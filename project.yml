@@ -1,0 +1,39 @@
+name: SmartChart
+
+options:
+  bundleIdPrefix: com.smartchart
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    PRODUCT_NAME: SmartChart
+    PRODUCT_BUNDLE_IDENTIFIER: com.smartchart.app
+    TARGETED_DEVICE_FAMILY: "2"
+    SWIFT_VERSION: "5.10"
+    GENERATE_INFOPLIST_FILE: true
+    INFOPLIST_KEY_CFBundleDisplayName: Smart Chart
+    INFOPLIST_KEY_UILaunchScreen_Generation: true
+    INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+    SUPPORTS_MACCATALYST: false
+
+targets:
+  SmartChart:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SmartChart
+        excludes:
+          - Resources
+    resources:
+      - path: SmartChart/Resources
+  SmartChartTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SmartChartTests
+    dependencies:
+      - target: SmartChart

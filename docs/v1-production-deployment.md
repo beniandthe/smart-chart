@@ -1,6 +1,6 @@
 # Smart Chart — V1 Production Deployment Plan
 
-Status: Active for V1 planning  
+Status: Active for v1 planning
 Source of truth: `docs/core-design-document.md`
 
 ## 1. Purpose
@@ -15,12 +15,13 @@ The goal of v1 deployment is not just to publish an app. It is to ship a stable 
 - **Platform:** iPad-only public release for v1
 - **Distribution:** Public App Store release after TestFlight validation
 - **Support posture:** local-first app with minimal backend dependencies
-- **Business model for launch:** paid upfront, or free plus a simple Pro unlock if monetization is ready without major state complexity
+- **Business model for launch:** free download plus a one-time Pro unlock
 
 ### Why this launch shape
 - iPad is the correct authoring surface for Pencil-first charting.
 - Avoiding a required backend reduces launch risk and operational load.
 - A narrower platform target keeps QA and support manageable.
+- Free-to-try lowers adoption friction while a one-time Pro tier keeps local ownership fair.
 
 ## 3. Environments
 
@@ -60,7 +61,7 @@ The goal of v1 deployment is not just to publish an app. It is to ship a stable 
 ### Phase 2 — curated musician beta
 - move to external TestFlight
 - recruit targeted testers: bandleaders, rhythm section players, teachers
-- collect structured feedback on speed, correction friction, output trust, and missing symbols
+- collect structured feedback on speed, correction friction, output trust, rhythm sufficiency, and missing chart symbols
 
 ### Phase 3 — public v1 launch
 - launch as an iPad-only public App Store release
@@ -70,7 +71,7 @@ The goal of v1 deployment is not just to publish an app. It is to ship a stable 
 ### Phase 4 — post-launch stabilization
 - patch recognition pain points
 - tighten layout edge cases
-- prioritize the most requested supported chart symbols/features
+- prioritize the most requested supported chart symbols and rhythm improvements
 
 ## 5. Release gating criteria
 
@@ -78,6 +79,8 @@ A production build should not ship until these are true.
 
 ### Functional
 - user can create a chart from scratch
+- user can set or change meter reliably
+- user can place two or more chord events inside a measure with clear rhythmic intent
 - user can edit and reinterpret objects reliably
 - concert / Bb / Eb views are correct for tested cases
 - PDF export works consistently
@@ -92,6 +95,7 @@ A production build should not ship until these are true.
 
 ### Product
 - at least a small set of beta testers say the app is faster than their current rough-chart workflow
+- at least a small set of beta testers say the limited rhythm support covers common real-world needs
 - at least a small set of beta testers say exported charts are usable in practice
 
 ## 6. Observability and support
@@ -110,30 +114,53 @@ A production build should not ship until these are true.
 
 If monetization is included in v1, keep it operationally simple.
 
-### Option A — paid upfront
-- simplest operational model
-- no purchase state complexity beyond App Store purchase itself
-
-### Option B — free app + one Pro unlock or subscription
-- better for user acquisition
-- requires robust StoreKit testing, entitlement handling, restore purchases, and App Store Connect configuration
-
 ### Recommendation
-If product validation is still the main goal, prefer the simplest monetization that does not add major state-management risk.
+- launch as a free download with a one-time Pro unlock
+- keep the launch purchase model to a single permanent local-upgrade tier
+- do not ship a recurring subscription in v1 unless real service-backed features already exist
+
+### Free tier recommendation
+- limited local chart library
+- enough editing access for a musician to feel the workflow
+- no PDF export
+
+### Pro recommendation
+- unlimited local charts
+- PDF export and sharing
+- transposition views
+- font tools
+- special notation tools
+- advanced rhythm-aware editing tools
+
+### Subscription recommendation for later only
+Only add a recurring tier after Smart Chart includes real ongoing-service value such as:
+- cloud sync / backup
+- cross-device organization
+- shared band libraries
+- setlists
+- version history
+- AI-assisted cleanup or recognition upgrades
+
+### Operational rules
+- restore purchases must work reliably
+- local charts must remain accessible after purchase restore or app reinstall
+- a future subscription should not remove access to locally owned Pro features
 
 ## 8. App Store positioning
 
 Smart Chart should be positioned as:
 - an iPad chart creation tool for musicians
 - faster than typed chart builders for rough-to-clean workflows
+- rhythm-aware enough to show chord placement and hits
 - more structured than plain annotation
 - not full notation software
 
 Metadata priorities:
 - very clear subtitle/value proposition
 - screenshots showing Pencil-to-clean-chart workflow
+- screenshots showing beat-aware chord placement where it matters
 - one short demo video if feasible
-- keywords focused on charting, lead sheets, chord charts, rehearsal charts, and transposition
+- keywords focused on charting, lead sheets, chord charts, rehearsal charts, rhythm charts, and transposition
 
 ## 9. CI/CD recommendation
 
@@ -168,7 +195,9 @@ Test with:
 ### Workflow focus
 Test heavily:
 - new chart creation
+- meter entry and meter changes
 - object correction
+- syncopated or split-measure chord placement
 - chart reopen/autosave
 - transposition
 - PDF export/share
@@ -191,6 +220,7 @@ Without cloud sync, the privacy story stays simpler and more trustworthy.
 ### Product
 - [ ] Pencil workflow stable
 - [ ] common chart creation path validated
+- [ ] meter and chord timing workflow validated
 - [ ] export quality acceptable
 - [ ] transposition validated for tested chords
 - [ ] empty/error states reviewed
@@ -199,7 +229,7 @@ Without cloud sync, the privacy story stays simpler and more trustworthy.
 - [ ] release build configuration finalized
 - [ ] crash reporting tested
 - [ ] analytics tested if present
-- [ ] purchase flows tested if present
+- [ ] Pro purchase and restore flows tested if present
 - [ ] versioning/build numbering strategy in place
 
 ### App Store
@@ -222,7 +252,7 @@ Without cloud sync, the privacy story stays simpler and more trustworthy.
 - crash fixes
 - export reliability
 - layout edge cases
-- most-requested missing supported roadmap elements
+- recognition pain points
 - usability fixes around correction and reinterpretation
 
 ### First 60–90 days
@@ -230,6 +260,7 @@ Possible additions:
 - chart templates
 - chart library polish
 - improved roadmap symbol coverage
+- broader limited rhythm coverage
 - better manual layout controls
 - evaluate iPhone companion scope
 
@@ -245,8 +276,9 @@ For external TestFlight, additional beta test information is required, including
 ## 15. Deployment summary
 
 The cleanest v1 deployment strategy for Smart Chart is:
-- launch iPad-first,
-- keep the app local-first,
-- validate through internal then external TestFlight,
-- ship publicly only after the core charting loop is clearly useful and reliable,
-- avoid backend or platform complexity that does not directly improve chart creation.
+- launch iPad-first
+- keep the app local-first
+- validate through internal then external TestFlight
+- ship publicly only after the core charting loop is clearly useful and reliable
+- use a free-to-try model with a one-time Pro unlock for the full local tool
+- avoid backend, subscription, or platform complexity that does not directly improve chart creation

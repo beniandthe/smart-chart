@@ -11,13 +11,13 @@ This document turns the design and MVP docs into the first execution sequence.
 
 Deliverables:
 - real GitHub repository created
-- Xcode iPad app project created
+- Xcode iPad app project or checked-in project generation spec created
 - base folder structure mapped to the planned module layout
 - README and docs committed
 - `.gitignore` added for Xcode/Swift projects
 
 Exit criteria:
-- project builds and runs a blank app shell
+- project definition is ready for Mac-side generation/build, and the blank app shell runs once opened in Xcode
 - repository has `main` branch and first docs commit
 
 ## Milestone 1 — Library and new chart shell
@@ -36,19 +36,24 @@ Exit criteria:
 Deliverables:
 - editor screen with top bar, toolbar, and canvas
 - systems and measures rendered from structured chart data
+- default time signature displayed
 - sample chart data displayed cleanly
 - zoom and pan behavior working
 
 Exit criteria:
 - sample one-page charts render reliably
 
-## Milestone 3 — Object editing
+## Milestone 3 — Manual object editing
 
 Deliverables:
-- chord object rendering
+- chord event rendering
 - section label rendering
 - cue text rendering
 - roadmap object rendering
+- top toolbar menus for fonts, transpose, notation, and text
+- manual beat placement and duration editing for chord events
+- document key and font controls
+- meter editing
 - select, move, edit, delete, and reinterpret interactions
 - inspector panel or popover
 
@@ -62,6 +67,7 @@ Deliverables:
 - preview and share flow
 - stable title/header layout
 - readable one-page export output
+- rhythm-aware chord placement preserved in export
 
 Exit criteria:
 - a manually built chart exports as a trustworthy PDF
@@ -81,6 +87,8 @@ Exit criteria:
 
 Deliverables:
 - chord recognition
+- time signature recognition
+- limited rhythm-value recognition for chord timing
 - section label recognition
 - cue text recognition
 - barline recognition
@@ -104,6 +112,18 @@ Deliverables:
 Exit criteria:
 - working-musician beta users can create a short roadmap chart without unacceptable friction
 
+## Milestone 8 — Monetization foundation
+
+Deliverables:
+- local entitlement state
+- free chart-cap messaging in the library
+- Pro gating hooks for PDF export and advanced local editing tools
+- purchase restoration path planned behind a StoreKit boundary
+- subscription tier reserved for later service-backed features only
+
+Exit criteria:
+- the app can express Free, Pro, and later Studio rules cleanly without tying core editing to billing code
+
 ## Release-critical guardrails
 
 Do not block the prototype or v1 on:
@@ -113,10 +133,11 @@ Do not block the prototype or v1 on:
 - playback
 - full notation
 - non-iPad platforms
+- shipping a recurring subscription before real service features exist
 
 ## Current recommended next step
 
 Start Milestone 0 immediately:
-1. create the real GitHub repository
-2. create the Xcode iPad project shell
-3. commit the aligned docs
+1. generate or open the Xcode project from the checked-in scaffold on a Mac
+2. verify the blank app shell launches and the sample library/editor views render
+3. begin manual chart editing on top of the current domain models

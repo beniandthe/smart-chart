@@ -1,6 +1,6 @@
 # Smart Chart — Developer-Facing MVP Spec
 
-Status: Active for Prototype and V1  
+Status: Active for prototype and v1
 Source of truth: `docs/core-design-document.md`
 
 ## 1. Purpose
@@ -18,12 +18,14 @@ The MVP succeeds if it proves the core workflow:
 ### Primary goals
 - Make chart creation faster than paper cleanup and less tedious than rigid typed entry.
 - Preserve the feel of handwriting while producing structured editable output.
+- Support meter and simple rhythm well enough to show where chords land in a measure.
 - Keep correction fast enough that imperfect recognition is acceptable.
 - Generate charts that look trustworthy and readable.
 
 ### Non-goals
 - Full staff notation
-- Melody or rhythm engraving
+- Melody or pitched note entry
+- General-purpose rhythm engraving
 - Playback or backing tracks
 - Realtime collaboration
 - Desktop parity
@@ -34,7 +36,7 @@ The MVP succeeds if it proves the core workflow:
 ### V1 target
 - iPadOS only for primary authoring
 - Apple Pencil is first-class input
-- Finger input is primarily for navigation, selection, editing, and mode changes
+- Finger input supports navigation, selection, editing, and simple fallback authoring where it remains reliable
 
 ### Later platforms
 - iPhone companion later
@@ -67,10 +69,15 @@ The MVP succeeds if it proves the core workflow:
 
 ### Included
 - Blank chart creation
+- Document key input at chart creation
 - Strong one-page chart layout
 - Systems and measures
+- Time signatures
 - Apple Pencil input on chart canvas
+- Document-wide font preset selection
 - Recognition of common chord symbols
+- Recognition of time signatures
+- Recognition of limited rhythmic values tied to chord placement and hits
 - Recognition of section labels
 - Recognition of cue text
 - Recognition of simple roadmap objects
@@ -80,7 +87,10 @@ The MVP succeeds if it proves the core workflow:
 
 ### Excluded
 - Full notation
-- Beat-level rhythmic spacing
+- Melody entry
+- Staff lines and pitched noteheads
+- Open-ended note and rest entry unrelated to chord timing
+- Tuplets and advanced engraving rules
 - Audio playback
 - Realtime collaboration
 - OCR or photo import
@@ -92,6 +102,7 @@ The MVP succeeds if it proves the core workflow:
 
 - As a bandleader, I want to write a quick chart naturally so I can hand a readable version to my players.
 - As a gigging musician, I want to clean up a rough chart fast so I can use it at rehearsal.
+- As a player, I want to show syncopated chord entries or implied hits without opening full notation software.
 - As a teacher, I want to create simplified readable chart handouts.
 - As a horn player or bandleader, I want to generate Bb and Eb versions without rewriting the chart by hand.
 
@@ -103,12 +114,16 @@ The chart must be represented as structured data, not just raw ink.
 - id
 - title
 - chartType
+- documentKey
+- documentFont
 - pageSize
 - orientation
 - defaultTranspositionView
+- defaultMeterNumerator
+- defaultMeterDenominator
+- stylePreset
 - createdAt
 - updatedAt
-- stylePreset
 
 ### 7.2 System
 - id
@@ -120,13 +135,16 @@ The chart must be represented as structured data, not just raw ink.
 ### 7.3 Measure
 - id
 - index
+- meterOverrideNumerator (optional)
+- meterOverrideDenominator (optional)
+- beatGridPreset
 - barlineAfter
-- chordIDs
+- chordEventIDs
 - cueIDs
 - roadmapIDs
 - layoutMetadata
 
-### 7.4 Chord
+### 7.4 ChordEvent
 - id
 - measureID
 - root
@@ -135,8 +153,12 @@ The chart must be represented as structured data, not just raw ink.
 - extensions
 - alterations
 - slashBass
+- startBeatPosition
+- durationValue
+- rhythmPlacement
+- tieOut (optional)
+- hitStyle (optional)
 - displayStyle
-- positionInMeasure
 - rawInput
 
 ### 7.5 SectionLabel
@@ -174,6 +196,9 @@ Common fields:
 - type
 - startMeasureID
 - endMeasureID (optional)
+- anchorSystemID (optional)
+- placement
+- displayText (optional)
 - count (optional)
 - linkedTargetID (optional)
 - rawInput
@@ -212,6 +237,23 @@ Examples:
 - F#-
 - Bb7
 - D/F#
+
+#### Time signatures
+Examples:
+- 4/4
+- 3/4
+- 6/8
+- 12/8
+
+#### Rhythmic values for chord timing
+Examples:
+- quarter
+- eighth
+- half
+- dotted quarter
+- dotted half
+- tied continuation
+- simple hit marks if low-cost and readable
 
 #### Section labels
 Examples:
@@ -255,7 +297,9 @@ Examples:
 - scribble => delete gesture
 
 ### Context rules
-- inside a measure => chord first
+- at the beginning of a chart or meter change zone => time signature first
+- inside a measure main writing zone => chord first
+- directly above or below a chord event => rhythm attachment first
 - above a system => section label first
 - below or near a measure => cue text first
 - text paired with a bracket => roadmap intent first
@@ -288,8 +332,14 @@ Examples:
 - supplemental to scribble delete
 
 ### Gesture-to-action map
-#### Pencil write
-- create chord / section / cue / roadmap candidate
+#### Pencil write in measure
+- create chord candidate
+
+#### Pencil rhythm value near an existing chord
+- attach or update chord timing
+
+#### Pencil time signature near the chart start or meter change position
+- set or update meter
 
 #### Pencil vertical stroke
 - create barline
@@ -338,10 +388,24 @@ Right:
 - export/share
 - overflow menu
 
+### Top tool strip
+- Fonts menu
+- Transpose menu
+- Notation menu
+- Text menu
+
+Notes:
+- Fonts menu should support document-wide font changes first
+- selection-aware font overrides can come after core editing is stable
+- Transpose menu should expose document key and concert / Bb / Eb views
+- Notation menu should create movable roadmap symbols such as Coda, Segno, D.S. al Coda, and Fine
+- Text menu should create section labels and cue text quickly
+
 ### Main canvas
 - chart rendered in clean systems
 - section labels above systems or measure groups
 - chords inside measures
+- rhythmic values aligned clearly with the chord events they explain
 - roadmap objects attached cleanly
 - cue text visually secondary but readable
 
@@ -354,13 +418,22 @@ Right:
 - Layout
 
 ### Context inspector
-#### Chord
+#### ChordEvent
 - root
 - quality
 - extension
 - alterations
 - slash bass
+- start beat position
+- duration value
+- rhythm placement
+- tie out
 - display style
+
+#### Measure
+- meter
+- beat grid preset
+- barline type
 
 #### RoadmapObject
 - type
@@ -384,7 +457,9 @@ The output must prioritize readability over decorative style.
 
 ### Requirements
 - clean measure spacing
+- beat-aware placement of chords inside measures
 - consistent chord alignment
+- rhythmic values visually tied to the chord they clarify
 - section labels clearly separated from chords
 - roadmap objects visually unambiguous
 - cue text readable but secondary
@@ -394,6 +469,7 @@ The output must prioritize readability over decorative style.
 ### User controls
 - auto-fit page
 - force line break here
+- show or hide beat guides if helpful
 - keep section together (nice-to-have)
 - loosen/tighten spacing (nice-to-have)
 
@@ -406,6 +482,7 @@ The output must prioritize readability over decorative style.
 
 ### Notes
 - transposition must operate on structured chord data, not string replacement
+- chord timing and rhythmic placement remain unchanged
 - roadmap and section objects remain unchanged
 - cue text remains unchanged unless explicitly edited by the user
 
@@ -418,6 +495,7 @@ The output must prioritize readability over decorative style.
 - clean title/header
 - readable systems and spacing
 - stable PDF layout
+- rhythmic placement preserved in export
 - printable/sharable output
 - share sheet integration
 
@@ -432,12 +510,53 @@ The output must prioritize readability over decorative style.
 ### Nice-to-have if low cost
 - Files export/import support
 
-## 15. Validation plan
+## 15. Monetization requirements
+
+### Launch recommendation
+- free download
+- one-time Pro unlock for the full local tool
+- no required subscription for v1
+
+### Free tier
+- limited local chart count
+- basic local chart creation and editing
+- local autosave
+- recent chart library
+
+Recommended initial chart cap:
+- 5 local charts
+
+### Pro tier
+- unlimited local charts
+- PDF export and sharing
+- concert / Bb / Eb transposition views
+- document-wide font presets
+- special notation toolbar tools
+- advanced rhythm-aware chart editing features
+
+### Later subscription tier
+Only add a recurring plan after Smart Chart includes features such as:
+- cloud sync / backup
+- cross-device chart organization
+- shared band libraries
+- setlists
+- version history
+- AI-assisted cleanup or recognition upgrades
+
+### Entitlement behavior
+- free users must be able to reopen their existing local charts
+- Pro must permanently remove the local chart cap
+- a future subscription must not be required for local chart ownership
+- expired subscription state should remove only service-backed features
+- restore purchases must be supported when monetization ships
+
+## 16. Validation plan
 
 ### Prototype test scenario
 User creates a chart that includes:
+- a 4/4 time signature
 - Intro
-- 4 bars of chords
+- one measure with two chord events and a visible rhythmic difference between them
 - Verse
 - 4 more bars
 - repeat bracket with x4
@@ -449,18 +568,23 @@ User creates a chart that includes:
 - Was it faster than the user’s current method?
 - What did the app misread most often?
 - Was correcting mistakes fast enough?
+- Did the limited rhythm support feel sufficient without becoming cumbersome?
 - Would the user trust the exported chart on a rehearsal or gig?
 
-## 16. Enforcement notes
+## 17. Enforcement notes
 
 Do not expand the MVP into:
 - full notation
+- melody entry
+- pitched note entry
 - playback
 - collaboration
 - required backend services
 - broad multi-platform scope
 
 Do iterate within the MVP on:
+- time signature handling
+- chord timing representation
 - recognition thresholds
 - correction UX
 - layout tuning

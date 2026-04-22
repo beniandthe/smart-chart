@@ -19,8 +19,8 @@ xcuserdata/
 
 # Swift Package Manager
 .build/
+.swiftpm/
 Packages/
-Package.resolved
 
 # CocoaPods
 Pods/
@@ -31,7 +31,7 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 
-# App secrets / local configs
+# Local secrets and signing assets
 .env
 .env.*
 *.p8
