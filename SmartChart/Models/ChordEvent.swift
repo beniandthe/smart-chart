@@ -6,6 +6,7 @@ struct ChordEvent: Identifiable, Codable, Hashable {
     var startPosition: BeatPosition
     var duration: RhythmValue
     var rhythmPlacement: RhythmPlacement
+    var mappedRhythmSlotIndex: Int? = nil
     var tieOut: Bool
     var hitStyle: HitStyle
     var rawInput: String?
@@ -15,6 +16,10 @@ struct ChordEvent: Identifiable, Codable, Hashable {
 
         if hitStyle != .none {
             components.append(hitStyle.rawValue)
+        }
+
+        if let mappedRhythmSlotIndex {
+            components.append("slot \(mappedRhythmSlotIndex + 1)")
         }
 
         if tieOut {

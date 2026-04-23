@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct SmartChartApp: App {
-    @StateObject private var store = ChartLibraryStore.preview
+    @StateObject private var store = ChartLibraryStore.live()
 
     var body: some Scene {
         WindowGroup {

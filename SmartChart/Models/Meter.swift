@@ -8,6 +8,10 @@ struct Meter: Codable, Hashable {
         "\(numerator)/\(denominator)"
     }
 
+    var beatUnitWholeNoteLength: Double {
+        1 / Double(denominator)
+    }
+
     var measureLengthInWholeNotes: Double {
         Double(numerator) / Double(denominator)
     }
@@ -38,6 +42,31 @@ struct BeatPosition: Codable, Hashable {
         let beatLength = meter.measureLengthInWholeNotes / Double(meter.numerator)
         let subdivisionOffset = Double(subdivision) / Double(subdivisionsPerBeat)
         return (Double(beat - 1) + subdivisionOffset) * beatLength
+    }
+}
+
+extension BeatPosition {
+    init?(offsetInWholeNotes offset: Double, meter: Meter) {
+        let beatLength = meter.measureLengthInWholeNotes / Double(meter.numerator)
+        guard beatLength > 0 else {
+            return nil
+        }
+
+        let beatOffset = offset / beatLength
+        let wholeBeats = Int(floor(beatOffset + 0.0001))
+        let remainder = beatOffset - Double(wholeBeats)
+
+        if abs(remainder) < 0.0001 {
+            self.init(beat: wholeBeats + 1, subdivision: 0, subdivisionsPerBeat: 1)
+            return
+        }
+
+        if abs(remainder - 0.5) < 0.0001 {
+            self.init(beat: wholeBeats + 1, subdivision: 1, subdivisionsPerBeat: 2)
+            return
+        }
+
+        return nil
     }
 }
 

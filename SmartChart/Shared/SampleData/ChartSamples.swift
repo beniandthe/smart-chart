@@ -2,7 +2,6 @@ import Foundation
 
 enum ChartSamples {
     static let previewCharts: [Chart] = [
-        syncopatedFunkGroove,
         straightAheadSwing
     ]
 
@@ -241,11 +240,14 @@ enum ChartSamples {
         return Chart(
             id: UUID(),
             title: "Turnaround Study",
+            composerCredit: "Irving Berlin",
+            styleNote: "MED. SWING",
             chartType: .teachingChart,
             documentKey: .bFlatMajor,
             documentFont: .serif,
             defaultTranspositionView: .concert,
             defaultMeter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
             systems: [system],
             sectionLabels: [
                 SectionLabel(
@@ -267,6 +269,27 @@ enum ChartSamples {
 }
 
 extension Chart {
+    static func draft(title: String, key: DocumentKey = .cMajor) -> Chart {
+        Chart(
+            id: UUID(),
+            title: title,
+            chartType: .chordChart,
+            documentKey: key,
+            documentFont: .classic,
+            defaultTranspositionView: .concert,
+            defaultMeter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
+            hasCompletedInitialSetup: false,
+            systems: [],
+            sectionLabels: [],
+            cueTexts: [],
+            roadmapObjects: [],
+            stylePreset: .cleanStudio,
+            createdAt: .now,
+            updatedAt: .now
+        )
+    }
+
     static func blank(title: String, key: DocumentKey = .cMajor) -> Chart {
         let measures = (1...4).map { index in
             Measure(
@@ -297,6 +320,8 @@ extension Chart {
             documentFont: .classic,
             defaultTranspositionView: .concert,
             defaultMeter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
+            hasCompletedInitialSetup: true,
             systems: [system],
             sectionLabels: [],
             cueTexts: [],

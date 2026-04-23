@@ -54,6 +54,9 @@ These are not bugs in the handoff. They are expected unfinished areas:
 
 ## First steps on the Mac
 
+If full Xcode is not installed yet, you can still validate that the shared chart logic compiles:
+- `swift build`
+
 1. Install or verify:
    - Xcode
    - Xcode command-line tools
@@ -65,6 +68,14 @@ These are not bugs in the handoff. They are expected unfinished areas:
 5. Run the unit tests.
 6. Launch the app in the iPad simulator.
 7. If available, run it on the physical iPad.
+
+## Important local build note
+
+If the repo is stored in a file-provider-managed `Documents` location, Xcode may attach Finder or File Provider metadata to in-repo build output and codesigning can fail.
+
+Use a DerivedData path outside the repo for command-line builds and tests:
+- `xcodebuild -project SmartChart.xcodeproj -scheme SmartChart -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4),OS=26.4.1' -derivedDataPath /tmp/SmartChartDerivedData build`
+- `xcodebuild -project SmartChart.xcodeproj -scheme SmartChart -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4),OS=26.4.1' -derivedDataPath /tmp/SmartChartDerivedData test`
 
 ## First things to validate in Xcode
 

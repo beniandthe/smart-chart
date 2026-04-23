@@ -48,7 +48,7 @@ struct ChordPitch: Codable, Hashable {
             adjustment = -1
         }
 
-        return normalized(base + adjustment)
+        return Self.normalized(base + adjustment)
     }
 
     var displayText: String {
@@ -56,7 +56,7 @@ struct ChordPitch: Codable, Hashable {
     }
 
     func transposed(by semitones: Int) -> ChordPitch {
-        ChordPitch.from(semitone: normalized(semitone + semitones), preference: .flats)
+        ChordPitch.from(semitone: Self.normalized(semitone + semitones), preference: .flats)
     }
 
     func spelled(using preference: PitchSpellingPreference) -> ChordPitch {

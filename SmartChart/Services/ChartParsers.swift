@@ -43,8 +43,10 @@ enum ChordSymbolParser {
         let descriptor = pieces.first ?? ""
         let slashBass = pieces.count > 1 ? pieces[1] : nil
 
-        if let slashBass,
-           ChordPitch.parse(slashBass) == nil {
+        let parsedSlashBass = slashBass.flatMap(ChordPitch.parse)
+
+        if slashBass != nil,
+           parsedSlashBass == nil {
             throw ChordSymbolParseError.invalidSlashBass
         }
 
@@ -56,7 +58,7 @@ enum ChordSymbolParser {
             quality: parsedDescriptor.quality,
             extensions: parsedDescriptor.extensions,
             alterations: parsedDescriptor.alterations,
-            slashBass: slashBass
+            slashBass: parsedSlashBass?.displayText
         )
     }
 

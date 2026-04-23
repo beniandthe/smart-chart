@@ -118,6 +118,16 @@ Business-model rules:
 - [`docs/basic-chart-creation-flow.md`](docs/basic-chart-creation-flow.md) — explicit step-by-step behavior for the most basic chart authoring flow
 - [`docs/architecture-reset-proposal.md`](docs/architecture-reset-proposal.md) — side-by-side comparison of the current build path and the proposed editor architecture reset
 
+## Local validation
+
+If full Xcode is not installed yet, the shared chart logic can still be compiled on macOS with Swift Package Manager:
+
+```sh
+swift build
+```
+
+This validates the non-UI parsing, transposition, timing, entitlement, and library-store layer. The iPad app target and XCTest suite still require Xcode plus XcodeGen.
+
 ## Prototype success criteria
 
 The first meaningful prototype succeeds if a musician can:

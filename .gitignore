@@ -1,9 +1,13 @@
 # macOS
 .DS_Store
+.home/
+.tools/
 
 # Xcode
 DerivedData/
+.derived/
 build/
+SmartChart.xcodeproj/
 *.pbxuser
 !default.pbxuser
 *.mode1v3
@@ -21,6 +25,7 @@ xcuserdata/
 .build/
 .swiftpm/
 Packages/
+dist/
 
 # CocoaPods
 Pods/

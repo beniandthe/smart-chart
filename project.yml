@@ -33,6 +33,10 @@ targets:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
+    settings:
+      base:
+        PRODUCT_NAME: SmartChartTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.smartchart.tests
     sources:
       - path: SmartChartTests
     dependencies:
