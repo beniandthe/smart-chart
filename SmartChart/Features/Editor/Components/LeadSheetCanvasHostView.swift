@@ -6,7 +6,8 @@ import UIKit
 struct LeadSheetCanvasHostView: UIViewRepresentable {
     @Binding var chart: Chart
     @Binding var selectedMeasureID: UUID?
-    let isFreeHandMode: Bool
+    let interactionMode: EditorCanvasMode
+    var onTimeSignatureTargetRequested: ((UUID) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
         Coordinator(chart: $chart, selectedMeasureID: $selectedMeasureID)
@@ -16,26 +17,28 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         let view = LeadSheetCanvasUIKitView()
         view.chart = chart
         view.selectedMeasureID = selectedMeasureID
-        view.isFreeHandMode = isFreeHandMode
+        view.interactionMode = interactionMode
         view.onMeasureSelectionChanged = { measureID in
             context.coordinator.selectedMeasureID.wrappedValue = measureID
         }
         view.onChartChanged = { updatedChart in
             context.coordinator.chart.wrappedValue = updatedChart
         }
+        view.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
         return view
     }
 
     func updateUIView(_ uiView: LeadSheetCanvasUIKitView, context: Context) {
         uiView.chart = chart
         uiView.selectedMeasureID = selectedMeasureID
-        uiView.isFreeHandMode = isFreeHandMode
+        uiView.interactionMode = interactionMode
         uiView.onMeasureSelectionChanged = { measureID in
             context.coordinator.selectedMeasureID.wrappedValue = measureID
         }
         uiView.onChartChanged = { updatedChart in
             context.coordinator.chart.wrappedValue = updatedChart
         }
+        uiView.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
     }
 
     final class Coordinator {
@@ -49,7 +52,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     }
 }
 
-final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
+final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRecognizerDelegate {
     var chart: Chart = .draft(title: "Preview") {
         didSet {
             guard oldValue != chart else {
@@ -68,13 +71,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
             setNeedsDisplay()
         }
     }
-    var isFreeHandMode = false {
+    var interactionMode: EditorCanvasMode = .browse {
         didSet {
-            guard oldValue != isFreeHandMode else {
+            guard oldValue != interactionMode else {
                 return
             }
 
-            if !isFreeHandMode {
+            if !interactionMode.allowsPageInkEditing {
                 persistActiveInkIfNeeded()
             }
 
@@ -85,6 +88,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
     }
     var onMeasureSelectionChanged: ((UUID?) -> Void)?
     var onChartChanged: ((Chart) -> Void)?
+    var onTimeSignatureTargetRequested: ((UUID) -> Void)?
 
     private var pageLayout: LeadSheetPageLayout?
     private let pageInkCanvasView = PKCanvasView()
@@ -92,8 +96,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
         target: self,
         action: #selector(handleTap(_:))
     )
+    private lazy var measureResizePanRecognizer = UIPanGestureRecognizer(
+        target: self,
+        action: #selector(handleMeasureResizePan(_:))
+    )
     private var isSyncingInkCanvasFromModel = false
     private var pendingInkPersistWorkItem: DispatchWorkItem?
+    private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -124,15 +133,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
             drawSystem(system)
         }
 
-        if !isFreeHandMode {
+        if !interactionMode.allowsPageInkEditing {
             drawSavedPageInk()
+        }
+
+        if interactionMode.showsMeasureResizeHandles,
+           let selectedMeasure = selectedMeasureLayout() {
+            drawMeasureResizeHandles(for: selectedMeasure)
         }
     }
 
     private func commonInit() {
         isOpaque = false
         backgroundColor = .clear
+        selectionTapRecognizer.delegate = self
         addGestureRecognizer(selectionTapRecognizer)
+        measureResizePanRecognizer.delegate = self
+        selectionTapRecognizer.require(toFail: measureResizePanRecognizer)
+        addGestureRecognizer(measureResizePanRecognizer)
 
         pageInkCanvasView.backgroundColor = .clear
         pageInkCanvasView.isOpaque = false
@@ -265,23 +283,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
         }
 
         if let timeSignatureFrame = system.timeSignatureFrame {
-            let numeratorRect = CGRect(x: timeSignatureFrame.minX, y: timeSignatureFrame.minY, width: timeSignatureFrame.width, height: timeSignatureFrame.height / 2)
-            let denominatorRect = CGRect(x: timeSignatureFrame.minX, y: timeSignatureFrame.midY - 2, width: timeSignatureFrame.width, height: timeSignatureFrame.height / 2)
-
-            drawText(
-                "\(chart.defaultMeter.numerator)",
-                in: numeratorRect,
-                font: markerFont(size: 22, weight: .regular),
-                color: UIColor(white: 0.08, alpha: 1),
-                alignment: .center
-            )
-            drawText(
-                "\(chart.defaultMeter.denominator)",
-                in: denominatorRect,
-                font: markerFont(size: 22, weight: .regular),
-                color: UIColor(white: 0.08, alpha: 1),
-                alignment: .center
-            )
+            drawStackedTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
         }
 
         if let firstMeasure = system.measures.first {
@@ -306,6 +308,11 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
                 drawNote(noteLayout)
             }
 
+            if let trailingMeterChange = measure.trailingMeterChange,
+               let trailingMeterChangeFrame = measure.trailingMeterChangeFrame {
+                drawStackedTimeSignature(trailingMeterChange, in: trailingMeterChangeFrame)
+            }
+
             if measure.isOpen {
                 drawOpenMeasureHint(measure)
             } else {
@@ -324,6 +331,29 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
         selectionPath.stroke()
     }
 
+    private func drawMeasureResizeHandles(for measure: LeadSheetMeasureLayout) {
+        let handleRects = measureResizeHandleRects(for: measure)
+        drawMeasureResizeHandle(handleRects.left, symbol: "⇠")
+        drawMeasureResizeHandle(handleRects.right, symbol: "⇢")
+    }
+
+    private func drawMeasureResizeHandle(_ rect: CGRect, symbol: String) {
+        let handlePath = UIBezierPath(roundedRect: rect, cornerRadius: 8)
+        UIColor.white.withAlphaComponent(0.95).setFill()
+        handlePath.fill()
+        UIColor(red: 0.18, green: 0.38, blue: 0.78, alpha: 0.88).setStroke()
+        handlePath.lineWidth = 1.2
+        handlePath.stroke()
+
+        drawText(
+            symbol,
+            in: rect.insetBy(dx: 1, dy: 3),
+            font: UIFont.systemFont(ofSize: 16, weight: .semibold),
+            color: UIColor(red: 0.16, green: 0.33, blue: 0.68, alpha: 1),
+            alignment: .center
+        )
+    }
+
     private func drawSavedPageInk() {
         guard let pageLayout,
               let drawingData = chart.pageHandwrittenNotationData,
@@ -338,6 +368,36 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
             scale: UIScreen.main.scale
         )
         image.draw(in: writingFrame)
+    }
+
+    private func drawStackedTimeSignature(_ meter: Meter, in frame: CGRect) {
+        let numeratorRect = CGRect(
+            x: frame.minX,
+            y: frame.minY,
+            width: frame.width,
+            height: frame.height / 2
+        )
+        let denominatorRect = CGRect(
+            x: frame.minX,
+            y: frame.midY - 2,
+            width: frame.width,
+            height: frame.height / 2
+        )
+
+        drawText(
+            "\(meter.numerator)",
+            in: numeratorRect,
+            font: markerFont(size: 22, weight: .regular),
+            color: UIColor(white: 0.08, alpha: 1),
+            alignment: .center
+        )
+        drawText(
+            "\(meter.denominator)",
+            in: denominatorRect,
+            font: markerFont(size: 22, weight: .regular),
+            color: UIColor(white: 0.08, alpha: 1),
+            alignment: .center
+        )
     }
 
     private func drawStaffLines(for system: LeadSheetSystemLayout) {
@@ -494,6 +554,66 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
         return trimmed?.isEmpty == false ? trimmed : nil
     }
 
+    private func selectedMeasureLayout() -> LeadSheetMeasureLayout? {
+        guard let selectedMeasureID else {
+            return nil
+        }
+
+        return pageLayout?.systems
+            .flatMap(\.measures)
+            .first(where: { $0.sourceMeasureID == selectedMeasureID })
+    }
+
+    private func measureResizeHandleRects(
+        for measure: LeadSheetMeasureLayout
+    ) -> (left: CGRect, right: CGRect) {
+        let handleSize = CGSize(width: 18, height: 34)
+        let handleY = measure.staffFrame.midY - handleSize.height / 2
+        let leftRect = CGRect(
+            x: measure.frame.minX - handleSize.width / 2,
+            y: handleY,
+            width: handleSize.width,
+            height: handleSize.height
+        )
+        let rightRect = CGRect(
+            x: measure.frame.maxX - handleSize.width / 2,
+            y: handleY,
+            width: handleSize.width,
+            height: handleSize.height
+        )
+        return (leftRect, rightRect)
+    }
+
+    private func measureResizeHandleHitTarget(at location: CGPoint) -> ActiveMeasureResizeDrag? {
+        guard interactionMode.showsMeasureResizeHandles,
+              let measure = selectedMeasureLayout(),
+              let measureID = measure.sourceMeasureID else {
+            return nil
+        }
+
+        let handleRects = measureResizeHandleRects(for: measure)
+        let touchInsetX: CGFloat = -12
+        let touchInsetY: CGFloat = -10
+
+        if handleRects.left.insetBy(dx: touchInsetX, dy: touchInsetY).contains(location) {
+            return ActiveMeasureResizeDrag(
+                measureID: measureID,
+                edge: .left,
+                initialWidth: measure.frame.width
+            )
+        }
+
+        if handleRects.right.insetBy(dx: touchInsetX, dy: touchInsetY).contains(location) {
+            return ActiveMeasureResizeDrag(
+                measureID: measureID,
+                edge: .right,
+                initialWidth: measure.frame.width
+            )
+        }
+
+        return nil
+    }
+
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
         guard !isSyncingInkCanvasFromModel else {
             return
@@ -504,7 +624,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
 
     @objc
     private func handleTap(_ recognizer: UITapGestureRecognizer) {
-        guard !isFreeHandMode else {
+        guard interactionMode.allowsMeasureSelection else {
             return
         }
 
@@ -514,10 +634,50 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
             .first(where: { $0.frame.insetBy(dx: -6, dy: -6).contains(location) })?
             .sourceMeasureID
         onMeasureSelectionChanged?(tappedMeasureID)
+
+        if interactionMode.showsTimeSignatureTargeting,
+           let tappedMeasureID {
+            onTimeSignatureTargetRequested?(tappedMeasureID)
+        }
+    }
+
+    @objc
+    private func handleMeasureResizePan(_ recognizer: UIPanGestureRecognizer) {
+        switch recognizer.state {
+        case .began:
+            let location = recognizer.location(in: self)
+            activeMeasureResizeDrag = measureResizeHandleHitTarget(at: location)
+        case .changed:
+            guard let activeMeasureResizeDrag else {
+                return
+            }
+
+            let translation = recognizer.translation(in: self)
+            let signedDelta = activeMeasureResizeDrag.edge == .right
+                ? translation.x
+                : -translation.x
+            let proposedWidth = activeMeasureResizeDrag.initialWidth + signedDelta
+
+            var updatedChart = chart
+            let appliedWidth = updatedChart.setMeasureManualLayoutWidth(
+                proposedWidth,
+                for: activeMeasureResizeDrag.measureID
+            )
+            guard appliedWidth != nil else {
+                return
+            }
+
+            chart = updatedChart
+            onChartChanged?(updatedChart)
+        case .ended, .cancelled, .failed:
+            activeMeasureResizeDrag = nil
+        default:
+            break
+        }
     }
 
     private func syncPageInkCanvas() {
-        guard isFreeHandMode else {
+        guard interactionMode.allowsPageInkEditing else {
             pageInkCanvasView.isHidden = true
             pageInkCanvasView.isUserInteractionEnabled = false
             return
@@ -585,10 +745,15 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
     }
 
     private func updateInteractionMode() {
-        selectionTapRecognizer.isEnabled = !isFreeHandMode
-        pageInkCanvasView.isUserInteractionEnabled = isFreeHandMode
+        selectionTapRecognizer.isEnabled = interactionMode.allowsMeasureSelection
+        measureResizePanRecognizer.isEnabled = interactionMode.showsMeasureResizeHandles
+        pageInkCanvasView.isUserInteractionEnabled = interactionMode.allowsPageInkEditing
 
-        if !isFreeHandMode {
+        if !interactionMode.showsMeasureResizeHandles {
+            activeMeasureResizeDrag = nil
+        }
+
+        if !interactionMode.allowsPageInkEditing {
             pageInkCanvasView.isHidden = true
             pageInkCanvasView.resignFirstResponder()
         }
@@ -597,5 +762,25 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate {
     private func pageWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
         pageLayout.paperFrame.insetBy(dx: 10, dy: 10)
     }
+
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer === measureResizePanRecognizer {
+            let location = gestureRecognizer.location(in: self)
+            return measureResizeHandleHitTarget(at: location) != nil
+        }
+
+        return super.gestureRecognizerShouldBegin(gestureRecognizer)
+    }
+}
+
+private struct ActiveMeasureResizeDrag {
+    enum Edge {
+        case left
+        case right
+    }
+
+    var measureID: UUID
+    var edge: Edge
+    var initialWidth: CGFloat
 }
 #endif

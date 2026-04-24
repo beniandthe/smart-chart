@@ -17,6 +17,18 @@ struct Meter: Codable, Hashable {
     }
 }
 
+enum TimeSignatureApplicationScope: Hashable {
+    case fixedMeasureCount(Int)
+    case toEndOfPiece
+    case toNextTimeSignature
+}
+
+struct TimeSignatureChange: Identifiable, Codable, Hashable {
+    var id: UUID
+    var afterMeasureID: UUID
+    var meter: Meter
+}
+
 struct BeatPosition: Codable, Hashable {
     var beat: Int
     var subdivision: Int

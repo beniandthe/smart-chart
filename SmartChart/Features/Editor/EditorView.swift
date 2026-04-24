@@ -1,6 +1,13 @@
 import SwiftUI
 
 struct EditorView: View {
+    private static let supportedTimeSignatureChoices = [
+        Meter(numerator: 4, denominator: 4),
+        Meter(numerator: 3, denominator: 4),
+        Meter(numerator: 5, denominator: 4),
+        Meter(numerator: 6, denominator: 4)
+    ]
+
     @EnvironmentObject private var store: ChartLibraryStore
     @Binding var chart: Chart
     @State private var activeSheet: EditorSheet?
@@ -10,7 +17,9 @@ struct EditorView: View {
     @State private var showingHeaderSheet = false
     @State private var isExporting = false
     @State private var selectedMeasureID: UUID?
-    @State private var isFreeHandMode = false
+    @State private var pendingTimeSignatureSourceMeasureID: UUID?
+    @State private var pendingTimeSignaturePlacement: PendingTimeSignaturePlacement?
+    @State private var canvasMode: EditorCanvasMode = .browse
     private let exporter: any ChartExporting
 
     init(chart: Binding<Chart>, exporter: any ChartExporting = PDFChartExporter.live()) {
@@ -29,7 +38,7 @@ struct EditorView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 28)
         }
-        .scrollDisabled(isFreeHandMode)
+        .scrollDisabled(canvasMode.disablesPageScroll)
         .background(
             LinearGradient(
                 colors: [
@@ -45,11 +54,19 @@ struct EditorView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button(chart.hasCompletedInitialSetup ? "Page Setup" : "Setup") {
+                    selectedMeasureID = nil
+                    pendingTimeSignatureSourceMeasureID = nil
+                    pendingTimeSignaturePlacement = nil
+                    canvasMode = .browse
                     showingSetupSheet = true
                 }
-                .disabled(isFreeHandMode)
+                .disabled(canvasMode.locksDocumentActions)
 
                 Button {
+                    selectedMeasureID = nil
+                    pendingTimeSignatureSourceMeasureID = nil
+                    pendingTimeSignaturePlacement = nil
+                    canvasMode = .browse
                     handleExportTapped()
                 } label: {
                     if isExporting {
@@ -59,7 +76,7 @@ struct EditorView: View {
                         Label(exportButtonTitle, systemImage: "square.and.arrow.up")
                     }
                 }
-                .disabled(isExporting || isFreeHandMode)
+                .disabled(isExporting || canvasMode.locksDocumentActions)
             }
         }
         .sheet(item: $activeSheet) { sheet in
@@ -76,6 +93,62 @@ struct EditorView: View {
         }
         .sheet(isPresented: $showingHeaderSheet) {
             ChartHeaderSheetView(chart: $chart)
+        }
+        .confirmationDialog(
+            "Change Time Signature",
+            isPresented: Binding(
+                get: { pendingTimeSignatureSourceMeasureID != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        pendingTimeSignatureSourceMeasureID = nil
+                    }
+                }
+            )
+        ) {
+            if let sourceMeasureID = pendingTimeSignatureSourceMeasureID {
+                ForEach(Self.supportedTimeSignatureChoices, id: \.self) { meter in
+                    Button(meter.displayText) {
+                        pendingTimeSignatureSourceMeasureID = nil
+                        pendingTimeSignaturePlacement = PendingTimeSignaturePlacement(
+                            sourceMeasureID: sourceMeasureID,
+                            meter: meter
+                        )
+                    }
+                }
+            }
+
+            Button("Cancel", role: .cancel) {
+                pendingTimeSignatureSourceMeasureID = nil
+                pendingTimeSignaturePlacement = nil
+            }
+        } message: {
+            Text("Apply the new time signature after the selected measure.")
+        }
+        .sheet(item: $pendingTimeSignaturePlacement) { placement in
+            TimeSignatureScopeSheetView(
+                meter: placement.meter,
+                onApplyCount: { additionalMeasureCount in
+                    handleTimeSignatureSelection(
+                        placement.meter,
+                        after: placement.sourceMeasureID,
+                        scope: .fixedMeasureCount(additionalMeasureCount)
+                    )
+                },
+                onApplyToEndOfPiece: {
+                    handleTimeSignatureSelection(
+                        placement.meter,
+                        after: placement.sourceMeasureID,
+                        scope: .toEndOfPiece
+                    )
+                },
+                onApplyToNextTimeSignature: {
+                    handleTimeSignatureSelection(
+                        placement.meter,
+                        after: placement.sourceMeasureID,
+                        scope: .toNextTimeSignature
+                    )
+                }
+            )
         }
         .alert("Export PDF", isPresented: $showingExportAlert) {
             Button("OK", role: .cancel) {}
@@ -97,6 +170,10 @@ struct EditorView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 Button {
+                    selectedMeasureID = nil
+                    pendingTimeSignatureSourceMeasureID = nil
+                    pendingTimeSignaturePlacement = nil
+                    canvasMode = .browse
                     showingSetupSheet = true
                 } label: {
                     EditorMenuTabLabel(title: "Page", systemImage: "doc.text")
@@ -106,36 +183,63 @@ struct EditorView: View {
                 Button {
                     handleMeasureTabTapped()
                 } label: {
-                    EditorMenuTabLabel(title: "Measures", systemImage: "rectangle.split.4x1")
+                    EditorMenuTabLabel(
+                        title: "Measures",
+                        systemImage: "rectangle.split.4x1",
+                        isSelected: canvasMode == .measureEdit
+                    )
                 }
-                .disabled(isFreeHandMode)
+                .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
 
                 Button {
+                    handleTimeSignatureTabTapped()
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Time",
+                        systemImage: "metronome",
+                        isSelected: canvasMode == .timeSignatureEdit
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Button {
+                    selectedMeasureID = nil
+                    pendingTimeSignatureSourceMeasureID = nil
+                    pendingTimeSignaturePlacement = nil
                     toggleFreeHandMode()
                 } label: {
                     EditorMenuTabLabel(
-                        title: isFreeHandMode ? "Done" : "Free-Hand",
-                        systemImage: isFreeHandMode ? "pencil.slash" : "pencil.and.scribble",
-                        isSelected: isFreeHandMode
+                        title: canvasMode.freeHandTabTitle,
+                        systemImage: canvasMode.freeHandTabSymbol,
+                        isSelected: canvasMode == .freeHand
                     )
                 }
-                .disabled(!canEnterFreeHandMode && !isFreeHandMode)
+                .disabled(!canEnterFreeHandMode && canvasMode != .freeHand)
                 .buttonStyle(.plain)
 
                 EditorMenuTabLabel(title: "Jazz", systemImage: "music.quarternote.3", isSelected: true)
 
                 Button {
+                    selectedMeasureID = nil
+                    pendingTimeSignatureSourceMeasureID = nil
+                    pendingTimeSignaturePlacement = nil
+                    canvasMode = .browse
                     showingHeaderSheet = true
                 } label: {
                     EditorMenuTabLabel(title: "Header", systemImage: "character.cursor.ibeam")
                 }
-                .disabled(isFreeHandMode)
+                .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
 
                 Menu {
                     ForEach(TranspositionView.allCases, id: \.self) { view in
                         Button {
+                            selectedMeasureID = nil
+                            pendingTimeSignatureSourceMeasureID = nil
+                            pendingTimeSignaturePlacement = nil
+                            canvasMode = .browse
                             chart.setTranspositionView(view)
                         } label: {
                             notationMenuLabel(view.displayText, isSelected: chart.defaultTranspositionView == view)
@@ -144,7 +248,7 @@ struct EditorView: View {
                 } label: {
                     EditorMenuTabLabel(title: "View", systemImage: "guitars")
                 }
-                .disabled(isFreeHandMode)
+                .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
             }
             .padding(10)
@@ -162,7 +266,8 @@ struct EditorView: View {
         LeadSheetCanvasHostView(
             chart: $chart,
             selectedMeasureID: $selectedMeasureID,
-            isFreeHandMode: isFreeHandMode
+            interactionMode: canvasMode,
+            onTimeSignatureTargetRequested: handleTimeSignatureTargetRequested
         )
     }
 
@@ -207,16 +312,34 @@ struct EditorView: View {
             return
         }
 
-        guard let targetMeasureID = resolvedMeasureActionTargetID() else {
-            selectedMeasureID = chart.appendMeasure(authoringState: .open)
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        selectedMeasureID = nil
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+        canvasMode = .measureEdit
+
+        guard let targetMeasureID else {
+            _ = chart.appendMeasure(authoringState: .open)
             return
         }
 
         if chart.measure(id: targetMeasureID)?.authoringState == .open {
-            selectedMeasureID = chart.commitOpenMeasure()
+            _ = chart.commitOpenMeasure()
         } else {
-            selectedMeasureID = chart.positionOpenMeasure(after: targetMeasureID) ?? targetMeasureID
+            _ = chart.positionOpenMeasure(after: targetMeasureID)
         }
+    }
+
+    private func handleTimeSignatureTabTapped() {
+        guard chart.hasCompletedInitialSetup else {
+            showingSetupSheet = true
+            return
+        }
+
+        selectedMeasureID = nil
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+        canvasMode = .timeSignatureEdit
     }
 
     private func resolvedMeasureActionTargetID() -> UUID? {
@@ -234,18 +357,42 @@ struct EditorView: View {
     }
 
     private func toggleFreeHandMode() {
-        guard canEnterFreeHandMode || isFreeHandMode else {
+        guard canEnterFreeHandMode || canvasMode == .freeHand else {
             if !chart.hasCompletedInitialSetup {
                 showingSetupSheet = true
             }
             return
         }
 
-        if !isFreeHandMode {
-            selectedMeasureID = resolvedMeasureActionTargetID()
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+        canvasMode = canvasMode == .freeHand ? .browse : .freeHand
+    }
+
+    private func handleTimeSignatureTargetRequested(_ measureID: UUID) {
+        guard canvasMode == .timeSignatureEdit,
+              chart.measure(id: measureID) != nil else {
+            return
         }
 
-        isFreeHandMode.toggle()
+        selectedMeasureID = measureID
+        pendingTimeSignaturePlacement = nil
+        pendingTimeSignatureSourceMeasureID = measureID
+    }
+
+    private func handleTimeSignatureSelection(
+        _ meter: Meter,
+        after sourceMeasureID: UUID,
+        scope: TimeSignatureApplicationScope
+    ) {
+        let appliedMeasureID = chart.applyMeterChange(meter, after: sourceMeasureID, scope: scope)
+        selectedMeasureID = sourceMeasureID
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+
+        if appliedMeasureID == nil {
+            canvasMode = .browse
+        }
     }
 
     private var canvasHeight: CGFloat {
@@ -253,7 +400,10 @@ struct EditorView: View {
             return 760
         }
 
-        let visibleSystemCount = max(1, chart.systems.count)
+        let visibleSystemCount = LeadSheetPageLayoutEngine.estimatedSystemCount(
+            for: chart,
+            pageWidth: 900
+        )
         return max(1200, CGFloat(visibleSystemCount) * 136 + 320)
     }
 
@@ -279,5 +429,99 @@ private enum EditorSheet: Identifiable {
         case .export(let exportedPDF):
             return "export-\(exportedPDF.id.absoluteString)"
         }
+    }
+}
+
+private struct PendingTimeSignaturePlacement: Identifiable {
+    let id = UUID()
+    let sourceMeasureID: UUID
+    let meter: Meter
+}
+
+private struct TimeSignatureScopeSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    let meter: Meter
+    let onApplyCount: (Int) -> Void
+    let onApplyToEndOfPiece: () -> Void
+    let onApplyToNextTimeSignature: () -> Void
+
+    @State private var additionalMeasureCount = 0
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Add measures of time?")
+                        .font(.headline)
+                    Text("The new \(meter.displayText) starts on the next measure.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Stepper(value: $additionalMeasureCount, in: 0...32) {
+                    HStack {
+                        Text("Additional measures")
+                        Spacer()
+                        Text("\(additionalMeasureCount)")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Button {
+                    onApplyCount(additionalMeasureCount)
+                    dismiss()
+                } label: {
+                    Text("Apply Measure Count")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Or choose a span")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 10) {
+                        bubbleButton(title: "To next time signature") {
+                            onApplyToNextTimeSignature()
+                            dismiss()
+                        }
+
+                        bubbleButton(title: "To end of piece") {
+                            onApplyToEndOfPiece()
+                            dismiss()
+                        }
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(24)
+            .navigationTitle("Apply \(meter.displayText)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.height(320)])
+    }
+
+    @ViewBuilder
+    private func bubbleButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color(red: 0.90, green: 0.95, blue: 1.0))
+                .foregroundStyle(Color(red: 0.11, green: 0.31, blue: 0.64))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }

@@ -3,6 +3,8 @@
 Status: Active implementation path
 Date: 2026-04-23
 
+Execution sequence reference: `docs/jazz-lead-sheet-build-plan.md`
+
 This audit reflects the repo after the jazz-page cleanup pass. It is meant to answer one practical question:
 
 What is still part of the real product path, and what has been intentionally removed?

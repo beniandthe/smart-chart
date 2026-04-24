@@ -13,6 +13,7 @@ struct Chart: Identifiable, Codable, Hashable {
     var staffStyle: StaffStyle = .fiveLine
     var hasCompletedInitialSetup: Bool = true
     var systems: [ChartSystem]
+    var timeSignatureChanges: [TimeSignatureChange]
     var sectionLabels: [SectionLabel]
     var cueTexts: [CueText]
     var roadmapObjects: [RoadmapObject]
@@ -38,6 +39,7 @@ struct Chart: Identifiable, Codable, Hashable {
         staffStyle: StaffStyle = .fiveLine,
         hasCompletedInitialSetup: Bool = true,
         systems: [ChartSystem],
+        timeSignatureChanges: [TimeSignatureChange] = [],
         sectionLabels: [SectionLabel],
         cueTexts: [CueText],
         roadmapObjects: [RoadmapObject],
@@ -58,6 +60,7 @@ struct Chart: Identifiable, Codable, Hashable {
         self.staffStyle = staffStyle
         self.hasCompletedInitialSetup = hasCompletedInitialSetup
         self.systems = systems
+        self.timeSignatureChanges = timeSignatureChanges
         self.sectionLabels = sectionLabels
         self.cueTexts = cueTexts
         self.roadmapObjects = roadmapObjects
@@ -80,6 +83,7 @@ struct Chart: Identifiable, Codable, Hashable {
         case staffStyle
         case hasCompletedInitialSetup
         case systems
+        case timeSignatureChanges
         case sectionLabels
         case cueTexts
         case roadmapObjects
@@ -103,6 +107,7 @@ struct Chart: Identifiable, Codable, Hashable {
         staffStyle = try container.decodeIfPresent(StaffStyle.self, forKey: .staffStyle) ?? .fiveLine
         hasCompletedInitialSetup = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedInitialSetup) ?? true
         systems = try container.decode([ChartSystem].self, forKey: .systems)
+        timeSignatureChanges = try container.decodeIfPresent([TimeSignatureChange].self, forKey: .timeSignatureChanges) ?? []
         sectionLabels = try container.decode([SectionLabel].self, forKey: .sectionLabels)
         cueTexts = try container.decode([CueText].self, forKey: .cueTexts)
         roadmapObjects = try container.decode([RoadmapObject].self, forKey: .roadmapObjects)

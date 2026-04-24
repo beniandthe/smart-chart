@@ -60,6 +60,28 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(chart.pageHandwrittenNotationData)
     }
 
+    func testSetMeasureManualLayoutWidthStoresClampedOverride() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+
+        let appliedLargeWidth = try XCTUnwrap(chart.setMeasureManualLayoutWidth(680, for: measureID))
+        XCTAssertEqual(appliedLargeWidth, Measure.maximumManualLayoutWidth)
+        XCTAssertEqual(chart.measure(id: measureID)?.manualLayoutWidth, Double(Measure.maximumManualLayoutWidth))
+
+        let appliedSmallWidth = try XCTUnwrap(chart.setMeasureManualLayoutWidth(44, for: measureID))
+        XCTAssertEqual(appliedSmallWidth, Measure.minimumManualLayoutWidth)
+        XCTAssertEqual(chart.measure(id: measureID)?.manualLayoutWidth, Double(Measure.minimumManualLayoutWidth))
+
+        _ = chart.setMeasureManualLayoutWidth(nil, for: measureID)
+        XCTAssertNil(chart.measure(id: measureID)?.manualLayoutWidth)
+    }
+
     func testCommitOpenMeasureMarksCurrentMeasureCommittedAndAppendsNextOpenMeasure() {
         var chart = Chart.draft(title: "New Chart")
         chart.completeInitialSetup(
@@ -195,6 +217,83 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.measure(id: annotatedMeasure.id)?.index, 5)
         XCTAssertEqual(chart.sectionLabels.first?.anchorSystemID, secondSystemID)
         XCTAssertEqual(chart.roadmapObjects.first?.anchorSystemID, secondSystemID)
+    }
+
+    func testApplyMeterChangeToNextTimeSignaturePersistsIntoFutureMeasures() throws {
+        var chart = Chart.draft(title: "Time Changes")
+        chart.completeInitialSetup(
+            title: "Time Changes",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        let secondMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+
+        let changedMeasureID = try XCTUnwrap(
+            chart.applyMeterChange(
+                Meter(numerator: 3, denominator: 4),
+                after: firstMeasureID,
+                scope: .toNextTimeSignature
+            )
+        )
+        let appendedMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+
+        XCTAssertEqual(changedMeasureID, secondMeasureID)
+        XCTAssertNil(chart.measure(id: firstMeasureID)?.meterOverride)
+        XCTAssertEqual(chart.measure(id: secondMeasureID)?.meterOverride, Meter(numerator: 3, denominator: 4))
+        XCTAssertEqual(chart.measure(id: appendedMeasureID)?.meterOverride, Meter(numerator: 3, denominator: 4))
+    }
+
+    func testApplyMeterChangeFixedMeasureCountRestoresSourceMeterAfterSpecifiedSpan() throws {
+        var chart = Chart.draft(title: "Time Changes")
+        chart.completeInitialSetup(
+            title: "Time Changes",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.applyMeterChange(
+            Meter(numerator: 3, denominator: 4),
+            after: firstMeasureID,
+            scope: .fixedMeasureCount(1)
+        )
+
+        XCTAssertEqual(chart.measures.count, 3)
+        XCTAssertEqual(chart.measures[1].meterOverride, Meter(numerator: 3, denominator: 4))
+        XCTAssertEqual(chart.measures[2].meterOverride, Meter(numerator: 3, denominator: 4))
+
+        let revertedMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+        XCTAssertNil(chart.measure(id: revertedMeasureID)?.meterOverride)
+    }
+
+    func testApplyMeterChangeToEndOfPieceOverridesLaterTimeSignatures() throws {
+        var chart = Chart.draft(title: "Time Changes")
+        chart.completeInitialSetup(
+            title: "Time Changes",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        let secondMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+        _ = chart.commitOpenMeasure()
+
+        _ = chart.applyMeterChange(
+            Meter(numerator: 5, denominator: 4),
+            after: secondMeasureID,
+            scope: .toNextTimeSignature
+        )
+        _ = chart.applyMeterChange(
+            Meter(numerator: 3, denominator: 4),
+            after: firstMeasureID,
+            scope: .toEndOfPiece
+        )
+
+        XCTAssertEqual(chart.measures[1].meterOverride, Meter(numerator: 3, denominator: 4))
+        XCTAssertEqual(chart.measures[2].meterOverride, Meter(numerator: 3, denominator: 4))
+        XCTAssertTrue(chart.timeSignatureChanges.allSatisfy { $0.afterMeasureID == firstMeasureID })
     }
 
     private func makeMeasure(

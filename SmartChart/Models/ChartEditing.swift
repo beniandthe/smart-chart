@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 extension Chart {
@@ -11,6 +12,7 @@ extension Chart {
         documentKey = key
         defaultMeter = meter
         self.staffStyle = staffStyle
+        timeSignatureChanges = []
         ensureInitialSystem()
         if measures.isEmpty {
             systems[0].measures = [
@@ -34,6 +36,78 @@ extension Chart {
     mutating func setTranspositionView(_ view: TranspositionView) {
         defaultTranspositionView = view
         updatedAt = .now
+    }
+
+    @discardableResult
+    mutating func setMeasureManualLayoutWidth(_ width: CGFloat?, for measureID: UUID) -> CGFloat? {
+        guard let location = measureLocation(id: measureID) else {
+            return nil
+        }
+
+        let normalizedWidth = width.map { Measure.clampedManualLayoutWidth($0) }
+        let normalizedStoredWidth = normalizedWidth.map(Double.init)
+        guard systems[location.systemIndex].measures[location.measureIndex].manualLayoutWidth != normalizedStoredWidth else {
+            return normalizedWidth
+        }
+
+        systems[location.systemIndex].measures[location.measureIndex].manualLayoutWidth = normalizedStoredWidth
+        updatedAt = .now
+        return normalizedWidth
+    }
+
+    @discardableResult
+    mutating func applyMeterChange(
+        _ meter: Meter,
+        after measureID: UUID,
+        scope: TimeSignatureApplicationScope
+    ) -> UUID? {
+        guard let location = measureLocation(id: measureID) else {
+            return nil
+        }
+
+        let sourceIndex = flattenedMeasureIndex(for: location)
+        let requiredFollowingMeasures: Int
+        switch scope {
+        case .fixedMeasureCount(let additionalMeasureCount):
+            requiredFollowingMeasures = max(1, additionalMeasureCount + 1)
+        case .toEndOfPiece, .toNextTimeSignature:
+            requiredFollowingMeasures = 1
+        }
+
+        ensureMeasuresExist(afterMeasureAt: sourceIndex, count: requiredFollowingMeasures)
+
+        let refreshedMeasures = measures
+        guard refreshedMeasures.indices.contains(sourceIndex + 1) else {
+            return nil
+        }
+
+        let sourceMeasureID = refreshedMeasures[sourceIndex].id
+        let sourceMeter = effectiveMeter(for: refreshedMeasures[sourceIndex])
+
+        setTimeSignatureChange(after: sourceMeasureID, meter: meter)
+
+        switch scope {
+        case .toNextTimeSignature:
+            break
+        case .toEndOfPiece:
+            removeTimeSignatureChanges(afterMeasureIndexGreaterThan: sourceIndex)
+        case .fixedMeasureCount(let additionalMeasureCount):
+            let lastAffectedIndex = min(sourceIndex + additionalMeasureCount + 1, measures.count - 1)
+            removeTimeSignatureChanges(afterMeasureIndexIn: (sourceIndex + 1)..<lastAffectedIndex)
+
+            let lastAffectedMeasureID = measures[lastAffectedIndex].id
+            let existingBoundaryChange = timeSignatureChange(after: lastAffectedMeasureID)
+            if existingBoundaryChange?.meter == meter || existingBoundaryChange == nil {
+                setTimeSignatureChange(after: lastAffectedMeasureID, meter: sourceMeter)
+            }
+        }
+
+        rebuildSystems(using: measures)
+        updatedAt = .now
+        let changedMeasureIndex = sourceIndex + 1
+        return measures.indices.contains(changedMeasureIndex)
+            ? measures[changedMeasureIndex].id
+            : nil
     }
 
     @discardableResult
@@ -303,13 +377,19 @@ extension Chart {
         return precedingMeasureCount + location.measureIndex
     }
 
+    private func effectiveMeter(for measure: Measure) -> Meter {
+        measure.meterOverride ?? defaultMeter
+    }
+
     private mutating func rebuildSystems(using flattenedMeasures: [Measure]) {
         ensureInitialSystem()
 
         let systemTemplates = systems.map {
             (id: $0.id, spacingMode: $0.spacingMode, lineBreakRule: $0.lineBreakRule)
         }
-        var normalizedMeasures = flattenedMeasures
+        timeSignatureChanges = normalizedTimeSignatureChanges(for: flattenedMeasures)
+
+        var normalizedMeasures = synchronizedMeterOverrides(in: flattenedMeasures)
         for measureIndex in normalizedMeasures.indices {
             normalizedMeasures[measureIndex].index = measureIndex + 1
         }
@@ -356,6 +436,92 @@ extension Chart {
         systems = rebuiltSystems
         normalizeSystemIndices()
         normalizeAnchorsToSystems()
+    }
+
+    private mutating func ensureMeasuresExist(afterMeasureAt sourceIndex: Int, count requiredFollowingMeasures: Int) {
+        guard requiredFollowingMeasures > 0 else {
+            return
+        }
+
+        while measures.count - sourceIndex - 1 < requiredFollowingMeasures {
+            if let lastMeasure = measures.last,
+               lastMeasure.authoringState == .open {
+                _ = commitOpenMeasure()
+            } else {
+                _ = appendMeasure(authoringState: .open)
+            }
+        }
+    }
+
+    private func timeSignatureChange(after measureID: UUID) -> TimeSignatureChange? {
+        timeSignatureChanges.first(where: { $0.afterMeasureID == measureID })
+    }
+
+    private mutating func setTimeSignatureChange(after measureID: UUID, meter: Meter) {
+        timeSignatureChanges.removeAll { $0.afterMeasureID == measureID }
+        timeSignatureChanges.append(
+            TimeSignatureChange(
+                id: UUID(),
+                afterMeasureID: measureID,
+                meter: meter
+            )
+        )
+    }
+
+    private mutating func removeTimeSignatureChanges(afterMeasureIndexGreaterThan index: Int) {
+        let measureIDs = Array(measures.suffix(from: max(index + 1, 0))).map(\.id)
+        let measureIDSet = Set(measureIDs)
+        timeSignatureChanges.removeAll { measureIDSet.contains($0.afterMeasureID) }
+    }
+
+    private mutating func removeTimeSignatureChanges(afterMeasureIndexIn range: Range<Int>) {
+        guard !range.isEmpty else {
+            return
+        }
+
+        let lowerBound = max(range.lowerBound, 0)
+        let upperBound = min(range.upperBound, measures.count)
+        guard lowerBound < upperBound else {
+            return
+        }
+
+        let measureIDSet = Set(measures[lowerBound..<upperBound].map(\.id))
+        timeSignatureChanges.removeAll { measureIDSet.contains($0.afterMeasureID) }
+    }
+
+    private func normalizedTimeSignatureChanges(for flattenedMeasures: [Measure]) -> [TimeSignatureChange] {
+        let validMeasureIDs = Set(flattenedMeasures.map(\.id))
+        var normalizedChanges: [TimeSignatureChange] = []
+
+        for change in timeSignatureChanges where validMeasureIDs.contains(change.afterMeasureID) {
+            normalizedChanges.removeAll { $0.afterMeasureID == change.afterMeasureID }
+            normalizedChanges.append(change)
+        }
+
+        return normalizedChanges
+    }
+
+    private func synchronizedMeterOverrides(in flattenedMeasures: [Measure]) -> [Measure] {
+        guard !flattenedMeasures.isEmpty else {
+            return flattenedMeasures
+        }
+
+        let meterByAnchorMeasureID = Dictionary(
+            uniqueKeysWithValues: normalizedTimeSignatureChanges(for: flattenedMeasures)
+                .map { ($0.afterMeasureID, $0.meter) }
+        )
+
+        var activeMeter = defaultMeter
+        return flattenedMeasures.enumerated().map { measureIndex, sourceMeasure in
+            if measureIndex > 0,
+               let changedMeter = meterByAnchorMeasureID[flattenedMeasures[measureIndex - 1].id] {
+                activeMeter = changedMeter
+            }
+
+            var measure = sourceMeasure
+            measure.meterOverride = activeMeter == defaultMeter ? nil : activeMeter
+            return measure
+        }
     }
 
     private mutating func normalizeAnchorsToSystems() {
