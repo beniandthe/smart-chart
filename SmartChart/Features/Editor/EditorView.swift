@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct EditorView: View {
@@ -15,10 +16,17 @@ struct EditorView: View {
     @State private var showingExportAlert = false
     @State private var showingSetupSheet = false
     @State private var showingHeaderSheet = false
+    @State private var showingRhythmicNotationAcceptanceSheet = false
+    @State private var activeAppearancePanel: ChartAppearancePanel?
+    @State private var hasPresentedRhythmicNotationGuide = false
     @State private var isExporting = false
+    @State private var rhythmicNotationErrorMessage = ""
+    @State private var showingRhythmicNotationError = false
+    @State private var pendingRhythmicNotationConfirmation: PendingRhythmicNotationConfirmation?
     @State private var selectedMeasureID: UUID?
     @State private var pendingTimeSignatureSourceMeasureID: UUID?
     @State private var pendingTimeSignaturePlacement: PendingTimeSignaturePlacement?
+    @State private var freeHandReturnMode: EditorCanvasMode = .browse
     @State private var canvasMode: EditorCanvasMode = .browse
     private let exporter: any ChartExporting
 
@@ -57,6 +65,7 @@ struct EditorView: View {
                     selectedMeasureID = nil
                     pendingTimeSignatureSourceMeasureID = nil
                     pendingTimeSignaturePlacement = nil
+                    freeHandReturnMode = .browse
                     canvasMode = .browse
                     showingSetupSheet = true
                 }
@@ -66,6 +75,7 @@ struct EditorView: View {
                     selectedMeasureID = nil
                     pendingTimeSignatureSourceMeasureID = nil
                     pendingTimeSignaturePlacement = nil
+                    freeHandReturnMode = .browse
                     canvasMode = .browse
                     handleExportTapped()
                 } label: {
@@ -93,6 +103,23 @@ struct EditorView: View {
         }
         .sheet(isPresented: $showingHeaderSheet) {
             ChartHeaderSheetView(chart: $chart)
+        }
+        .sheet(item: $activeAppearancePanel) { panel in
+            ChartAppearanceSheetView(chart: $chart, panel: panel)
+        }
+        .sheet(isPresented: $showingRhythmicNotationAcceptanceSheet) {
+            RhythmicNotationAcceptanceSheetView()
+        }
+        .sheet(item: $pendingRhythmicNotationConfirmation) { confirmation in
+            RhythmicNotationConfirmationSheetView(
+                confirmation: confirmation,
+                onAccept: {
+                    handleRhythmicNotationConfirmationAccepted(confirmation)
+                },
+                onRewrite: {
+                    handleRhythmicNotationConfirmationRewriteRequested(confirmation)
+                }
+            )
         }
         .confirmationDialog(
             "Change Time Signature",
@@ -155,6 +182,11 @@ struct EditorView: View {
         } message: {
             Text(exportAlertMessage)
         }
+        .alert("Rhythmic Notation", isPresented: $showingRhythmicNotationError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(rhythmicNotationErrorMessage)
+        }
         .task {
             if chart.staffStyle != .fiveLine {
                 chart.staffStyle = .fiveLine
@@ -173,6 +205,7 @@ struct EditorView: View {
                     selectedMeasureID = nil
                     pendingTimeSignatureSourceMeasureID = nil
                     pendingTimeSignaturePlacement = nil
+                    freeHandReturnMode = .browse
                     canvasMode = .browse
                     showingSetupSheet = true
                 } label: {
@@ -205,6 +238,18 @@ struct EditorView: View {
                 .buttonStyle(.plain)
 
                 Button {
+                    handleRhythmicNotationTabTapped()
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Rhythmic Notation",
+                        systemImage: "note.quarter",
+                        isSelected: canvasMode == .rhythmicNotationEdit
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Button {
                     selectedMeasureID = nil
                     pendingTimeSignatureSourceMeasureID = nil
                     pendingTimeSignaturePlacement = nil
@@ -216,15 +261,52 @@ struct EditorView: View {
                         isSelected: canvasMode == .freeHand
                     )
                 }
-                .disabled(!canEnterFreeHandMode && canvasMode != .freeHand)
+                .disabled(!chart.hasCompletedInitialSetup && canvasMode != .freeHand)
                 .buttonStyle(.plain)
 
                 EditorMenuTabLabel(title: "Jazz", systemImage: "music.quarternote.3", isSelected: true)
 
                 Button {
+                    presentAppearancePanel(.documentStyle)
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Style",
+                        systemImage: "paintpalette",
+                        isSelected: activeAppearancePanel == .documentStyle
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Button {
+                    presentAppearancePanel(.notationFont)
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Fonts",
+                        systemImage: "textformat",
+                        isSelected: activeAppearancePanel == .notationFont
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Button {
+                    presentAppearancePanel(.engraving)
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Engraving",
+                        systemImage: "slider.horizontal.3",
+                        isSelected: activeAppearancePanel == .engraving
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Button {
                     selectedMeasureID = nil
                     pendingTimeSignatureSourceMeasureID = nil
                     pendingTimeSignaturePlacement = nil
+                    freeHandReturnMode = .browse
                     canvasMode = .browse
                     showingHeaderSheet = true
                 } label: {
@@ -239,6 +321,7 @@ struct EditorView: View {
                             selectedMeasureID = nil
                             pendingTimeSignatureSourceMeasureID = nil
                             pendingTimeSignaturePlacement = nil
+                            freeHandReturnMode = .browse
                             canvasMode = .browse
                             chart.setTranspositionView(view)
                         } label: {
@@ -267,7 +350,9 @@ struct EditorView: View {
             chart: $chart,
             selectedMeasureID: $selectedMeasureID,
             interactionMode: canvasMode,
-            onTimeSignatureTargetRequested: handleTimeSignatureTargetRequested
+            onTimeSignatureTargetRequested: handleTimeSignatureTargetRequested,
+            onRhythmicNotationProposal: handleRhythmicNotationProposal,
+            onRhythmicNotationValidationError: handleRhythmicNotationValidationError
         )
     }
 
@@ -316,6 +401,7 @@ struct EditorView: View {
         selectedMeasureID = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
+        freeHandReturnMode = .browse
         canvasMode = .measureEdit
 
         guard let targetMeasureID else {
@@ -336,10 +422,42 @@ struct EditorView: View {
             return
         }
 
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+        freeHandReturnMode = .browse
+        canvasMode = .timeSignatureEdit
+    }
+
+    private func handleRhythmicNotationTabTapped() {
+        guard chart.hasCompletedInitialSetup else {
+            showingSetupSheet = true
+            return
+        }
+
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+        freeHandReturnMode = .browse
+
+        if canvasMode == .rhythmicNotationEdit {
+            showingRhythmicNotationAcceptanceSheet = true
+            return
+        }
+
+        canvasMode = .rhythmicNotationEdit
+
+        if !hasPresentedRhythmicNotationGuide {
+            showingRhythmicNotationAcceptanceSheet = true
+            hasPresentedRhythmicNotationGuide = true
+        }
+    }
+
+    private func presentAppearancePanel(_ panel: ChartAppearancePanel) {
         selectedMeasureID = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
-        canvasMode = .timeSignatureEdit
+        freeHandReturnMode = .browse
+        canvasMode = .browse
+        activeAppearancePanel = panel
     }
 
     private func resolvedMeasureActionTargetID() -> UUID? {
@@ -352,12 +470,15 @@ struct EditorView: View {
             ?? chart.measures.last?.id
     }
 
-    private var canEnterFreeHandMode: Bool {
-        chart.hasCompletedInitialSetup
-    }
-
     private func toggleFreeHandMode() {
-        guard canEnterFreeHandMode || canvasMode == .freeHand else {
+        if canvasMode == .freeHand {
+            pendingTimeSignatureSourceMeasureID = nil
+            pendingTimeSignaturePlacement = nil
+            canvasMode = freeHandReturnMode
+            return
+        }
+
+        guard chart.hasCompletedInitialSetup else {
             if !chart.hasCompletedInitialSetup {
                 showingSetupSheet = true
             }
@@ -366,7 +487,8 @@ struct EditorView: View {
 
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
-        canvasMode = canvasMode == .freeHand ? .browse : .freeHand
+        freeHandReturnMode = canvasMode
+        canvasMode = .freeHand
     }
 
     private func handleTimeSignatureTargetRequested(_ measureID: UUID) {
@@ -393,6 +515,67 @@ struct EditorView: View {
         if appliedMeasureID == nil {
             canvasMode = .browse
         }
+    }
+
+    private func handleRhythmicNotationValidationError(_ message: String) {
+        rhythmicNotationErrorMessage = message
+        showingRhythmicNotationError = true
+        canvasMode = .rhythmicNotationEdit
+    }
+
+    private func handleRhythmicNotationProposal(
+        measureID: UUID,
+        values: [RhythmValue],
+        drawingData: Data
+    ) {
+        guard let measure = chart.measure(id: measureID) else {
+            return
+        }
+
+        selectedMeasureID = measureID
+        canvasMode = .rhythmicNotationEdit
+        pendingRhythmicNotationConfirmation = PendingRhythmicNotationConfirmation(
+            measureID: measureID,
+            measureIndex: measure.index,
+            meter: measure.resolvedMeter(defaultMeter: chart.defaultMeter),
+            values: values,
+            drawingData: drawingData
+        )
+    }
+
+    private func handleRhythmicNotationConfirmationAccepted(
+        _ confirmation: PendingRhythmicNotationConfirmation
+    ) {
+        var updatedChart = chart
+        _ = updatedChart.setMeasureRhythmMap(
+            confirmation.values,
+            drawingData: confirmation.drawingData,
+            for: confirmation.measureID
+        )
+        _ = updatedChart.clearMeasureRhythmicNotation(
+            for: confirmation.measureID,
+            clearRhythmMap: false
+        )
+
+        chart = updatedChart
+        selectedMeasureID = confirmation.measureID
+        canvasMode = .rhythmicNotationEdit
+        pendingRhythmicNotationConfirmation = nil
+    }
+
+    private func handleRhythmicNotationConfirmationRewriteRequested(
+        _ confirmation: PendingRhythmicNotationConfirmation
+    ) {
+        var updatedChart = chart
+        _ = updatedChart.clearMeasureRhythmicNotation(
+            for: confirmation.measureID,
+            clearRhythmMap: true
+        )
+
+        chart = updatedChart
+        selectedMeasureID = confirmation.measureID
+        canvasMode = .rhythmicNotationEdit
+        pendingRhythmicNotationConfirmation = nil
     }
 
     private var canvasHeight: CGFloat {
@@ -436,6 +619,234 @@ private struct PendingTimeSignaturePlacement: Identifiable {
     let id = UUID()
     let sourceMeasureID: UUID
     let meter: Meter
+}
+
+private struct PendingRhythmicNotationConfirmation: Identifiable {
+    let id = UUID()
+    let measureID: UUID
+    let measureIndex: Int
+    let meter: Meter
+    let values: [RhythmValue]
+    let drawingData: Data
+
+    var displayMeasureNumber: Int {
+        measureIndex + 1
+    }
+
+    var requiredBeatCount: Double {
+        meter.measureLengthInWholeNotes / meter.beatUnitWholeNoteLength
+    }
+
+    var recognizedBeatCount: Double {
+        values.reduce(0) { partialResult, value in
+            partialResult + value.wholeNoteLength / meter.beatUnitWholeNoteLength
+        }
+    }
+}
+
+private struct RhythmicNotationConfirmationSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    let confirmation: PendingRhythmicNotationConfirmation
+    let onAccept: () -> Void
+    let onRewrite: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Measure \(confirmation.displayMeasureNumber)")
+                        .font(.title3.weight(.semibold))
+                    Text("The app read your handwriting as this rhythm. Accept it if it is right, or keep editing the ink in the measure.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Read as")
+                            .font(.headline)
+                        Spacer()
+                        Text("\(formattedBeats(confirmation.recognizedBeatCount)) / \(formattedBeats(confirmation.requiredBeatCount)) beats")
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+
+                    FlowLayout(spacing: 8, rowSpacing: 8) {
+                        ForEach(Array(confirmation.values.enumerated()), id: \.offset) { _, value in
+                            Text(value.debugConfirmationLabel)
+                                .font(.subheadline.weight(.semibold))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(value.isRest ? Color.orange.opacity(0.15) : Color.blue.opacity(0.13))
+                                .foregroundStyle(value.isRest ? Color.orange : Color.blue)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+                .padding(16)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                VStack(spacing: 10) {
+                    Button {
+                        onAccept()
+                        dismiss()
+                    } label: {
+                        Text("Use This Rhythm")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button(role: .destructive) {
+                        onRewrite()
+                        dismiss()
+                    } label: {
+                        Text("Clear Measure & Rewrite")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(24)
+            .navigationTitle("Confirm Rhythm")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Keep Editing") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.height(420), .medium])
+    }
+
+    private func formattedBeats(_ value: Double) -> String {
+        if abs(value.rounded() - value) < 0.0001 {
+            return String(Int(value.rounded()))
+        }
+
+        return String(format: "%.1f", value)
+    }
+}
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    var rowSpacing: CGFloat = 8
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout Void
+    ) -> CGSize {
+        layout(in: proposal.replacingUnspecifiedDimensions().width, subviews: subviews).size
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout Void
+    ) {
+        let rows = layout(in: bounds.width, subviews: subviews).rows
+        var y = bounds.minY
+
+        for row in rows {
+            var x = bounds.minX
+            for item in row.items {
+                item.subview.place(
+                    at: CGPoint(x: x, y: y),
+                    proposal: ProposedViewSize(item.size)
+                )
+                x += item.size.width + spacing
+            }
+            y += row.height + rowSpacing
+        }
+    }
+
+    private func layout(in availableWidth: CGFloat, subviews: Subviews) -> FlowLayoutResult {
+        let safeWidth = max(1, availableWidth)
+        var rows: [FlowRow] = []
+        var currentItems: [FlowItem] = []
+        var currentWidth: CGFloat = 0
+        var currentHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            let proposedWidth = currentItems.isEmpty ? size.width : currentWidth + spacing + size.width
+
+            if proposedWidth > safeWidth, !currentItems.isEmpty {
+                rows.append(FlowRow(items: currentItems, height: currentHeight, width: currentWidth))
+                currentItems = [FlowItem(subview: subview, size: size)]
+                currentWidth = size.width
+                currentHeight = size.height
+            } else {
+                currentItems.append(FlowItem(subview: subview, size: size))
+                currentWidth = proposedWidth
+                currentHeight = max(currentHeight, size.height)
+            }
+        }
+
+        if !currentItems.isEmpty {
+            rows.append(FlowRow(items: currentItems, height: currentHeight, width: currentWidth))
+        }
+
+        let height = rows.reduce(CGFloat.zero) { partialResult, row in
+            partialResult + row.height
+        } + max(0, CGFloat(rows.count - 1)) * rowSpacing
+        let width = rows.reduce(CGFloat.zero) { partialResult, row in
+            max(partialResult, row.width)
+        }
+
+        return FlowLayoutResult(size: CGSize(width: width, height: height), rows: rows)
+    }
+}
+
+private struct FlowLayoutResult {
+    let size: CGSize
+    let rows: [FlowRow]
+}
+
+private struct FlowRow {
+    let items: [FlowItem]
+    let height: CGFloat
+    let width: CGFloat
+}
+
+private struct FlowItem {
+    let subview: LayoutSubview
+    let size: CGSize
+}
+
+private extension RhythmValue {
+    var debugConfirmationLabel: String {
+        switch self {
+        case .eighth:
+            return "eighth"
+        case .eighthRest:
+            return "eighth rest"
+        case .quarter:
+            return "quarter"
+        case .quarterRest:
+            return "quarter rest"
+        case .dottedQuarter:
+            return "dotted quarter"
+        case .half:
+            return "half"
+        case .halfRest:
+            return "half rest"
+        case .dottedHalf:
+            return "dotted half"
+        case .whole:
+            return "whole"
+        case .wholeRest:
+            return "whole rest"
+        case .tiedContinuation:
+            return "tie"
+        }
+    }
 }
 
 private struct TimeSignatureScopeSheetView: View {

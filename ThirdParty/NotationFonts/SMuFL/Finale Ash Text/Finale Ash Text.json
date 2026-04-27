@@ -1,0 +1,95 @@
+{
+ "engravingDefaults": {
+  "arrowShaftThickness": 0.15, 
+  "barlineSeparation": 0.5, 
+  "beamSpacing": 0.25, 
+  "beamThickness": 0.5, 
+  "bracketThickness": 0.5, 
+  "dashedBarlineDashLength": 0.42, 
+  "dashedBarlineGapLength": 0.3, 
+  "dashedBarlineThickness": 0.15, 
+  "hairpinThickness": 0.15, 
+  "legerLineExtension": 0.25, 
+  "legerLineThickness": 0.19, 
+  "lyricLineThickness": 0.15, 
+  "octaveLineThickness": 0.15, 
+  "pedalLineThickness": 0.15, 
+  "repeatBarlineDotSeparation": 0.2, 
+  "repeatEndingLineThickness": 0.15, 
+  "slurEndpointThickness": 0.07, 
+  "slurMidpointThickness": 0.33, 
+  "staffLineThickness": 0.15, 
+  "stemThickness": 0.15, 
+  "subBracketThickness": 0.15, 
+  "textEnclosureThickness": 0.15, 
+  "thickBarlineThickness": 0.5, 
+  "thinBarlineThickness": 0.15,
+  "thinThickBarlineSeparation": 0.5, 
+  "tieEndpointThickness": 0.07, 
+  "tieMidpointThickness": 0.33, 
+  "tupletBracketThickness": 0.15
+ }, 
+ "fontName": "Finale Ash Text", 
+ "fontVersion": 1.3, 
+ "glyphBBoxes": {
+  "U+F723": {
+   "bBoxNE": [
+    7.016, 
+    3.972
+   ], 
+   "bBoxSW": [
+    -0.292, 
+    -0.072
+   ]
+  }, 
+  "U+F735": {
+   "bBoxNE": [
+    6.828, 
+    3.432
+   ], 
+   "bBoxSW": [
+    -0.484, 
+    -0.608
+   ]
+  }, 
+  "U+F74A": {
+   "bBoxNE": [
+    4.98, 
+    4.888
+   ], 
+   "bBoxSW": [
+    -1.104, 
+    -1.832
+   ]
+  }, 
+  "U+F74B": {
+   "bBoxNE": [
+    6.14, 
+    4.888
+   ], 
+   "bBoxSW": [
+    -0.724, 
+    -1.84
+   ]
+  }
+ }, 
+ "glyphsWithAnchors": {}, 
+ "optionalGlyphs": {
+  "U+F723": {
+   "classes": [], 
+   "codepoint": "U+F723"
+  }, 
+  "U+F735": {
+   "classes": [], 
+   "codepoint": "U+F735"
+  }, 
+  "U+F74A": {
+   "classes": [], 
+   "codepoint": "U+F74A"
+  }, 
+  "U+F74B": {
+   "classes": [], 
+   "codepoint": "U+F74B"
+  }
+ }
+}

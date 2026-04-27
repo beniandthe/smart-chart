@@ -1,0 +1,7030 @@
+{
+ "engravingDefaults": {
+  "arrowShaftThickness": 0.07, 
+  "barlineSeparation": 0.5, 
+  "beamSpacing": 0.25, 
+  "beamThickness": 0.5, 
+  "bracketThickness": 0.5, 
+  "dashedBarlineDashLength": 0.42, 
+  "dashedBarlineGapLength": 0.3, 
+  "dashedBarlineThickness": 0.07, 
+  "hairpinThickness": 0.07, 
+  "legerLineExtension": 0.25, 
+  "legerLineThickness": 0.08, 
+  "lyricLineThickness": 0.07, 
+  "octaveLineThickness": 0.07, 
+  "pedalLineThickness": 0.07, 
+  "repeatBarlineDotSeparation": 0.3, 
+  "repeatEndingLineThickness": 0.07, 
+  "slurEndpointThickness": 0.04, 
+  "slurMidpointThickness": 0.25, 
+  "staffLineThickness": 0.07, 
+  "stemThickness": 0.07, 
+  "subBracketThickness": 0.07, 
+  "textEnclosureThickness": 0.07, 
+  "thickBarlineThickness": 0.5, 
+  "thinBarlineThickness": 0.07,
+  "thinThickBarlineSeparation": 0.5,	 
+  "tieEndpointThickness": 0.04, 
+  "tieMidpointThickness": 0.25, 
+  "tupletBracketThickness": 0.07
+ }, 
+ "fontName": "Finale Engraver", 
+ "fontVersion": 1.4, 
+ "glyphBBoxes": {
+  "4stringTabClef": {
+   "bBoxNE": [
+    0.948, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.08
+   ]
+  }, 
+  "6stringTabClef": {
+   "bBoxNE": [
+    1.536, 
+    3.336
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.356
+   ]
+  }, 
+  "U+F614": {
+   "bBoxNE": [
+    1.024, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "U+F615": {
+   "bBoxNE": [
+    1.024, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "U+F625": {
+   "bBoxNE": [
+    1.244, 
+    0.624
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.624
+   ]
+  }, 
+  "U+F627": {
+   "bBoxNE": [
+    1.092, 
+    0.544
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.544
+   ]
+  }, 
+  "U+F62B": {
+   "bBoxNE": [
+    1.7, 
+    0.928
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.764
+   ]
+  }, 
+  "U+F62C": {
+   "bBoxNE": [
+    1.7, 
+    0.764
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.936
+   ]
+  }, 
+  "U+F62F": {
+   "bBoxNE": [
+    1.184, 
+    0.564
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.652
+   ]
+  }, 
+  "U+F630": {
+   "bBoxNE": [
+    1.7, 
+    0.928
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.652
+   ]
+  }, 
+  "U+F631": {
+   "bBoxNE": [
+    1.7, 
+    0.64
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.94
+   ]
+  }, 
+  "U+F636": {
+   "bBoxNE": [
+    1.184, 
+    0.652
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.564
+   ]
+  }, 
+  "U+F670": {
+   "bBoxNE": [
+    1.22, 
+    0.5
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F676": {
+   "bBoxNE": [
+    0.924, 
+    1.368
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F677": {
+   "bBoxNE": [
+    2.832, 
+    1.368
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F678": {
+   "bBoxNE": [
+    2.816, 
+    1.392
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F679": {
+   "bBoxNE": [
+    2.94, 
+    1.392
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F67A": {
+   "bBoxNE": [
+    1.824, 
+    1.352
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F67B": {
+   "bBoxNE": [
+    4.36, 
+    1.352
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.024
+   ]
+  }, 
+  "U+F67C": {
+   "bBoxNE": [
+    4.352, 
+    1.368
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.024
+   ]
+  }, 
+  "U+F68C": {
+   "bBoxNE": [
+    2.584, 
+    2.128
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.088
+   ]
+  }, 
+  "U+F68D": {
+   "bBoxNE": [
+    2.416, 
+    1.872
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.472
+   ]
+  }, 
+  "U+F68E": {
+   "bBoxNE": [
+    2.644, 
+    1.924
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.42
+   ]
+  }, 
+  "U+F700": {
+   "bBoxNE": [
+    0.508, 
+    2.272
+   ], 
+   "bBoxSW": [
+    0.032, 
+    -0.008
+   ]
+  }, 
+  "U+F770": {
+   "bBoxNE": [
+    1.088, 
+    5.296
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F771": {
+   "bBoxNE": [
+    1.088, 
+    7.3
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F772": {
+   "bBoxNE": [
+    1.088, 
+    9.292
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F773": {
+   "bBoxNE": [
+    1.088, 
+    5.244
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F774": {
+   "bBoxNE": [
+    1.088, 
+    7.248
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F775": {
+   "bBoxNE": [
+    1.088, 
+    9.256
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F776": {
+   "bBoxNE": [
+    1.088, 
+    5.296
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F777": {
+   "bBoxNE": [
+    1.088, 
+    7.304
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F778": {
+   "bBoxNE": [
+    1.088, 
+    9.292
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F779": {
+   "bBoxNE": [
+    1.088, 
+    5.292
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F77A": {
+   "bBoxNE": [
+    1.088, 
+    7.252
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F77B": {
+   "bBoxNE": [
+    1.088, 
+    9.264
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F780": {
+   "bBoxNE": [
+    1.788, 
+    0.536
+   ], 
+   "bBoxSW": [
+    -1.78, 
+    -0.536
+   ]
+  }, 
+  "U+F781": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    -1.348, 
+    -0.536
+   ]
+  }, 
+  "U+F782": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    -1.36, 
+    -0.532
+   ]
+  }, 
+  "U+F783": {
+   "bBoxNE": [
+    3.608, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F784": {
+   "bBoxNE": [
+    3.608, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F785": {
+   "bBoxNE": [
+    3.608, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F786": {
+   "bBoxNE": [
+    3.608, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F787": {
+   "bBoxNE": [
+    4.412, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F788": {
+   "bBoxNE": [
+    4.408, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F789": {
+   "bBoxNE": [
+    4.412, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F78A": {
+   "bBoxNE": [
+    4.412, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F78B": {
+   "bBoxNE": [
+    4.408, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F78C": {
+   "bBoxNE": [
+    3.288, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F78D": {
+   "bBoxNE": [
+    3.288, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F78E": {
+   "bBoxNE": [
+    3.288, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F78F": {
+   "bBoxNE": [
+    3.288, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F790": {
+   "bBoxNE": [
+    4.132, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F791": {
+   "bBoxNE": [
+    4.132, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F792": {
+   "bBoxNE": [
+    4.132, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F793": {
+   "bBoxNE": [
+    4.132, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F794": {
+   "bBoxNE": [
+    4.136, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F795": {
+   "bBoxNE": [
+    3.288, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F796": {
+   "bBoxNE": [
+    3.288, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F797": {
+   "bBoxNE": [
+    3.288, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F798": {
+   "bBoxNE": [
+    3.288, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F799": {
+   "bBoxNE": [
+    4.132, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F79A": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F79B": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F79C": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F79D": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F79E": {
+   "bBoxNE": [
+    3.728, 
+    0.84
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.84
+   ]
+  }, 
+  "U+F79F": {
+   "bBoxNE": [
+    3.728, 
+    0.84
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.84
+   ]
+  }, 
+  "U+F7A0": {
+   "bBoxNE": [
+    4.532, 
+    0.84
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.84
+   ]
+  }, 
+  "U+F7A1": {
+   "bBoxNE": [
+    4.532, 
+    0.84
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.84
+   ]
+  }, 
+  "U+F7A2": {
+   "bBoxNE": [
+    3.288, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F7A3": {
+   "bBoxNE": [
+    3.288, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F7A4": {
+   "bBoxNE": [
+    3.288, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F7A5": {
+   "bBoxNE": [
+    3.288, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F7A6": {
+   "bBoxNE": [
+    4.128, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F7A7": {
+   "bBoxNE": [
+    4.132, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F7A8": {
+   "bBoxNE": [
+    4.132, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "U+F7A9": {
+   "bBoxNE": [
+    4.132, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F7AA": {
+   "bBoxNE": [
+    4.344, 
+    1.016
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.012
+   ]
+  }, 
+  "U+F7AC": {
+   "bBoxNE": [
+    3.288, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F7AD": {
+   "bBoxNE": [
+    3.288, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F7AE": {
+   "bBoxNE": [
+    3.288, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F7AF": {
+   "bBoxNE": [
+    3.288, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F7B0": {
+   "bBoxNE": [
+    4.132, 
+    0.768
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F7B1": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "U+F7B2": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F7B3": {
+   "bBoxNE": [
+    4.132, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "U+F7B6": {
+   "bBoxNE": [
+    2.4, 
+    2.1
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7B7": {
+   "bBoxNE": [
+    2.4, 
+    2.5
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7B8": {
+   "bBoxNE": [
+    2.4, 
+    2.1
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7B9": {
+   "bBoxNE": [
+    2.4, 
+    2.5
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7BA": {
+   "bBoxNE": [
+    1.336, 
+    2.156
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7BB": {
+   "bBoxNE": [
+    2.056, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7BC": {
+   "bBoxNE": [
+    2.056, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "U+F7BD": {
+   "bBoxNE": [
+    2.056, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "accidentalBracketLeft": {
+   "bBoxNE": [
+    0.864, 
+    1.1
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.1
+   ]
+  }, 
+  "accidentalBracketRight": {
+   "bBoxNE": [
+    0.864, 
+    1.1
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.1
+   ]
+  }, 
+  "accidentalDoubleFlat": {
+   "bBoxNE": [
+    1.772, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.672
+   ]
+  }, 
+  "accidentalDoubleFlatParens": {
+   "bBoxNE": [
+    3.14, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.008, 
+    -1.108
+   ]
+  }, 
+  "accidentalDoubleSharp": {
+   "bBoxNE": [
+    1.008, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "accidentalDoubleSharpParens": {
+   "bBoxNE": [
+    2.268, 
+    1.08
+   ], 
+   "bBoxSW": [
+    0.008, 
+    -1.108
+   ]
+  }, 
+  "accidentalFilledReversedFlatAndFlat": {
+   "bBoxNE": [
+    1.744, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.632
+   ]
+  }, 
+  "accidentalFlat": {
+   "bBoxNE": [
+    0.928, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.672
+   ]
+  }, 
+  "accidentalFlatParens": {
+   "bBoxNE": [
+    2.444, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.008, 
+    -1.108
+   ]
+  }, 
+  "accidentalNatural": {
+   "bBoxNE": [
+    0.72, 
+    1.464
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.468
+   ]
+  }, 
+  "accidentalNaturalParens": {
+   "bBoxNE": [
+    2.552, 
+    1.464
+   ], 
+   "bBoxSW": [
+    0.008, 
+    -1.468
+   ]
+  }, 
+  "accidentalParensLeft": {
+   "bBoxNE": [
+    0.66, 
+    1.08
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.108
+   ]
+  }, 
+  "accidentalParensRight": {
+   "bBoxNE": [
+    0.7, 
+    1.08
+   ], 
+   "bBoxSW": [
+    0.04, 
+    -1.108
+   ]
+  }, 
+  "accidentalQuarterToneFlat4": {
+   "bBoxNE": [
+    1.064, 
+    1.996
+   ], 
+   "bBoxSW": [
+    -0.004, 
+    -0.436
+   ]
+  }, 
+  "accidentalQuarterToneFlatArrowUp": {
+   "bBoxNE": [
+    0.932, 
+    2.4
+   ], 
+   "bBoxSW": [
+    -0.172, 
+    -0.672
+   ]
+  }, 
+  "accidentalQuarterToneFlatFilledReversed": {
+   "bBoxNE": [
+    0.932, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.672
+   ]
+  }, 
+  "accidentalQuarterToneFlatNaturalArrowDown": {
+   "bBoxNE": [
+    0.892, 
+    1.464
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.08
+   ]
+  }, 
+  "accidentalQuarterToneFlatStein": {
+   "bBoxNE": [
+    0.932, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.672
+   ]
+  }, 
+  "accidentalQuarterToneSharp4": {
+   "bBoxNE": [
+    1.044, 
+    2.072
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.972
+   ]
+  }, 
+  "accidentalQuarterToneSharpArrowDown": {
+   "bBoxNE": [
+    1.012, 
+    1.464
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.456
+   ]
+  }, 
+  "accidentalQuarterToneSharpNaturalArrowUp": {
+   "bBoxNE": [
+    0.72, 
+    2.08
+   ], 
+   "bBoxSW": [
+    -0.172, 
+    -1.468
+   ]
+  }, 
+  "accidentalQuarterToneSharpStein": {
+   "bBoxNE": [
+    1.012, 
+    1.408
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.408
+   ]
+  }, 
+  "accidentalSharp": {
+   "bBoxNE": [
+    1.012, 
+    1.464
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.464
+   ]
+  }, 
+  "accidentalSharpParens": {
+   "bBoxNE": [
+    2.588, 
+    1.464
+   ], 
+   "bBoxSW": [
+    0.008, 
+    -1.464
+   ]
+  }, 
+  "accidentalThreeQuarterTonesFlatArrowDown": {
+   "bBoxNE": [
+    0.932, 
+    1.992
+   ], 
+   "bBoxSW": [
+    -0.172, 
+    -1.392
+   ]
+  }, 
+  "accidentalThreeQuarterTonesFlatZimmermann": {
+   "bBoxNE": [
+    1.964, 
+    1.992
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.672
+   ]
+  }, 
+  "accidentalThreeQuarterTonesSharpArrowUp": {
+   "bBoxNE": [
+    1.012, 
+    2.456
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.464
+   ]
+  }, 
+  "accidentalThreeQuarterTonesSharpStein": {
+   "bBoxNE": [
+    1.532, 
+    1.572
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.576
+   ]
+  }, 
+  "arpeggiatoDown": {
+   "bBoxNE": [
+    1.088, 
+    7.248
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "arpeggiatoUp": {
+   "bBoxNE": [
+    1.088, 
+    7.3
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "arrowBlackLeft": {
+   "bBoxNE": [
+    3.492, 
+    1.48
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.392
+   ]
+  }, 
+  "arrowBlackRight": {
+   "bBoxNE": [
+    3.492, 
+    1.48
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.392
+   ]
+  }, 
+  "arrowheadBlackDown": {
+   "bBoxNE": [
+    1.088, 
+    1.268
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "arrowheadBlackUp": {
+   "bBoxNE": [
+    1.088, 
+    1.268
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articAccentAbove": {
+   "bBoxNE": [
+    1.7, 
+    0.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.016
+   ]
+  }, 
+  "articAccentBelow": {
+   "bBoxNE": [
+    1.7, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.816
+   ]
+  }, 
+  "articAccentStaccatoAbove": {
+   "bBoxNE": [
+    1.7, 
+    1.196
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articAccentStaccatoBelow": {
+   "bBoxNE": [
+    1.7, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.196
+   ]
+  }, 
+  "articLaissezVibrerAbove": {
+   "bBoxNE": [
+    1.32, 
+    0.448
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articLaissezVibrerBelow": {
+   "bBoxNE": [
+    1.32, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.448
+   ]
+  }, 
+  "articMarcatoAbove": {
+   "bBoxNE": [
+    1.184, 
+    1.692
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articMarcatoBelow": {
+   "bBoxNE": [
+    1.184, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.688
+   ]
+  }, 
+  "articMarcatoStaccatoAbove": {
+   "bBoxNE": [
+    1.184, 
+    1.692
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articMarcatoStaccatoBelow": {
+   "bBoxNE": [
+    1.184, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.692
+   ]
+  }, 
+  "articMarcatoTenutoAbove": {
+   "bBoxNE": [
+    1.184, 
+    2.192
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articMarcatoTenutoBelow": {
+   "bBoxNE": [
+    1.184, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.192
+   ]
+  }, 
+  "articStaccatissimoAbove": {
+   "bBoxNE": [
+    0.508, 
+    0.504
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.004
+   ]
+  }, 
+  "articStaccatissimoBelow": {
+   "bBoxNE": [
+    0.508, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "articStaccatissimoStrokeAbove": {
+   "bBoxNE": [
+    0.196, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articStaccatissimoStrokeBelow": {
+   "bBoxNE": [
+    0.196, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "articStaccatissimoWedgeAbove": {
+   "bBoxNE": [
+    0.508, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.004
+   ]
+  }, 
+  "articStaccatissimoWedgeBelow": {
+   "bBoxNE": [
+    0.508, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.004
+   ]
+  }, 
+  "articStaccatoAbove": {
+   "bBoxNE": [
+    0.364, 
+    0.36
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articStaccatoBelow": {
+   "bBoxNE": [
+    0.364, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.36
+   ]
+  }, 
+  "articStressAbove": {
+   "bBoxNE": [
+    0.74, 
+    0.74
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articStressBelow": {
+   "bBoxNE": [
+    0.74, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.74
+   ]
+  }, 
+  "articTenutoAbove": {
+   "bBoxNE": [
+    1.184, 
+    0.152
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articTenutoAccentAbove": {
+   "bBoxNE": [
+    1.7, 
+    1.12
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.012
+   ]
+  }, 
+  "articTenutoAccentBelow": {
+   "bBoxNE": [
+    1.7, 
+    0.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.12
+   ]
+  }, 
+  "articTenutoBelow": {
+   "bBoxNE": [
+    1.184, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.152
+   ]
+  }, 
+  "articTenutoStaccatoAbove": {
+   "bBoxNE": [
+    1.184, 
+    0.704
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articTenutoStaccatoBelow": {
+   "bBoxNE": [
+    1.184, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.704
+   ]
+  }, 
+  "articUnstressAbove": {
+   "bBoxNE": [
+    1.568, 
+    0.836
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "articUnstressBelow": {
+   "bBoxNE": [
+    1.568, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.836
+   ]
+  }, 
+  "augmentationDot": {
+   "bBoxNE": [
+    0.364, 
+    0.18
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.18
+   ]
+  }, 
+  "barlineDashed": {
+   "bBoxNE": [
+    0.132, 
+    4.12
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.068
+   ]
+  }, 
+  "barlineShort": {
+   "bBoxNE": [
+    0.132, 
+    4.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    2.0
+   ]
+  }, 
+  "barlineSingle": {
+   "bBoxNE": [
+    0.132, 
+    4.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "barlineTick": {
+   "bBoxNE": [
+    0.132, 
+    4.504
+   ], 
+   "bBoxSW": [
+    0.0, 
+    3.504
+   ]
+  }, 
+  "breathMarkComma": {
+   "bBoxNE": [
+    0.648, 
+    1.088
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "breathMarkUpbow": {
+   "bBoxNE": [
+    0.76, 
+    1.704
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "buzzRoll": {
+   "bBoxNE": [
+    0.548, 
+    0.496
+   ], 
+   "bBoxSW": [
+    -0.54, 
+    -0.496
+   ]
+  }, 
+  "cClef": {
+   "bBoxNE": [
+    2.776, 
+    2.028
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.028
+   ]
+  }, 
+  "cClef8vb": {
+   "bBoxNE": [
+    2.776, 
+    2.028
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.892
+   ]
+  }, 
+  "caesura": {
+   "bBoxNE": [
+    2.128, 
+    2.028
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "clef15": {
+   "bBoxNE": [
+    1.196, 
+    0.988
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.016
+   ]
+  }, 
+  "clef8": {
+   "bBoxNE": [
+    0.712, 
+    0.96
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "coda": {
+   "bBoxNE": [
+    1.436, 
+    1.732
+   ], 
+   "bBoxSW": [
+    -0.236, 
+    -0.236
+   ]
+  }, 
+  "conductorBeat2Simple": {
+   "bBoxNE": [
+    2.056, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "conductorBeat3Simple": {
+   "bBoxNE": [
+    2.576, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "conductorBeat4Simple": {
+   "bBoxNE": [
+    2.056, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "conductorStrongBeat": {
+   "bBoxNE": [
+    0.256, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "csymAugmented": {
+   "bBoxNE": [
+    0.948, 
+    0.948
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "csymBracketLeftTall": {
+   "bBoxNE": [
+    0.864, 
+    4.136
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.12
+   ]
+  }, 
+  "csymBracketRightTall": {
+   "bBoxNE": [
+    0.864, 
+    4.136
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.12
+   ]
+  }, 
+  "csymDiminished": {
+   "bBoxNE": [
+    0.692, 
+    0.696
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "csymHalfDiminished": {
+   "bBoxNE": [
+    0.884, 
+    0.94
+   ], 
+   "bBoxSW": [
+    -0.168, 
+    -0.22
+   ]
+  }, 
+  "csymMajorSeventh": {
+   "bBoxNE": [
+    1.124, 
+    0.972
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "dynamicFF": {
+   "bBoxNE": [
+    2.816, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicFFF": {
+   "bBoxNE": [
+    4.016, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicFFFF": {
+   "bBoxNE": [
+    5.216, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicFFFFF": {
+   "bBoxNE": [
+    6.248, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicFFFFFF": {
+   "bBoxNE": [
+    7.416, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicForte": {
+   "bBoxNE": [
+    1.616, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicFortePiano": {
+   "bBoxNE": [
+    2.644, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicForzando": {
+   "bBoxNE": [
+    2.18, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.812, 
+    -0.756
+   ]
+  }, 
+  "dynamicHairpinBracketLeft": {
+   "bBoxNE": [
+    0.88, 
+    0.656
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.668
+   ]
+  }, 
+  "dynamicHairpinBracketRight": {
+   "bBoxNE": [
+    0.86, 
+    0.656
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.668
+   ]
+  }, 
+  "dynamicHairpinParenthesisLeft": {
+   "bBoxNE": [
+    0.764, 
+    1.088
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.104
+   ]
+  }, 
+  "dynamicHairpinParenthesisRight": {
+   "bBoxNE": [
+    0.788, 
+    1.096
+   ], 
+   "bBoxSW": [
+    0.024, 
+    -1.096
+   ]
+  }, 
+  "dynamicMF": {
+   "bBoxNE": [
+    3.696, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicMP": {
+   "bBoxNE": [
+    3.472, 
+    1.056
+   ], 
+   "bBoxSW": [
+    0.028, 
+    -0.7
+   ]
+  }, 
+  "dynamicMezzo": {
+   "bBoxNE": [
+    2.056, 
+    1.052
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.064
+   ]
+  }, 
+  "dynamicNiente": {
+   "bBoxNE": [
+    1.468, 
+    1.052
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.064
+   ]
+  }, 
+  "dynamicNienteForHairpin": {
+   "bBoxNE": [
+    0.688, 
+    0.348
+   ], 
+   "bBoxSW": [
+    -0.004, 
+    -0.348
+   ]
+  }, 
+  "dynamicPF": {
+   "bBoxNE": [
+    3.176, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.756
+   ]
+  }, 
+  "dynamicPP": {
+   "bBoxNE": [
+    2.816, 
+    1.056
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.7
+   ]
+  }, 
+  "dynamicPPP": {
+   "bBoxNE": [
+    4.264, 
+    1.056
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.7
+   ]
+  }, 
+  "dynamicPPPP": {
+   "bBoxNE": [
+    5.744, 
+    1.056
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.7
+   ]
+  }, 
+  "dynamicPPPPP": {
+   "bBoxNE": [
+    7.216, 
+    1.056
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.7
+   ]
+  }, 
+  "dynamicPPPPPP": {
+   "bBoxNE": [
+    8.696, 
+    1.056
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.7
+   ]
+  }, 
+  "dynamicPiano": {
+   "bBoxNE": [
+    1.384, 
+    1.056
+   ], 
+   "bBoxSW": [
+    -0.48, 
+    -0.7
+   ]
+  }, 
+  "dynamicRinforzando": {
+   "bBoxNE": [
+    1.248, 
+    1.052
+   ], 
+   "bBoxSW": [
+    -0.076, 
+    0.0
+   ]
+  }, 
+  "dynamicRinforzando1": {
+   "bBoxNE": [
+    2.996, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.076, 
+    -0.756
+   ]
+  }, 
+  "dynamicRinforzando2": {
+   "bBoxNE": [
+    3.54, 
+    1.868
+   ], 
+   "bBoxSW": [
+    -0.076, 
+    -0.756
+   ]
+  }, 
+  "dynamicSforzando": {
+   "bBoxNE": [
+    0.912, 
+    1.072
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.068
+   ]
+  }, 
+  "dynamicSforzando1": {
+   "bBoxNE": [
+    2.576, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicSforzandoPianissimo": {
+   "bBoxNE": [
+    5.024, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicSforzandoPiano": {
+   "bBoxNE": [
+    3.564, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicSforzato": {
+   "bBoxNE": [
+    3.208, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicSforzatoFF": {
+   "bBoxNE": [
+    4.34, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicSforzatoPiano": {
+   "bBoxNE": [
+    4.624, 
+    1.868
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.756
+   ]
+  }, 
+  "dynamicZ": {
+   "bBoxNE": [
+    0.98, 
+    1.048
+   ], 
+   "bBoxSW": [
+    -0.272, 
+    -0.068
+   ]
+  }, 
+  "fClef": {
+   "bBoxNE": [
+    2.796, 
+    1.004
+   ], 
+   "bBoxSW": [
+    -0.088, 
+    -2.312
+   ]
+  }, 
+  "fClef15ma": {
+   "bBoxNE": [
+    2.796, 
+    2.02
+   ], 
+   "bBoxSW": [
+    -0.088, 
+    -2.312
+   ]
+  }, 
+  "fClef15mb": {
+   "bBoxNE": [
+    2.796, 
+    1.004
+   ], 
+   "bBoxSW": [
+    -0.088, 
+    -3.148
+   ]
+  }, 
+  "fClef8va": {
+   "bBoxNE": [
+    2.8, 
+    1.988
+   ], 
+   "bBoxSW": [
+    -0.088, 
+    -2.312
+   ]
+  }, 
+  "fClef8vb": {
+   "bBoxNE": [
+    2.8, 
+    1.004
+   ], 
+   "bBoxSW": [
+    -0.088, 
+    -3.148
+   ]
+  }, 
+  "fermataAbove": {
+   "bBoxNE": [
+    2.108, 
+    1.412
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "fermataBelow": {
+   "bBoxNE": [
+    2.108, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.412
+   ]
+  }, 
+  "flag1024thDown": {
+   "bBoxNE": [
+    1.424, 
+    2.852
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.9
+   ]
+  }, 
+  "flag1024thUp": {
+   "bBoxNE": [
+    1.092, 
+    5.112
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.62
+   ]
+  }, 
+  "flag128thDown": {
+   "bBoxNE": [
+    1.424, 
+    2.852
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.616
+   ]
+  }, 
+  "flag128thUp": {
+   "bBoxNE": [
+    1.092, 
+    2.888
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.62
+   ]
+  }, 
+  "flag16thDown": {
+   "bBoxNE": [
+    1.424, 
+    3.132
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.12
+   ]
+  }, 
+  "flag16thUp": {
+   "bBoxNE": [
+    1.08, 
+    0.12
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.284
+   ]
+  }, 
+  "flag256thDown": {
+   "bBoxNE": [
+    1.424, 
+    2.852
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.38
+   ]
+  }, 
+  "flag256thUp": {
+   "bBoxNE": [
+    1.092, 
+    3.62
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.62
+   ]
+  }, 
+  "flag32ndDown": {
+   "bBoxNE": [
+    1.424, 
+    2.852
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.084
+   ]
+  }, 
+  "flag32ndUp": {
+   "bBoxNE": [
+    1.092, 
+    1.032
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.008
+   ]
+  }, 
+  "flag512thDown": {
+   "bBoxNE": [
+    1.424, 
+    2.852
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.14
+   ]
+  }, 
+  "flag512thUp": {
+   "bBoxNE": [
+    1.092, 
+    4.372
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.62
+   ]
+  }, 
+  "flag64thDown": {
+   "bBoxNE": [
+    1.424, 
+    2.852
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.856
+   ]
+  }, 
+  "flag64thUp": {
+   "bBoxNE": [
+    1.092, 
+    2.156
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.62
+   ]
+  }, 
+  "flag8thDown": {
+   "bBoxNE": [
+    1.424, 
+    2.888
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.12
+   ]
+  }, 
+  "flag8thDownStraight": {
+   "bBoxNE": [
+    1.22, 
+    1.804
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "flag8thUp": {
+   "bBoxNE": [
+    1.092, 
+    0.12
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.248
+   ]
+  }, 
+  "flag8thUpStraight": {
+   "bBoxNE": [
+    1.22, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.804
+   ]
+  }, 
+  "flagInternalDown": {
+   "bBoxNE": [
+    1.42, 
+    2.54
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.08
+   ]
+  }, 
+  "flagInternalUp": {
+   "bBoxNE": [
+    1.08, 
+    0.08
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.604
+   ]
+  }, 
+  "fretboard3String": {
+   "bBoxNE": [
+    1.416, 
+    4.084
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "fretboard3StringNut": {
+   "bBoxNE": [
+    1.416, 
+    4.248
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "fretboard4String": {
+   "bBoxNE": [
+    2.084, 
+    4.084
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "fretboard4StringNut": {
+   "bBoxNE": [
+    2.084, 
+    4.248
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "gClef": {
+   "bBoxNE": [
+    2.728, 
+    4.424
+   ], 
+   "bBoxSW": [
+    0.008, 
+    -2.624
+   ]
+  }, 
+  "gClef15ma": {
+   "bBoxNE": [
+    2.72, 
+    5.344
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.624
+   ]
+  }, 
+  "gClef15mb": {
+   "bBoxNE": [
+    2.72, 
+    4.424
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.544
+   ]
+  }, 
+  "gClef8va": {
+   "bBoxNE": [
+    2.72, 
+    5.344
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.624
+   ]
+  }, 
+  "gClef8vb": {
+   "bBoxNE": [
+    2.72, 
+    4.424
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.496
+   ]
+  }, 
+  "graceNoteAcciaccaturaStemDown": {
+   "bBoxNE": [
+    0.94, 
+    0.296
+   ], 
+   "bBoxSW": [
+    -0.284, 
+    -2.328
+   ]
+  }, 
+  "graceNoteAcciaccaturaStemUp": {
+   "bBoxNE": [
+    1.676, 
+    2.312
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.372
+   ]
+  }, 
+  "graceNoteAppoggiaturaStemDown": {
+   "bBoxNE": [
+    0.908, 
+    0.296
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.328
+   ]
+  }, 
+  "graceNoteAppoggiaturaStemUp": {
+   "bBoxNE": [
+    1.568, 
+    2.312
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.372
+   ]
+  }, 
+  "handbellsDamp3": {
+   "bBoxNE": [
+    3.124, 
+    3.124
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "harpPedalCentered": {
+   "bBoxNE": [
+    2.408, 
+    3.156
+   ], 
+   "bBoxSW": [
+    -0.024, 
+    1.468
+   ]
+  }, 
+  "harpPedalDivider": {
+   "bBoxNE": [
+    2.408, 
+    4.48
+   ], 
+   "bBoxSW": [
+    -0.024, 
+    0.12
+   ]
+  }, 
+  "harpPedalLowered": {
+   "bBoxNE": [
+    2.408, 
+    2.432
+   ], 
+   "bBoxSW": [
+    -0.024, 
+    0.0
+   ]
+  }, 
+  "harpPedalRaised": {
+   "bBoxNE": [
+    2.408, 
+    4.624
+   ], 
+   "bBoxSW": [
+    -0.024, 
+    2.192
+   ]
+  }, 
+  "keyboardPedalD": {
+   "bBoxNE": [
+    0.828, 
+    1.548
+   ], 
+   "bBoxSW": [
+    -0.456, 
+    0.012
+   ]
+  }, 
+  "keyboardPedalDot": {
+   "bBoxNE": [
+    0.296, 
+    0.26
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "keyboardPedalE": {
+   "bBoxNE": [
+    0.86, 
+    0.972
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "keyboardPedalP": {
+   "bBoxNE": [
+    1.628, 
+    1.864
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.004
+   ]
+  }, 
+  "keyboardPedalPed": {
+   "bBoxNE": [
+    3.344, 
+    1.864
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "keyboardPedalUp": {
+   "bBoxNE": [
+    1.504, 
+    1.504
+   ], 
+   "bBoxSW": [
+    0.016, 
+    0.016
+   ]
+  }, 
+  "legerLine": {
+   "bBoxNE": [
+    1.692, 
+    0.076
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "metAugmentationDot": {
+   "bBoxNE": [
+    0.5, 
+    0.58
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.08
+   ]
+  }, 
+  "metNote16thDown": {
+   "bBoxNE": [
+    2.004, 
+    0.744
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.452
+   ]
+  }, 
+  "metNote16thUp": {
+   "bBoxNE": [
+    3.3, 
+    4.452
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.744
+   ]
+  }, 
+  "metNote8thDown": {
+   "bBoxNE": [
+    2.004, 
+    0.744
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.452
+   ]
+  }, 
+  "metNote8thUp": {
+   "bBoxNE": [
+    3.316, 
+    4.184
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.012
+   ]
+  }, 
+  "metNoteDoubleWhole": {
+   "bBoxNE": [
+    3.712, 
+    1.024
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.024
+   ]
+  }, 
+  "metNoteDoubleWholeSquare": {
+   "bBoxNE": [
+    2.676, 
+    1.34
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.34
+   ]
+  }, 
+  "metNoteHalfDown": {
+   "bBoxNE": [
+    2.008, 
+    0.748
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.432
+   ]
+  }, 
+  "metNoteHalfUp": {
+   "bBoxNE": [
+    2.008, 
+    4.432
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.748
+   ]
+  }, 
+  "metNoteQuarterDown": {
+   "bBoxNE": [
+    2.004, 
+    0.744
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.452
+   ]
+  }, 
+  "metNoteQuarterUp": {
+   "bBoxNE": [
+    2.004, 
+    4.452
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.744
+   ]
+  }, 
+  "metNoteWhole": {
+   "bBoxNE": [
+    2.52, 
+    0.748
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.752
+   ]
+  }, 
+  "metricModulationArrowLeft": {
+   "bBoxNE": [
+    3.492, 
+    0.88
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.208
+   ]
+  }, 
+  "metricModulationArrowRight": {
+   "bBoxNE": [
+    3.492, 
+    0.88
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.208
+   ]
+  }, 
+  "note1024thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -8.1
+   ]
+  }, 
+  "note1024thUp": {
+   "bBoxNE": [
+    2.416, 
+    8.2
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note128thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -5.816
+   ]
+  }, 
+  "note128thUp": {
+   "bBoxNE": [
+    2.416, 
+    5.956
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note16thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.6
+   ]
+  }, 
+  "note16thUp": {
+   "bBoxNE": [
+    2.404, 
+    3.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note256thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -6.592
+   ]
+  }, 
+  "note256thUp": {
+   "bBoxNE": [
+    2.416, 
+    6.684
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note32ndDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.284
+   ]
+  }, 
+  "note32ndUp": {
+   "bBoxNE": [
+    2.416, 
+    4.208
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note512thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -7.34
+   ]
+  }, 
+  "note512thUp": {
+   "bBoxNE": [
+    2.416, 
+    7.44
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note64thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -5.056
+   ]
+  }, 
+  "note64thUp": {
+   "bBoxNE": [
+    2.416, 
+    5.224
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "note8thDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.6
+   ]
+  }, 
+  "note8thUp": {
+   "bBoxNE": [
+    2.416, 
+    3.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteDoubleWhole": {
+   "bBoxNE": [
+    2.652, 
+    0.732
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.732
+   ]
+  }, 
+  "noteDoubleWholeSquare": {
+   "bBoxNE": [
+    2.028, 
+    1.016
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "noteHalfDown": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.6
+   ]
+  }, 
+  "noteHalfUp": {
+   "bBoxNE": [
+    1.432, 
+    3.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteQuarterDown": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.6
+   ]
+  }, 
+  "noteQuarterUp": {
+   "bBoxNE": [
+    1.432, 
+    3.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteShapeDiamondBlack": {
+   "bBoxNE": [
+    1.396, 
+    0.52
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.52
+   ]
+  }, 
+  "noteShapeDiamondWhite": {
+   "bBoxNE": [
+    1.396, 
+    0.52
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.52
+   ]
+  }, 
+  "noteShapeMoonBlack": {
+   "bBoxNE": [
+    1.34, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "noteShapeMoonWhite": {
+   "bBoxNE": [
+    1.34, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "noteShapeRoundBlack": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteShapeRoundWhite": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteShapeSquareBlack": {
+   "bBoxNE": [
+    1.34, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteShapeSquareWhite": {
+   "bBoxNE": [
+    1.34, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleLeftBlack": {
+   "bBoxNE": [
+    1.424, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.552
+   ]
+  }, 
+  "noteShapeTriangleLeftWhite": {
+   "bBoxNE": [
+    1.424, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.552
+   ]
+  }, 
+  "noteShapeTriangleRightBlack": {
+   "bBoxNE": [
+    1.424, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleRightWhite": {
+   "bBoxNE": [
+    1.424, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleRoundBlack": {
+   "bBoxNE": [
+    1.368, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.528
+   ]
+  }, 
+  "noteShapeTriangleRoundWhite": {
+   "bBoxNE": [
+    1.368, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.528
+   ]
+  }, 
+  "noteShapeTriangleUpBlack": {
+   "bBoxNE": [
+    1.412, 
+    0.544
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleUpWhite": {
+   "bBoxNE": [
+    1.412, 
+    0.544
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteWhole": {
+   "bBoxNE": [
+    1.8, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadBlack": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteheadBlackParens": {
+   "bBoxNE": [
+    1.996, 
+    0.732
+   ], 
+   "bBoxSW": [
+    -0.568, 
+    -0.692
+   ]
+  }, 
+  "noteheadCircleX": {
+   "bBoxNE": [
+    1.092, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.54
+   ]
+  }, 
+  "noteheadCircledBlackLarge": {
+   "bBoxNE": [
+    1.64, 
+    0.924
+   ], 
+   "bBoxSW": [
+    -0.216, 
+    -0.924
+   ]
+  }, 
+  "noteheadCircledHalfLarge": {
+   "bBoxNE": [
+    1.644, 
+    0.924
+   ], 
+   "bBoxSW": [
+    -0.212, 
+    -0.924
+   ]
+  }, 
+  "noteheadCircledXLarge": {
+   "bBoxNE": [
+    1.676, 
+    0.84
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.84
+   ]
+  }, 
+  "noteheadClusterHalfBottom": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadClusterHalfMiddle": {
+   "bBoxNE": [
+    0.956, 
+    0.576
+   ], 
+   "bBoxSW": [
+    0.476, 
+    -0.552
+   ]
+  }, 
+  "noteheadClusterHalfTop": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadClusterQuarterBottom": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteheadClusterQuarterMiddle": {
+   "bBoxNE": [
+    0.956, 
+    0.576
+   ], 
+   "bBoxSW": [
+    0.476, 
+    -0.552
+   ]
+  }, 
+  "noteheadClusterQuarterTop": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteheadClusterWholeBottom": {
+   "bBoxNE": [
+    1.8, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadClusterWholeMiddle": {
+   "bBoxNE": [
+    1.136, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.66, 
+    -0.552
+   ]
+  }, 
+  "noteheadClusterWholeTop": {
+   "bBoxNE": [
+    1.8, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadDiamondBlack": {
+   "bBoxNE": [
+    1.2, 
+    0.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.6
+   ]
+  }, 
+  "noteheadDiamondBlackWide": {
+   "bBoxNE": [
+    1.396, 
+    0.52
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.52
+   ]
+  }, 
+  "noteheadDiamondHalfWide": {
+   "bBoxNE": [
+    1.428, 
+    0.624
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.624
+   ]
+  }, 
+  "noteheadDiamondWhite": {
+   "bBoxNE": [
+    1.2, 
+    0.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.6
+   ]
+  }, 
+  "noteheadDiamondWhiteWide": {
+   "bBoxNE": [
+    1.396, 
+    0.52
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.52
+   ]
+  }, 
+  "noteheadDoubleWhole": {
+   "bBoxNE": [
+    2.652, 
+    0.732
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.732
+   ]
+  }, 
+  "noteheadDoubleWholeSquare": {
+   "bBoxNE": [
+    2.028, 
+    1.016
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "noteheadHalf": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadHalfParens": {
+   "bBoxNE": [
+    2.012, 
+    0.732
+   ], 
+   "bBoxSW": [
+    -0.552, 
+    -0.696
+   ]
+  }, 
+  "noteheadMoonBlack": {
+   "bBoxNE": [
+    1.34, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "noteheadMoonWhite": {
+   "bBoxNE": [
+    1.34, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "noteheadParenthesis": {
+   "bBoxNE": [
+    1.724, 
+    0.716
+   ], 
+   "bBoxSW": [
+    -0.36, 
+    -0.708
+   ]
+  }, 
+  "noteheadParenthesisLeft": {
+   "bBoxNE": [
+    0.492, 
+    0.712
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.716
+   ]
+  }, 
+  "noteheadParenthesisRight": {
+   "bBoxNE": [
+    0.292, 
+    0.712
+   ], 
+   "bBoxSW": [
+    -0.204, 
+    -0.716
+   ]
+  }, 
+  "noteheadPlusBlack": {
+   "bBoxNE": [
+    1.092, 
+    0.544
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.544
+   ]
+  }, 
+  "noteheadRectangularClusterBlackBottom": {
+   "bBoxNE": [
+    1.556, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadRectangularClusterBlackMiddle": {
+   "bBoxNE": [
+    1.556, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadRectangularClusterBlackTop": {
+   "bBoxNE": [
+    1.556, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadRectangularClusterWhiteBottom": {
+   "bBoxNE": [
+    1.556, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadRectangularClusterWhiteMiddle": {
+   "bBoxNE": [
+    1.556, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadRectangularClusterWhiteTop": {
+   "bBoxNE": [
+    1.556, 
+    0.556
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadSlashDiamondWhite": {
+   "bBoxNE": [
+    2.028, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "noteheadSlashHorizontalEnds": {
+   "bBoxNE": [
+    2.536, 
+    1.016
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.012
+   ]
+  }, 
+  "noteheadSlashVerticalEnds": {
+   "bBoxNE": [
+    1.324, 
+    0.796
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.844
+   ]
+  }, 
+  "noteheadSlashVerticalEndsSmall": {
+   "bBoxNE": [
+    0.764, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.5
+   ]
+  }, 
+  "noteheadSlashWhiteHalf": {
+   "bBoxNE": [
+    3.424, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "noteheadSlashWhiteWhole": {
+   "bBoxNE": [
+    4.344, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "noteheadSlashedBlack1": {
+   "bBoxNE": [
+    1.924, 
+    0.592
+   ], 
+   "bBoxSW": [
+    -0.496, 
+    -0.592
+   ]
+  }, 
+  "noteheadSlashedBlack2": {
+   "bBoxNE": [
+    1.924, 
+    0.592
+   ], 
+   "bBoxSW": [
+    -0.496, 
+    -0.592
+   ]
+  }, 
+  "noteheadSlashedHalf1": {
+   "bBoxNE": [
+    1.828, 
+    0.768
+   ], 
+   "bBoxSW": [
+    -0.4, 
+    -0.768
+   ]
+  }, 
+  "noteheadSlashedHalf2": {
+   "bBoxNE": [
+    1.828, 
+    0.768
+   ], 
+   "bBoxSW": [
+    -0.4, 
+    -0.768
+   ]
+  }, 
+  "noteheadSquareBlack": {
+   "bBoxNE": [
+    1.12, 
+    0.56
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.56
+   ]
+  }, 
+  "noteheadSquareWhite": {
+   "bBoxNE": [
+    1.12, 
+    0.56
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.56
+   ]
+  }, 
+  "noteheadTriangleDownBlack": {
+   "bBoxNE": [
+    1.412, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.544
+   ]
+  }, 
+  "noteheadTriangleDownWhite": {
+   "bBoxNE": [
+    1.412, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.544
+   ]
+  }, 
+  "noteheadTriangleLeftBlack": {
+   "bBoxNE": [
+    1.424, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteheadTriangleLeftWhite": {
+   "bBoxNE": [
+    1.424, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteheadTriangleRightBlack": {
+   "bBoxNE": [
+    1.424, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteheadTriangleRightWhite": {
+   "bBoxNE": [
+    1.424, 
+    0.552
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.512
+   ]
+  }, 
+  "noteheadTriangleRoundDownBlack": {
+   "bBoxNE": [
+    1.368, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.528
+   ]
+  }, 
+  "noteheadTriangleRoundDownWhite": {
+   "bBoxNE": [
+    1.368, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.528
+   ]
+  }, 
+  "noteheadTriangleUpBlack": {
+   "bBoxNE": [
+    1.548, 
+    0.608
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadTriangleUpRightBlack": {
+   "bBoxNE": [
+    1.424, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.552
+   ]
+  }, 
+  "noteheadTriangleUpRightWhite": {
+   "bBoxNE": [
+    1.424, 
+    0.512
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.552
+   ]
+  }, 
+  "noteheadTriangleUpWhite": {
+   "bBoxNE": [
+    1.548, 
+    0.608
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.556
+   ]
+  }, 
+  "noteheadVoidWithX": {
+   "bBoxNE": [
+    1.432, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadWhole": {
+   "bBoxNE": [
+    1.8, 
+    0.536
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.536
+   ]
+  }, 
+  "noteheadXBlack": {
+   "bBoxNE": [
+    1.432, 
+    0.532
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "noteheadXOrnate": {
+   "bBoxNE": [
+    1.008, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.508
+   ]
+  }, 
+  "noteheadXOrnateEllipse": {
+   "bBoxNE": [
+    1.52, 
+    0.76
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.76
+   ]
+  }, 
+  "octaveBassa": {
+   "bBoxNE": [
+    3.216, 
+    1.14
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.02
+   ]
+  }, 
+  "octaveParensLeft": {
+   "bBoxNE": [
+    0.66, 
+    1.956
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.232
+   ]
+  }, 
+  "octaveParensRight": {
+   "bBoxNE": [
+    0.572, 
+    1.956
+   ], 
+   "bBoxSW": [
+    -0.088, 
+    -0.232
+   ]
+  }, 
+  "ornamentMordent": {
+   "bBoxNE": [
+    2.428, 
+    1.32
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.372
+   ]
+  }, 
+  "ornamentShortTrill": {
+   "bBoxNE": [
+    2.428, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.004
+   ]
+  }, 
+  "ornamentTremblement": {
+   "bBoxNE": [
+    3.48, 
+    1.004
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.004
+   ]
+  }, 
+  "ornamentTrill": {
+   "bBoxNE": [
+    1.696, 
+    1.608
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ornamentTurn": {
+   "bBoxNE": [
+    2.524, 
+    1.192
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ornamentTurnInverted": {
+   "bBoxNE": [
+    2.524, 
+    1.192
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ornamentTurnSlash": {
+   "bBoxNE": [
+    2.524, 
+    1.44
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.252
+   ]
+  }, 
+  "ottava": {
+   "bBoxNE": [
+    1.152, 
+    1.728
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ottavaAlta": {
+   "bBoxNE": [
+    2.496, 
+    1.728
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ottavaBassa": {
+   "bBoxNE": [
+    2.496, 
+    1.728
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ottavaBassaBa": {
+   "bBoxNE": [
+    2.536, 
+    1.728
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.004
+   ]
+  }, 
+  "ottavaBassaVb": {
+   "bBoxNE": [
+    2.46, 
+    1.816
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pendereckiTremolo": {
+   "bBoxNE": [
+    0.58, 
+    0.496
+   ], 
+   "bBoxSW": [
+    -0.58, 
+    -0.52
+   ]
+  }, 
+  "pictDamp1": {
+   "bBoxNE": [
+    1.384, 
+    1.352
+   ], 
+   "bBoxSW": [
+    -0.368, 
+    -0.4
+   ]
+  }, 
+  "pictDamp2": {
+   "bBoxNE": [
+    2.404, 
+    2.424
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pictDamp3": {
+   "bBoxNE": [
+    2.404, 
+    2.424
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pictDamp4": {
+   "bBoxNE": [
+    2.404, 
+    2.424
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pictHalfOpen1": {
+   "bBoxNE": [
+    0.956, 
+    0.952
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pictHalfOpen2": {
+   "bBoxNE": [
+    0.952, 
+    1.352
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.4
+   ]
+  }, 
+  "pictOpen": {
+   "bBoxNE": [
+    0.956, 
+    0.952
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pictOpenRimShot": {
+   "bBoxNE": [
+    1.092, 
+    1.088
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pluckedBuzzPizzicato": {
+   "bBoxNE": [
+    1.3, 
+    0.936
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pluckedLeftHandPizzicato": {
+   "bBoxNE": [
+    1.184, 
+    1.184
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pluckedSnapPizzicatoAbove": {
+   "bBoxNE": [
+    0.936, 
+    1.3
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "pluckedSnapPizzicatoBelow": {
+   "bBoxNE": [
+    0.936, 
+    1.3
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "quindicesima": {
+   "bBoxNE": [
+    1.844, 
+    1.74
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.028
+   ]
+  }, 
+  "quindicesimaAlta": {
+   "bBoxNE": [
+    3.684, 
+    1.74
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.028
+   ]
+  }, 
+  "quindicesimaBassa": {
+   "bBoxNE": [
+    3.684, 
+    1.74
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.028
+   ]
+  }, 
+  "quindicesimaBassaMb": {
+   "bBoxNE": [
+    3.644, 
+    1.976
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.028
+   ]
+  }, 
+  "repeat1Bar": {
+   "bBoxNE": [
+    2.536, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "repeat2Bars": {
+   "bBoxNE": [
+    3.38, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "repeat4Bars": {
+   "bBoxNE": [
+    5.06, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "repeatBarLowerDot": {
+   "bBoxNE": [
+    0.456, 
+    -0.308
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.764
+   ]
+  }, 
+  "repeatBarSlash": {
+   "bBoxNE": [
+    2.536, 
+    1.016
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.012
+   ]
+  }, 
+  "repeatBarUpperDot": {
+   "bBoxNE": [
+    0.456, 
+    0.752
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.296
+   ]
+  }, 
+  "repeatDot": {
+   "bBoxNE": [
+    0.388, 
+    0.196
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.192
+   ]
+  }, 
+  "rest1024th": {
+   "bBoxNE": [
+    2.724, 
+    4.836
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.064
+   ]
+  }, 
+  "rest128th": {
+   "bBoxNE": [
+    2.016, 
+    2.832
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.06
+   ]
+  }, 
+  "rest16th": {
+   "bBoxNE": [
+    1.316, 
+    0.84
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.044
+   ]
+  }, 
+  "rest256th": {
+   "bBoxNE": [
+    2.252, 
+    2.828
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.064
+   ]
+  }, 
+  "rest32nd": {
+   "bBoxNE": [
+    1.548, 
+    1.844
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.044
+   ]
+  }, 
+  "rest512th": {
+   "bBoxNE": [
+    2.492, 
+    3.832
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -4.064
+   ]
+  }, 
+  "rest64th": {
+   "bBoxNE": [
+    1.784, 
+    1.832
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -3.068
+   ]
+  }, 
+  "rest8th": {
+   "bBoxNE": [
+    1.076, 
+    0.836
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.032
+   ]
+  }, 
+  "restDoubleWhole": {
+   "bBoxNE": [
+    0.676, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "restHBar": {
+   "bBoxNE": [
+    3.568, 
+    1.028
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.028
+   ]
+  }, 
+  "restHBarLeft": {
+   "bBoxNE": [
+    1.496, 
+    1.028
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.028
+   ]
+  }, 
+  "restHBarMiddle": {
+   "bBoxNE": [
+    1.424, 
+    0.36
+   ], 
+   "bBoxSW": [
+    -0.16, 
+    -0.36
+   ]
+  }, 
+  "restHBarRight": {
+   "bBoxNE": [
+    1.496, 
+    1.028
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.028
+   ]
+  }, 
+  "restHalf": {
+   "bBoxNE": [
+    1.184, 
+    0.508
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "restHalfLegerLine": {
+   "bBoxNE": [
+    1.9, 
+    0.492
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.064
+   ]
+  }, 
+  "restLonga": {
+   "bBoxNE": [
+    0.676, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "restMaxima": {
+   "bBoxNE": [
+    1.796, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "restQuarter": {
+   "bBoxNE": [
+    1.088, 
+    1.564
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.452
+   ]
+  }, 
+  "restWhole": {
+   "bBoxNE": [
+    1.184, 
+    0.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.492
+   ]
+  }, 
+  "restWholeLegerLine": {
+   "bBoxNE": [
+    1.9, 
+    0.064
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.492
+   ]
+  }, 
+  "segno": {
+   "bBoxNE": [
+    2.1, 
+    2.736
+   ], 
+   "bBoxSW": [
+    0.024, 
+    -0.04
+   ]
+  }, 
+  "staff5Lines": {
+   "bBoxNE": [
+    4.112, 
+    4.064
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.068
+   ]
+  }, 
+  "stem": {
+   "bBoxNE": [
+    0.052, 
+    4.0
+   ], 
+   "bBoxSW": [
+    -0.052, 
+    0.0
+   ]
+  }, 
+  "stringsDownBow": {
+   "bBoxNE": [
+    1.352, 
+    1.52
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "stringsDownBowTurned": {
+   "bBoxNE": [
+    1.352, 
+    1.52
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "stringsHarmonic": {
+   "bBoxNE": [
+    0.692, 
+    0.696
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "stringsUpBow": {
+   "bBoxNE": [
+    0.76, 
+    1.704
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "stringsUpBowTurned": {
+   "bBoxNE": [
+    0.76, 
+    1.704
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "systemDividerLong": {
+   "bBoxNE": [
+    7.124, 
+    6.388
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.284
+   ]
+  }, 
+  "textAugmentationDot": {
+   "bBoxNE": [
+    0.364, 
+    0.268
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.092
+   ]
+  }, 
+  "textBlackNoteFrac16thLongStem": {
+   "bBoxNE": [
+    1.496, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textBlackNoteFrac16thShortStem": {
+   "bBoxNE": [
+    1.496, 
+    3.04
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textBlackNoteFrac32ndLongStem": {
+   "bBoxNE": [
+    1.496, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textBlackNoteFrac8thLongStem": {
+   "bBoxNE": [
+    1.496, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textBlackNoteFrac8thShortStem": {
+   "bBoxNE": [
+    1.496, 
+    3.04
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textBlackNoteLongStem": {
+   "bBoxNE": [
+    1.432, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textBlackNoteShortStem": {
+   "bBoxNE": [
+    1.432, 
+    3.04
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.532
+   ]
+  }, 
+  "textCont16thBeamLongStem": {
+   "bBoxNE": [
+    1.432, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    2.54
+   ]
+  }, 
+  "textCont16thBeamShortStem": {
+   "bBoxNE": [
+    1.432, 
+    3.04
+   ], 
+   "bBoxSW": [
+    0.0, 
+    1.78
+   ]
+  }, 
+  "textCont32ndBeamLongStem": {
+   "bBoxNE": [
+    1.432, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    1.78
+   ]
+  }, 
+  "textCont8thBeamLongStem": {
+   "bBoxNE": [
+    1.432, 
+    3.8
+   ], 
+   "bBoxSW": [
+    0.0, 
+    3.3
+   ]
+  }, 
+  "textCont8thBeamShortStem": {
+   "bBoxNE": [
+    1.432, 
+    3.04
+   ], 
+   "bBoxSW": [
+    0.0, 
+    2.54
+   ]
+  }, 
+  "textTie": {
+   "bBoxNE": [
+    1.528, 
+    -0.664
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.148
+   ]
+  }, 
+  "textTuplet3LongStem": {
+   "bBoxNE": [
+    0.804, 
+    5.648
+   ], 
+   "bBoxSW": [
+    0.0, 
+    4.236
+   ]
+  }, 
+  "textTuplet3ShortStem": {
+   "bBoxNE": [
+    0.804, 
+    4.808
+   ], 
+   "bBoxSW": [
+    0.0, 
+    3.396
+   ]
+  }, 
+  "textTupletBracketEndLongStem": {
+   "bBoxNE": [
+    1.324, 
+    5.008
+   ], 
+   "bBoxSW": [
+    0.0, 
+    4.244
+   ]
+  }, 
+  "textTupletBracketEndShortStem": {
+   "bBoxNE": [
+    1.324, 
+    4.172
+   ], 
+   "bBoxSW": [
+    0.0, 
+    3.408
+   ]
+  }, 
+  "textTupletBracketStartLongStem": {
+   "bBoxNE": [
+    1.324, 
+    5.008
+   ], 
+   "bBoxSW": [
+    0.0, 
+    4.244
+   ]
+  }, 
+  "textTupletBracketStartShortStem": {
+   "bBoxNE": [
+    1.324, 
+    4.172
+   ], 
+   "bBoxSW": [
+    0.0, 
+    3.408
+   ]
+  }, 
+  "timeSig0": {
+   "bBoxNE": [
+    1.624, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig0Large": {
+   "bBoxNE": [
+    2.092, 
+    4.32
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.32
+   ]
+  }, 
+  "timeSig1": {
+   "bBoxNE": [
+    1.108, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig1Large": {
+   "bBoxNE": [
+    1.196, 
+    4.304
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.304
+   ]
+  }, 
+  "timeSig2": {
+   "bBoxNE": [
+    1.552, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig2Large": {
+   "bBoxNE": [
+    2.028, 
+    4.308
+   ], 
+   "bBoxSW": [
+    0.096, 
+    -4.3
+   ]
+  }, 
+  "timeSig3": {
+   "bBoxNE": [
+    1.456, 
+    1.004
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.004
+   ]
+  }, 
+  "timeSig3Large": {
+   "bBoxNE": [
+    2.124, 
+    4.32
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.32
+   ]
+  }, 
+  "timeSig4": {
+   "bBoxNE": [
+    1.544, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig4Large": {
+   "bBoxNE": [
+    2.152, 
+    4.3
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.304
+   ]
+  }, 
+  "timeSig5": {
+   "bBoxNE": [
+    1.404, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig5Large": {
+   "bBoxNE": [
+    2.092, 
+    4.32
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.32
+   ]
+  }, 
+  "timeSig6": {
+   "bBoxNE": [
+    1.532, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig6Large": {
+   "bBoxNE": [
+    2.08, 
+    4.52
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.12
+   ]
+  }, 
+  "timeSig7": {
+   "bBoxNE": [
+    1.548, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig7Large": {
+   "bBoxNE": [
+    2.108, 
+    4.304
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.304
+   ]
+  }, 
+  "timeSig8": {
+   "bBoxNE": [
+    1.496, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig8Large": {
+   "bBoxNE": [
+    2.084, 
+    4.32
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.32
+   ]
+  }, 
+  "timeSig9": {
+   "bBoxNE": [
+    1.524, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.0
+   ]
+  }, 
+  "timeSig9Large": {
+   "bBoxNE": [
+    2.052, 
+    4.52
+   ], 
+   "bBoxSW": [
+    0.16, 
+    -4.12
+   ]
+  }, 
+  "timeSigBracketLeft": {
+   "bBoxNE": [
+    0.864, 
+    2.128
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.128
+   ]
+  }, 
+  "timeSigBracketLeftSmall": {
+   "bBoxNE": [
+    0.864, 
+    1.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.6
+   ]
+  }, 
+  "timeSigBracketRight": {
+   "bBoxNE": [
+    0.864, 
+    2.128
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.128
+   ]
+  }, 
+  "timeSigBracketRightSmall": {
+   "bBoxNE": [
+    0.864, 
+    1.6
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.6
+   ]
+  }, 
+  "timeSigCommon": {
+   "bBoxNE": [
+    1.668, 
+    1.004
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.008
+   ]
+  }, 
+  "timeSigCommonLarge": {
+   "bBoxNE": [
+    2.192, 
+    4.932
+   ], 
+   "bBoxSW": [
+    0.152, 
+    -5.088
+   ]
+  }, 
+  "timeSigCutCommon": {
+   "bBoxNE": [
+    1.668, 
+    1.604
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.676
+   ]
+  }, 
+  "timeSigCutCommonLarge": {
+   "bBoxNE": [
+    2.2, 
+    6.112
+   ], 
+   "bBoxSW": [
+    0.152, 
+    -6.112
+   ]
+  }, 
+  "timeSigParensLeft": {
+   "bBoxNE": [
+    0.88, 
+    2.056
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -2.06
+   ]
+  }, 
+  "timeSigParensLeftSmall": {
+   "bBoxNE": [
+    0.66, 
+    1.096
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.092
+   ]
+  }, 
+  "timeSigParensRight": {
+   "bBoxNE": [
+    0.72, 
+    2.056
+   ], 
+   "bBoxSW": [
+    -0.16, 
+    -2.06
+   ]
+  }, 
+  "timeSigParensRightSmall": {
+   "bBoxNE": [
+    0.66, 
+    1.096
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.092
+   ]
+  }, 
+  "timeSigPlus": {
+   "bBoxNE": [
+    1.64, 
+    0.812
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.828
+   ]
+  }, 
+  "timeSigPlusLarge": {
+   "bBoxNE": [
+    1.64, 
+    1.68
+   ], 
+   "bBoxSW": [
+    0.112, 
+    -1.68
+   ]
+  }, 
+  "timeSigPlusSmall": {
+   "bBoxNE": [
+    1.184, 
+    0.592
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.592
+   ]
+  }, 
+  "timeSigX": {
+   "bBoxNE": [
+    1.524, 
+    1.504
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.5
+   ]
+  }, 
+  "tremolo1": {
+   "bBoxNE": [
+    0.668, 
+    0.5
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -0.496
+   ]
+  }, 
+  "tremolo2": {
+   "bBoxNE": [
+    0.668, 
+    0.8
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -0.796
+   ]
+  }, 
+  "tremolo3": {
+   "bBoxNE": [
+    0.668, 
+    1.08
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -1.076
+   ]
+  }, 
+  "tremolo4": {
+   "bBoxNE": [
+    0.668, 
+    1.34
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -1.416
+   ]
+  }, 
+  "tremolo5": {
+   "bBoxNE": [
+    0.668, 
+    1.68
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -1.676
+   ]
+  }, 
+  "tremoloDivisiDots2": {
+   "bBoxNE": [
+    0.964, 
+    0.36
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "tremoloDivisiDots3": {
+   "bBoxNE": [
+    1.564, 
+    0.36
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "tremoloDivisiDots4": {
+   "bBoxNE": [
+    2.164, 
+    0.36
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "tremoloDivisiDots6": {
+   "bBoxNE": [
+    1.564, 
+    1.0
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "tremoloFingered1": {
+   "bBoxNE": [
+    0.668, 
+    0.5
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -0.496
+   ]
+  }, 
+  "tremoloFingered2": {
+   "bBoxNE": [
+    0.668, 
+    0.8
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -0.796
+   ]
+  }, 
+  "tremoloFingered3": {
+   "bBoxNE": [
+    0.668, 
+    1.08
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -1.076
+   ]
+  }, 
+  "tremoloFingered4": {
+   "bBoxNE": [
+    0.668, 
+    1.34
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -1.416
+   ]
+  }, 
+  "tremoloFingered5": {
+   "bBoxNE": [
+    0.668, 
+    1.68
+   ], 
+   "bBoxSW": [
+    -0.668, 
+    -1.676
+   ]
+  }, 
+  "unpitchedPercussionClef1": {
+   "bBoxNE": [
+    0.776, 
+    1.012
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.016
+   ]
+  }, 
+  "unpitchedPercussionClef2": {
+   "bBoxNE": [
+    1.016, 
+    1.776
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -1.776
+   ]
+  }, 
+  "ventiduesima": {
+   "bBoxNE": [
+    2.408, 
+    1.676
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ventiduesimaAlta": {
+   "bBoxNE": [
+    4.128, 
+    1.676
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "ventiduesimaBassa": {
+   "bBoxNE": [
+    4.212, 
+    1.676
+   ], 
+   "bBoxSW": [
+    0.0, 
+    -0.028
+   ]
+  }, 
+  "ventiduesimaBassaMb": {
+   "bBoxNE": [
+    4.124, 
+    1.976
+   ], 
+   "bBoxSW": [
+    0.0, 
+    0.0
+   ]
+  }, 
+  "wiggleGlissando": {
+   "bBoxNE": [
+    1.532, 
+    0.704
+   ], 
+   "bBoxSW": [
+    -0.176, 
+    0.0
+   ]
+  }, 
+  "wiggleTrill": {
+   "bBoxNE": [
+    1.532, 
+    0.836
+   ], 
+   "bBoxSW": [
+    -0.176, 
+    0.132
+   ]
+  }
+ }, 
+ "glyphsWithAnchors": {
+  "U+F614": {
+   "stemDownNW": [
+    0.0, 
+    -0.468
+   ], 
+   "stemUpSE": [
+    1.024, 
+    0.456
+   ]
+  }, 
+  "U+F615": {
+   "stemDownNW": [
+    0.0, 
+    -0.428
+   ], 
+   "stemUpSE": [
+    1.024, 
+    0.432
+   ]
+  }, 
+  "U+F625": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.244, 
+    0.0
+   ]
+  }, 
+  "U+F627": {
+   "stemDownNW": [
+    0.0, 
+    0.004
+   ], 
+   "stemUpSE": [
+    1.092, 
+    0.0
+   ]
+  }, 
+  "U+F781": {
+   "stemDownNW": [
+    -0.036, 
+    -0.104
+   ], 
+   "stemUpSE": [
+    0.084, 
+    0.136
+   ]
+  }, 
+  "U+F782": {
+   "stemDownNW": [
+    0.0, 
+    -0.116
+   ], 
+   "stemUpSE": [
+    0.072, 
+    0.124
+   ]
+  }, 
+  "U+F78C": {
+   "stemDownNW": [
+    0.0, 
+    -0.132
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "U+F78D": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.14
+   ]
+  }, 
+  "U+F78E": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "U+F78F": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "U+F790": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "U+F791": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "U+F792": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "U+F793": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "U+F794": {
+   "stemDownNW": [
+    0.0, 
+    -0.14
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "U+F795": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.124
+   ]
+  }, 
+  "U+F796": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "U+F797": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "U+F798": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "U+F799": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.12
+   ]
+  }, 
+  "U+F79A": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "U+F79B": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "U+F79C": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "U+F79D": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "U+F79E": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.676, 
+    0.0
+   ]
+  }, 
+  "U+F79F": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.676, 
+    0.0
+   ]
+  }, 
+  "U+F7A0": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.676, 
+    -0.004
+   ]
+  }, 
+  "U+F7A1": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.676, 
+    0.0
+   ]
+  }, 
+  "U+F7A2": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A3": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A4": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A5": {
+   "stemDownNW": [
+    0.0, 
+    0.004
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A6": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A7": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A8": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7A9": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "U+F7AC": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7AD": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7AE": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7AF": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7B0": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7B1": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7B2": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "U+F7B3": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "flag1024thDown": {
+   "stemDownSW": [
+    0.0, 
+    -4.684
+   ]
+  }, 
+  "flag1024thUp": {
+   "stemUpNW": [
+    0.0, 
+    4.064
+   ]
+  }, 
+  "flag128thDown": {
+   "stemDownSW": [
+    0.0, 
+    -2.076
+   ]
+  }, 
+  "flag128thUp": {
+   "stemUpNW": [
+    0.0, 
+    1.9
+   ]
+  }, 
+  "flag16thDown": {
+   "stemDownSW": [
+    0.0, 
+    0.128
+   ]
+  }, 
+  "flag16thUp": {
+   "stemUpNW": [
+    0.0, 
+    -0.088
+   ]
+  }, 
+  "flag256thDown": {
+   "stemDownSW": [
+    0.0, 
+    -2.812
+   ]
+  }, 
+  "flag256thUp": {
+   "stemUpNW": [
+    0.0, 
+    2.592
+   ]
+  }, 
+  "flag32ndDown": {
+   "stemDownSW": [
+    0.0, 
+    -0.448
+   ]
+  }, 
+  "flag32ndUp": {
+   "stemUpNW": [
+    0.0, 
+    0.376
+   ]
+  }, 
+  "flag512thDown": {
+   "stemDownSW": [
+    0.0, 
+    -3.608
+   ]
+  }, 
+  "flag512thUp": {
+   "stemUpNW": [
+    0.0, 
+    3.324
+   ]
+  }, 
+  "flag64thDown": {
+   "stemDownSW": [
+    0.0, 
+    -1.244
+   ]
+  }, 
+  "flag64thUp": {
+   "stemUpNW": [
+    0.0, 
+    1.172
+   ]
+  }, 
+  "flag8thDown": {
+   "graceNoteSlashNW": [
+    -0.596, 
+    2.168
+   ], 
+   "graceNoteSlashSE": [
+    1.328, 
+    0.628
+   ], 
+   "stemDownSW": [
+    0.0, 
+    0.132
+   ]
+  }, 
+  "flag8thUp": {
+   "graceNoteSlashNE": [
+    1.284, 
+    -0.796
+   ], 
+   "graceNoteSlashSW": [
+    -0.644, 
+    -2.456
+   ], 
+   "stemUpNW": [
+    0.0, 
+    -0.04
+   ]
+  }, 
+  "metNoteDoubleWhole": {
+   "noteheadOrigin": [
+    0.576, 
+    0.012
+   ]
+  }, 
+  "noteShapeDiamondBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.396, 
+    0.0
+   ]
+  }, 
+  "noteShapeDiamondWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.396, 
+    0.0
+   ]
+  }, 
+  "noteShapeMoonBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.068
+   ], 
+   "stemUpSE": [
+    1.34, 
+    0.064
+   ]
+  }, 
+  "noteShapeMoonWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.072
+   ], 
+   "stemUpSE": [
+    1.34, 
+    0.088
+   ]
+  }, 
+  "noteShapeRoundBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "noteShapeRoundWhite": {
+   "stemDownNW": [
+    0.0, 
+    -0.144
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "noteShapeSquareBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.46
+   ], 
+   "stemUpSE": [
+    1.34, 
+    -0.464
+   ]
+  }, 
+  "noteShapeSquareWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.34, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleLeftBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    -0.452
+   ]
+  }, 
+  "noteShapeTriangleLeftWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    -0.432
+   ]
+  }, 
+  "noteShapeTriangleRightBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.448
+   ], 
+   "stemUpSE": [
+    1.424, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleRightWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.46
+   ], 
+   "stemUpSE": [
+    1.424, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleRoundBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.184
+   ], 
+   "stemUpSE": [
+    1.368, 
+    0.184
+   ]
+  }, 
+  "noteShapeTriangleRoundWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.184
+   ], 
+   "stemUpSE": [
+    1.368, 
+    0.184
+   ]
+  }, 
+  "noteShapeTriangleUpBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.512
+   ], 
+   "stemUpSE": [
+    1.412, 
+    -0.512
+   ]
+  }, 
+  "noteShapeTriangleUpWhite": {
+   "stemDownNW": [
+    0.0, 
+    -0.512
+   ], 
+   "stemUpSE": [
+    1.412, 
+    -0.512
+   ]
+  }, 
+  "noteheadBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.132
+   ]
+  }, 
+  "noteheadBlackParens": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "noteheadCircleX": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.092, 
+    0.0
+   ]
+  }, 
+  "noteheadCircledBlackLarge": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "noteheadCircledHalfLarge": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "noteheadCircledXLarge": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.676, 
+    0.0
+   ]
+  }, 
+  "noteheadClusterHalfBottom": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ]
+  }, 
+  "noteheadClusterHalfTop": {
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "noteheadClusterQuarterBottom": {
+   "stemDownNW": [
+    0.0, 
+    -0.132
+   ]
+  }, 
+  "noteheadClusterQuarterTop": {
+   "stemUpSE": [
+    1.432, 
+    0.12
+   ]
+  }, 
+  "noteheadDiamondBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.2, 
+    0.0
+   ]
+  }, 
+  "noteheadDiamondBlackWide": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.396, 
+    0.0
+   ]
+  }, 
+  "noteheadDiamondHalfWide": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.428, 
+    -0.004
+   ]
+  }, 
+  "noteheadDiamondWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.2, 
+    0.0
+   ]
+  }, 
+  "noteheadDiamondWhiteWide": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.396, 
+    0.0
+   ]
+  }, 
+  "noteheadDoubleWhole": {
+   "noteheadOrigin": [
+    0.36, 
+    0.0
+   ]
+  }, 
+  "noteheadHalf": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "noteheadHalfParens": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.436, 
+    0.136
+   ]
+  }, 
+  "noteheadMoonBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.06
+   ], 
+   "stemUpSE": [
+    1.34, 
+    0.06
+   ]
+  }, 
+  "noteheadMoonWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.08
+   ], 
+   "stemUpSE": [
+    1.34, 
+    0.084
+   ]
+  }, 
+  "noteheadPlusBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.092, 
+    0.0
+   ]
+  }, 
+  "noteheadSlashDiamondWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    2.028, 
+    0.0
+   ]
+  }, 
+  "noteheadSlashHorizontalEnds": {
+   "stemDownNW": [
+    0.0, 
+    -1.012
+   ], 
+   "stemUpSE": [
+    2.536, 
+    1.016
+   ]
+  }, 
+  "noteheadSlashVerticalEnds": {
+   "stemDownNW": [
+    0.0, 
+    -0.664
+   ], 
+   "stemUpSE": [
+    1.324, 
+    0.632
+   ]
+  }, 
+  "noteheadSlashVerticalEndsSmall": {
+   "stemDownNW": [
+    0.0, 
+    -0.256
+   ], 
+   "stemUpSE": [
+    0.764, 
+    0.264
+   ]
+  }, 
+  "noteheadSlashWhiteHalf": {
+   "stemDownNW": [
+    0.0, 
+    -1.016
+   ], 
+   "stemUpSE": [
+    3.424, 
+    1.012
+   ]
+  }, 
+  "noteheadSlashedBlack1": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "noteheadSlashedBlack2": {
+   "stemDownNW": [
+    0.0, 
+    -0.128
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.128
+   ]
+  }, 
+  "noteheadSlashedHalf1": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "noteheadSlashedHalf2": {
+   "stemDownNW": [
+    0.0, 
+    -0.136
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.136
+   ]
+  }, 
+  "noteheadSquareBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.56
+   ], 
+   "stemUpSE": [
+    1.12, 
+    0.56
+   ]
+  }, 
+  "noteheadSquareWhite": {
+   "stemDownNW": [
+    0.0, 
+    -0.56
+   ], 
+   "stemUpSE": [
+    1.12, 
+    0.56
+   ]
+  }, 
+  "noteheadTriangleDownBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.412, 
+    0.512
+   ]
+  }, 
+  "noteheadTriangleDownWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.412, 
+    0.512
+   ]
+  }, 
+  "noteheadTriangleLeftBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    -0.512
+   ]
+  }, 
+  "noteheadTriangleLeftWhite": {
+   "stemDownNW": [
+    0.0, 
+    -0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    -0.512
+   ]
+  }, 
+  "noteheadTriangleRightBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    0.472
+   ]
+  }, 
+  "noteheadTriangleRightWhite": {
+   "stemDownNW": [
+    0.0, 
+    -0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    0.244
+   ]
+  }, 
+  "noteheadTriangleRoundDownBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.184
+   ], 
+   "stemUpSE": [
+    1.368, 
+    0.184
+   ]
+  }, 
+  "noteheadTriangleRoundDownWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.184
+   ], 
+   "stemUpSE": [
+    1.368, 
+    0.184
+   ]
+  }, 
+  "noteheadTriangleUpBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.556
+   ], 
+   "stemUpSE": [
+    1.548, 
+    -0.556
+   ]
+  }, 
+  "noteheadTriangleUpRightBlack": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    0.512
+   ]
+  }, 
+  "noteheadTriangleUpRightWhite": {
+   "stemDownNW": [
+    0.0, 
+    0.512
+   ], 
+   "stemUpSE": [
+    1.424, 
+    0.512
+   ]
+  }, 
+  "noteheadTriangleUpWhite": {
+   "stemDownNW": [
+    0.0, 
+    -0.556
+   ], 
+   "stemUpSE": [
+    1.548, 
+    -0.556
+   ]
+  }, 
+  "noteheadVoidWithX": {
+   "stemDownNW": [
+    0.0, 
+    0.0
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.0
+   ]
+  }, 
+  "noteheadXBlack": {
+   "stemDownNW": [
+    0.0, 
+    -0.404
+   ], 
+   "stemUpSE": [
+    1.432, 
+    0.404
+   ]
+  }, 
+  "noteheadXOrnate": {
+   "stemDownNW": [
+    0.0, 
+    -0.312
+   ], 
+   "stemUpSE": [
+    1.008, 
+    0.32
+   ]
+  }, 
+  "noteheadXOrnateEllipse": {
+   "stemDownNW": [
+    0.252, 
+    -0.324
+   ], 
+   "stemUpSE": [
+    1.26, 
+    0.312
+   ]
+  }, 
+  "wiggleGlissando": {
+   "repeatOffset": [
+    1.352, 
+    0.0
+   ]
+  }, 
+  "wiggleTrill": {
+   "repeatOffset": [
+    1.352, 
+    0.0
+   ]
+  }
+ }, 
+ "optionalGlyphs": {
+  "U+F614": {
+   "classes": [], 
+   "codepoint": "U+F614"
+  }, 
+  "U+F615": {
+   "classes": [], 
+   "codepoint": "U+F615"
+  }, 
+  "U+F625": {
+   "classes": [], 
+   "codepoint": "U+F625"
+  }, 
+  "U+F627": {
+   "classes": [], 
+   "codepoint": "U+F627"
+  }, 
+  "U+F62B": {
+   "classes": [], 
+   "codepoint": "U+F62B"
+  }, 
+  "U+F62C": {
+   "classes": [], 
+   "codepoint": "U+F62C"
+  }, 
+  "U+F62F": {
+   "classes": [], 
+   "codepoint": "U+F62F"
+  }, 
+  "U+F630": {
+   "classes": [], 
+   "codepoint": "U+F630"
+  }, 
+  "U+F631": {
+   "classes": [], 
+   "codepoint": "U+F631"
+  }, 
+  "U+F636": {
+   "classes": [], 
+   "codepoint": "U+F636"
+  }, 
+  "U+F670": {
+   "classes": [], 
+   "codepoint": "U+F670"
+  }, 
+  "U+F676": {
+   "classes": [], 
+   "codepoint": "U+F676"
+  }, 
+  "U+F677": {
+   "classes": [], 
+   "codepoint": "U+F677"
+  }, 
+  "U+F678": {
+   "classes": [], 
+   "codepoint": "U+F678"
+  }, 
+  "U+F679": {
+   "classes": [], 
+   "codepoint": "U+F679"
+  }, 
+  "U+F67A": {
+   "classes": [], 
+   "codepoint": "U+F67A"
+  }, 
+  "U+F67B": {
+   "classes": [], 
+   "codepoint": "U+F67B"
+  }, 
+  "U+F67C": {
+   "classes": [], 
+   "codepoint": "U+F67C"
+  }, 
+  "U+F68C": {
+   "classes": [], 
+   "codepoint": "U+F68C"
+  }, 
+  "U+F68D": {
+   "classes": [], 
+   "codepoint": "U+F68D"
+  }, 
+  "U+F68E": {
+   "classes": [], 
+   "codepoint": "U+F68E"
+  }, 
+  "U+F700": {
+   "classes": [], 
+   "codepoint": "U+F700"
+  }, 
+  "U+F770": {
+   "classes": [], 
+   "codepoint": "U+F770"
+  }, 
+  "U+F771": {
+   "classes": [], 
+   "codepoint": "U+F771"
+  }, 
+  "U+F772": {
+   "classes": [], 
+   "codepoint": "U+F772"
+  }, 
+  "U+F773": {
+   "classes": [], 
+   "codepoint": "U+F773"
+  }, 
+  "U+F774": {
+   "classes": [], 
+   "codepoint": "U+F774"
+  }, 
+  "U+F775": {
+   "classes": [], 
+   "codepoint": "U+F775"
+  }, 
+  "U+F776": {
+   "classes": [], 
+   "codepoint": "U+F776"
+  }, 
+  "U+F777": {
+   "classes": [], 
+   "codepoint": "U+F777"
+  }, 
+  "U+F778": {
+   "classes": [], 
+   "codepoint": "U+F778"
+  }, 
+  "U+F779": {
+   "classes": [], 
+   "codepoint": "U+F779"
+  }, 
+  "U+F77A": {
+   "classes": [], 
+   "codepoint": "U+F77A"
+  }, 
+  "U+F77B": {
+   "classes": [], 
+   "codepoint": "U+F77B"
+  }, 
+  "U+F780": {
+   "classes": [], 
+   "codepoint": "U+F780"
+  }, 
+  "U+F781": {
+   "classes": [], 
+   "codepoint": "U+F781"
+  }, 
+  "U+F782": {
+   "classes": [], 
+   "codepoint": "U+F782"
+  }, 
+  "U+F783": {
+   "classes": [], 
+   "codepoint": "U+F783"
+  }, 
+  "U+F784": {
+   "classes": [], 
+   "codepoint": "U+F784"
+  }, 
+  "U+F785": {
+   "classes": [], 
+   "codepoint": "U+F785"
+  }, 
+  "U+F786": {
+   "classes": [], 
+   "codepoint": "U+F786"
+  }, 
+  "U+F787": {
+   "classes": [], 
+   "codepoint": "U+F787"
+  }, 
+  "U+F788": {
+   "classes": [], 
+   "codepoint": "U+F788"
+  }, 
+  "U+F789": {
+   "classes": [], 
+   "codepoint": "U+F789"
+  }, 
+  "U+F78A": {
+   "classes": [], 
+   "codepoint": "U+F78A"
+  }, 
+  "U+F78B": {
+   "classes": [], 
+   "codepoint": "U+F78B"
+  }, 
+  "U+F78C": {
+   "classes": [], 
+   "codepoint": "U+F78C"
+  }, 
+  "U+F78D": {
+   "classes": [], 
+   "codepoint": "U+F78D"
+  }, 
+  "U+F78E": {
+   "classes": [], 
+   "codepoint": "U+F78E"
+  }, 
+  "U+F78F": {
+   "classes": [], 
+   "codepoint": "U+F78F"
+  }, 
+  "U+F790": {
+   "classes": [], 
+   "codepoint": "U+F790"
+  }, 
+  "U+F791": {
+   "classes": [], 
+   "codepoint": "U+F791"
+  }, 
+  "U+F792": {
+   "classes": [], 
+   "codepoint": "U+F792"
+  }, 
+  "U+F793": {
+   "classes": [], 
+   "codepoint": "U+F793"
+  }, 
+  "U+F794": {
+   "classes": [], 
+   "codepoint": "U+F794"
+  }, 
+  "U+F795": {
+   "classes": [], 
+   "codepoint": "U+F795"
+  }, 
+  "U+F796": {
+   "classes": [], 
+   "codepoint": "U+F796"
+  }, 
+  "U+F797": {
+   "classes": [], 
+   "codepoint": "U+F797"
+  }, 
+  "U+F798": {
+   "classes": [], 
+   "codepoint": "U+F798"
+  }, 
+  "U+F799": {
+   "classes": [], 
+   "codepoint": "U+F799"
+  }, 
+  "U+F79A": {
+   "classes": [], 
+   "codepoint": "U+F79A"
+  }, 
+  "U+F79B": {
+   "classes": [], 
+   "codepoint": "U+F79B"
+  }, 
+  "U+F79C": {
+   "classes": [], 
+   "codepoint": "U+F79C"
+  }, 
+  "U+F79D": {
+   "classes": [], 
+   "codepoint": "U+F79D"
+  }, 
+  "U+F79E": {
+   "classes": [], 
+   "codepoint": "U+F79E"
+  }, 
+  "U+F79F": {
+   "classes": [], 
+   "codepoint": "U+F79F"
+  }, 
+  "U+F7A0": {
+   "classes": [], 
+   "codepoint": "U+F7A0"
+  }, 
+  "U+F7A1": {
+   "classes": [], 
+   "codepoint": "U+F7A1"
+  }, 
+  "U+F7A2": {
+   "classes": [], 
+   "codepoint": "U+F7A2"
+  }, 
+  "U+F7A3": {
+   "classes": [], 
+   "codepoint": "U+F7A3"
+  }, 
+  "U+F7A4": {
+   "classes": [], 
+   "codepoint": "U+F7A4"
+  }, 
+  "U+F7A5": {
+   "classes": [], 
+   "codepoint": "U+F7A5"
+  }, 
+  "U+F7A6": {
+   "classes": [], 
+   "codepoint": "U+F7A6"
+  }, 
+  "U+F7A7": {
+   "classes": [], 
+   "codepoint": "U+F7A7"
+  }, 
+  "U+F7A8": {
+   "classes": [], 
+   "codepoint": "U+F7A8"
+  }, 
+  "U+F7A9": {
+   "classes": [], 
+   "codepoint": "U+F7A9"
+  }, 
+  "U+F7AA": {
+   "classes": [], 
+   "codepoint": "U+F7AA"
+  }, 
+  "U+F7AC": {
+   "classes": [], 
+   "codepoint": "U+F7AC"
+  }, 
+  "U+F7AD": {
+   "classes": [], 
+   "codepoint": "U+F7AD"
+  }, 
+  "U+F7AE": {
+   "classes": [], 
+   "codepoint": "U+F7AE"
+  }, 
+  "U+F7AF": {
+   "classes": [], 
+   "codepoint": "U+F7AF"
+  }, 
+  "U+F7B0": {
+   "classes": [], 
+   "codepoint": "U+F7B0"
+  }, 
+  "U+F7B1": {
+   "classes": [], 
+   "codepoint": "U+F7B1"
+  }, 
+  "U+F7B2": {
+   "classes": [], 
+   "codepoint": "U+F7B2"
+  }, 
+  "U+F7B3": {
+   "classes": [], 
+   "codepoint": "U+F7B3"
+  }, 
+  "U+F7B6": {
+   "classes": [], 
+   "codepoint": "U+F7B6"
+  }, 
+  "U+F7B7": {
+   "classes": [], 
+   "codepoint": "U+F7B7"
+  }, 
+  "U+F7B8": {
+   "classes": [], 
+   "codepoint": "U+F7B8"
+  }, 
+  "U+F7B9": {
+   "classes": [], 
+   "codepoint": "U+F7B9"
+  }, 
+  "U+F7BA": {
+   "classes": [], 
+   "codepoint": "U+F7BA"
+  }, 
+  "U+F7BB": {
+   "classes": [], 
+   "codepoint": "U+F7BB"
+  }, 
+  "U+F7BC": {
+   "classes": [], 
+   "codepoint": "U+F7BC"
+  }, 
+  "U+F7BD": {
+   "classes": [], 
+   "codepoint": "U+F7BD"
+  }, 
+  "accidentalDoubleFlatParens": {
+   "classes": [], 
+   "codepoint": "U+F5D9"
+  }, 
+  "accidentalDoubleSharpParens": {
+   "classes": [], 
+   "codepoint": "U+F5D8"
+  }, 
+  "accidentalFlatParens": {
+   "classes": [], 
+   "codepoint": "U+F5D5"
+  }, 
+  "accidentalNaturalParens": {
+   "classes": [], 
+   "codepoint": "U+F5D6"
+  }, 
+  "accidentalSharpParens": {
+   "classes": [], 
+   "codepoint": "U+F5D7"
+  }, 
+  "flag8thDownStraight": {
+   "classes": [], 
+   "codepoint": "U+F411"
+  }, 
+  "flag8thUpStraight": {
+   "classes": [], 
+   "codepoint": "U+F40F"
+  }, 
+  "noteheadBlackParens": {
+   "classes": [], 
+   "codepoint": "U+F5D1"
+  }, 
+  "noteheadHalfParens": {
+   "classes": [], 
+   "codepoint": "U+F5D2"
+  }, 
+  "timeSig0Large": {
+   "classes": [], 
+   "codepoint": "U+F440"
+  }, 
+  "timeSig1Large": {
+   "classes": [], 
+   "codepoint": "U+F441"
+  }, 
+  "timeSig2Large": {
+   "classes": [], 
+   "codepoint": "U+F442"
+  }, 
+  "timeSig3Large": {
+   "classes": [], 
+   "codepoint": "U+F443"
+  }, 
+  "timeSig4Large": {
+   "classes": [], 
+   "codepoint": "U+F444"
+  }, 
+  "timeSig5Large": {
+   "classes": [], 
+   "codepoint": "U+F445"
+  }, 
+  "timeSig6Large": {
+   "classes": [], 
+   "codepoint": "U+F446"
+  }, 
+  "timeSig7Large": {
+   "classes": [], 
+   "codepoint": "U+F447"
+  }, 
+  "timeSig8Large": {
+   "classes": [], 
+   "codepoint": "U+F448"
+  }, 
+  "timeSig9Large": {
+   "classes": [], 
+   "codepoint": "U+F449"
+  }, 
+  "timeSigCommonLarge": {
+   "classes": [], 
+   "codepoint": "U+F44A"
+  }, 
+  "timeSigCutCommonLarge": {
+   "classes": [], 
+   "codepoint": "U+F44B"
+  }, 
+  "timeSigPlusLarge": {
+   "classes": [], 
+   "codepoint": "U+F44C"
+  }
+ }
+}

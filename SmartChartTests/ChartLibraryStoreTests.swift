@@ -101,4 +101,26 @@ final class ChartLibraryStoreTests: XCTestCase {
 
         XCTAssertEqual(store.selectedChartID, charts.last?.id)
     }
+
+    func testUniversalRhythmGuideSupportsExpectedReferenceSymbols() {
+        XCTAssertEqual(
+            Set(RhythmicNotationPrimitive.supportedUniversalGuidePrimitives),
+            Set([
+                .wholeNote,
+                .halfNote,
+                .dottedHalfNote,
+                .quarterNote,
+                .dottedQuarterNote,
+                .eighthNote,
+                .wholeRest,
+                .quarterRest,
+                .halfRest,
+                .eighthRest
+            ])
+        )
+        XCTAssertEqual(
+            Set(RhythmicNotationPrimitive.pendingUniversalGuidePrimitives),
+            Set([.tie])
+        )
+    }
 }

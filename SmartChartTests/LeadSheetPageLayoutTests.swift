@@ -63,6 +63,27 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
     }
 
+    func testEngravingPresetChangesDefaultMeasureSpacing() throws {
+        var compactChart = makeBlankLeadSheet()
+        compactChart.setEngravingPreset(.compact)
+        var wideChart = makeBlankLeadSheet()
+        wideChart.setEngravingPreset(.wide)
+
+        let compactLayout = LeadSheetPageLayoutEngine.pageLayout(
+            for: compactChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let wideLayout = LeadSheetPageLayoutEngine.pageLayout(
+            for: wideChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let compactMeasure = try XCTUnwrap(compactLayout.systems.first?.measures.first)
+        let wideMeasure = try XCTUnwrap(wideLayout.systems.first?.measures.first)
+
+        XCTAssertLessThan(compactMeasure.frame.width, wideMeasure.frame.width)
+    }
+
     func testLeadSheetLayoutKeepsGrowingMeasuresOnFirstSystemBeforeWrapping() throws {
         var chart = makeBlankLeadSheet()
         _ = chart.commitOpenMeasure()
@@ -163,6 +184,201 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertEqual(trailingChangeMeasure.sourceMeasureID, thirdMeasureID)
         XCTAssertEqual(trailingChangeMeasure.trailingMeterChange, Meter(numerator: 3, denominator: 4))
         XCTAssertNotNil(trailingChangeMeasure.trailingMeterChangeFrame)
+    }
+
+    func testLeadSheetLayoutRendersQuantizedRhythmMapAsSlashNotation() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.quarter, .quarter, .eighth, .eighth, .quarterRest],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+
+        XCTAssertEqual(firstMeasure.noteLayouts.count, 5)
+        XCTAssertEqual(firstMeasure.noteLayouts[0].symbolStyle, .slash)
+        XCTAssertEqual(firstMeasure.noteLayouts[2].symbolStyle, .slash)
+        XCTAssertNotNil(firstMeasure.noteLayouts[2].beamEndPoint)
+        XCTAssertEqual(firstMeasure.noteLayouts[2].flagStyle, .none)
+        XCTAssertEqual(firstMeasure.noteLayouts[3].flagStyle, .none)
+        XCTAssertEqual(firstMeasure.noteLayouts[4].symbolStyle, .quarterRest)
+    }
+
+    func testLeadSheetLayoutKeepsRestGlyphsUprightInsideStaffBody() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.eighthRest, .eighthRest, .quarterRest, .halfRest],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let restLayouts = firstMeasure.noteLayouts
+
+        XCTAssertEqual(restLayouts.map(\.symbolStyle), [.eighthRest, .eighthRest, .quarterRest, .halfRest])
+        let topLineY = try XCTUnwrap(firstSystem.staffLineYPositions.first)
+        let bottomLineY = try XCTUnwrap(firstSystem.staffLineYPositions.last)
+        let lineSpacing = (bottomLineY - topLineY) / 4
+        let staffMidY = (topLineY + bottomLineY) / 2
+        let eighthRest = restLayouts[0]
+        let quarterRest = restLayouts[2]
+
+        XCTAssertGreaterThan(eighthRest.noteheadFrame.minY, topLineY)
+        XCTAssertLessThan(eighthRest.noteheadFrame.maxY, bottomLineY + 2)
+        XCTAssertNil(eighthRest.stemStart)
+        XCTAssertNil(eighthRest.stemEnd)
+        XCTAssertGreaterThan(quarterRest.noteheadFrame.minY, topLineY + lineSpacing * 0.5)
+        XCTAssertLessThan(quarterRest.noteheadFrame.maxY, bottomLineY + 2)
+        XCTAssertEqual(quarterRest.noteheadFrame.midY, staffMidY, accuracy: lineSpacing * 0.75)
+        XCTAssertNil(quarterRest.stemStart)
+        XCTAssertNil(quarterRest.stemEnd)
+    }
+
+    func testLeadSheetLayoutUsesDownwardStemsForRhythmicSlashNotation() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.quarter, .eighth, .eighth, .half],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let stemmedSlashNotes = firstMeasure.noteLayouts.filter {
+            $0.symbolStyle == .slash && $0.stemStart != nil
+        }
+
+        XCTAssertEqual(stemmedSlashNotes.count, 4)
+        for note in stemmedSlashNotes {
+            let stemStart = try XCTUnwrap(note.stemStart)
+            let stemEnd = try XCTUnwrap(note.stemEnd)
+            XCTAssertFalse(note.stemGoesUp)
+            XCTAssertLessThan(stemStart.x, note.noteheadFrame.midX)
+            XCTAssertGreaterThan(stemStart.y, note.noteheadFrame.midY)
+            XCTAssertGreaterThan(stemEnd.y, stemStart.y)
+        }
+    }
+
+    func testLeadSheetLayoutCentersQuarterRhythmsInFourFourBeatLanes() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.quarter, .quarter, .quarter, .quarter],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let centers = firstMeasure.noteLayouts.map(\.noteheadFrame.midX)
+
+        XCTAssertEqual(centers.count, 4)
+        let usableWidth = firstMeasure.staffFrame.width - 16
+        let expectedStep = usableWidth / 4
+        XCTAssertEqual(centers[0], firstMeasure.staffFrame.minX + 8 + expectedStep * 0.5, accuracy: 0.001)
+        XCTAssertEqual(centers[1] - centers[0], expectedStep, accuracy: 0.001)
+        XCTAssertEqual(centers[2] - centers[1], expectedStep, accuracy: 0.001)
+        XCTAssertEqual(centers[3] - centers[2], expectedStep, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.staffFrame.maxX - centers[3], centers[0] - firstMeasure.staffFrame.minX, accuracy: 0.001)
+    }
+
+    func testLeadSheetLayoutCentersQuarterRhythmsInThreeFourBeatLanes() throws {
+        var chart = Chart.draft(title: "Three Four")
+        chart.completeInitialSetup(
+            title: "Three Four",
+            key: .cMajor,
+            meter: Meter(numerator: 3, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.quarter, .quarter, .quarter],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let centers = firstMeasure.noteLayouts.map(\.noteheadFrame.midX)
+
+        XCTAssertEqual(centers.count, 3)
+        let usableWidth = firstMeasure.staffFrame.width - 16
+        let expectedStep = usableWidth / 3
+        XCTAssertEqual(centers[0], firstMeasure.staffFrame.minX + 8 + expectedStep * 0.5, accuracy: 0.001)
+        XCTAssertEqual(centers[1] - centers[0], expectedStep, accuracy: 0.001)
+        XCTAssertEqual(centers[2] - centers[1], expectedStep, accuracy: 0.001)
+    }
+
+    func testLeadSheetLayoutPlacesLongRhythmsAtTheirStartingBeatLanes() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.half, .half],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let centers = firstMeasure.noteLayouts.map(\.noteheadFrame.midX)
+
+        XCTAssertEqual(centers.count, 2)
+        let usableWidth = firstMeasure.staffFrame.width - 16
+        let beatStep = usableWidth / 4
+        XCTAssertEqual(centers[0], firstMeasure.staffFrame.minX + 8 + beatStep * 0.5, accuracy: 0.001)
+        XCTAssertEqual(centers[1], firstMeasure.staffFrame.minX + 8 + beatStep * 2.5, accuracy: 0.001)
+    }
+
+    func testLeadSheetLayoutDoesNotBeamEighthNotesAcrossBeatBoundary() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.dottedQuarter, .eighth, .eighth, .dottedQuarter],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+
+        XCTAssertNil(firstMeasure.noteLayouts[1].beamEndPoint)
+        XCTAssertEqual(firstMeasure.noteLayouts[1].flagStyle, .single)
+        XCTAssertNil(firstMeasure.noteLayouts[2].beamEndPoint)
+        XCTAssertEqual(firstMeasure.noteLayouts[2].flagStyle, .single)
     }
 
     private func makeBlankLeadSheet() -> Chart {

@@ -27,8 +27,8 @@ targets:
       - path: SmartChart
         excludes:
           - Resources
-    resources:
       - path: SmartChart/Resources
+        buildPhase: resources
   SmartChartTests:
     type: bundle.unit-test
     platform: iOS

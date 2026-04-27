@@ -8,6 +8,7 @@ struct Chart: Identifiable, Codable, Hashable {
     var chartType: ChartType
     var documentKey: DocumentKey
     var documentFont: ChartFontPreset
+    var notationFont: NotationFontPreset
     var defaultTranspositionView: TranspositionView
     var defaultMeter: Meter
     var staffStyle: StaffStyle = .fiveLine
@@ -18,6 +19,7 @@ struct Chart: Identifiable, Codable, Hashable {
     var cueTexts: [CueText]
     var roadmapObjects: [RoadmapObject]
     var stylePreset: StylePreset
+    var engravingPreset: EngravingPreset
     var pageHandwrittenNotationData: Data?
     var createdAt: Date
     var updatedAt: Date
@@ -34,6 +36,7 @@ struct Chart: Identifiable, Codable, Hashable {
         chartType: ChartType,
         documentKey: DocumentKey,
         documentFont: ChartFontPreset,
+        notationFont: NotationFontPreset = .petaluma,
         defaultTranspositionView: TranspositionView,
         defaultMeter: Meter,
         staffStyle: StaffStyle = .fiveLine,
@@ -44,6 +47,7 @@ struct Chart: Identifiable, Codable, Hashable {
         cueTexts: [CueText],
         roadmapObjects: [RoadmapObject],
         stylePreset: StylePreset,
+        engravingPreset: EngravingPreset = .balanced,
         pageHandwrittenNotationData: Data? = nil,
         createdAt: Date,
         updatedAt: Date
@@ -55,6 +59,7 @@ struct Chart: Identifiable, Codable, Hashable {
         self.chartType = chartType
         self.documentKey = documentKey
         self.documentFont = documentFont
+        self.notationFont = notationFont
         self.defaultTranspositionView = defaultTranspositionView
         self.defaultMeter = defaultMeter
         self.staffStyle = staffStyle
@@ -65,6 +70,7 @@ struct Chart: Identifiable, Codable, Hashable {
         self.cueTexts = cueTexts
         self.roadmapObjects = roadmapObjects
         self.stylePreset = stylePreset
+        self.engravingPreset = engravingPreset
         self.pageHandwrittenNotationData = pageHandwrittenNotationData
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -78,6 +84,7 @@ struct Chart: Identifiable, Codable, Hashable {
         case chartType
         case documentKey
         case documentFont
+        case notationFont
         case defaultTranspositionView
         case defaultMeter
         case staffStyle
@@ -88,6 +95,7 @@ struct Chart: Identifiable, Codable, Hashable {
         case cueTexts
         case roadmapObjects
         case stylePreset
+        case engravingPreset
         case pageHandwrittenNotationData
         case createdAt
         case updatedAt
@@ -102,6 +110,7 @@ struct Chart: Identifiable, Codable, Hashable {
         chartType = try container.decode(ChartType.self, forKey: .chartType)
         documentKey = try container.decode(DocumentKey.self, forKey: .documentKey)
         documentFont = try container.decode(ChartFontPreset.self, forKey: .documentFont)
+        notationFont = try container.decodeIfPresent(NotationFontPreset.self, forKey: .notationFont) ?? .petaluma
         defaultTranspositionView = try container.decode(TranspositionView.self, forKey: .defaultTranspositionView)
         defaultMeter = try container.decode(Meter.self, forKey: .defaultMeter)
         staffStyle = try container.decodeIfPresent(StaffStyle.self, forKey: .staffStyle) ?? .fiveLine
@@ -112,6 +121,7 @@ struct Chart: Identifiable, Codable, Hashable {
         cueTexts = try container.decode([CueText].self, forKey: .cueTexts)
         roadmapObjects = try container.decode([RoadmapObject].self, forKey: .roadmapObjects)
         stylePreset = try container.decode(StylePreset.self, forKey: .stylePreset)
+        engravingPreset = try container.decodeIfPresent(EngravingPreset.self, forKey: .engravingPreset) ?? .balanced
         pageHandwrittenNotationData = try container.decodeIfPresent(Data.self, forKey: .pageHandwrittenNotationData)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)

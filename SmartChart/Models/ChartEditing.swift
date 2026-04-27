@@ -28,6 +28,21 @@ extension Chart {
         updatedAt = .now
     }
 
+    mutating func setStylePreset(_ preset: StylePreset) {
+        stylePreset = preset
+        updatedAt = .now
+    }
+
+    mutating func setNotationFont(_ preset: NotationFontPreset) {
+        notationFont = preset
+        updatedAt = .now
+    }
+
+    mutating func setEngravingPreset(_ preset: EngravingPreset) {
+        engravingPreset = preset
+        updatedAt = .now
+    }
+
     mutating func setDocumentKey(_ key: DocumentKey) {
         documentKey = key
         updatedAt = .now
@@ -135,6 +150,77 @@ extension Chart {
         pageHandwrittenNotationData = normalizedData
         updatedAt = .now
         return true
+    }
+
+    @discardableResult
+    mutating func setMeasureHandwrittenRhythmicNotationDrawing(
+        _ drawingData: Data?,
+        for measureID: UUID
+    ) -> Bool {
+        guard let location = measureLocation(id: measureID) else {
+            return false
+        }
+
+        let normalizedData = drawingData?.isEmpty == true ? nil : drawingData
+        guard systems[location.systemIndex].measures[location.measureIndex].handwrittenRhythmicNotationData != normalizedData else {
+            return false
+        }
+
+        systems[location.systemIndex].measures[location.measureIndex].handwrittenRhythmicNotationData = normalizedData
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func setMeasureRhythmMap(
+        _ values: [RhythmValue]?,
+        drawingData: Data? = nil,
+        for measureID: UUID
+    ) -> Bool {
+        guard let location = measureLocation(id: measureID) else {
+            return false
+        }
+
+        let normalizedMap = values.map { MeasureRhythmMap(values: $0, drawingData: drawingData) }
+        guard systems[location.systemIndex].measures[location.measureIndex].rhythmMap != normalizedMap else {
+            return false
+        }
+
+        systems[location.systemIndex].measures[location.measureIndex].rhythmMap = normalizedMap
+        systems[location.systemIndex].measures[location.measureIndex]
+            .clearInvalidRhythmSlotAssignments(defaultMeter: defaultMeter)
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func clearMeasureRhythmicNotation(
+        for measureID: UUID,
+        clearRhythmMap: Bool
+    ) -> Bool {
+        guard let location = measureLocation(id: measureID) else {
+            return false
+        }
+
+        var didChange = false
+        if systems[location.systemIndex].measures[location.measureIndex].handwrittenRhythmicNotationData != nil {
+            systems[location.systemIndex].measures[location.measureIndex].handwrittenRhythmicNotationData = nil
+            didChange = true
+        }
+
+        if clearRhythmMap,
+           systems[location.systemIndex].measures[location.measureIndex].rhythmMap != nil {
+            systems[location.systemIndex].measures[location.measureIndex].rhythmMap = nil
+            systems[location.systemIndex].measures[location.measureIndex]
+                .clearInvalidRhythmSlotAssignments(defaultMeter: defaultMeter)
+            didChange = true
+        }
+
+        if didChange {
+            updatedAt = .now
+        }
+
+        return didChange
     }
 
     @discardableResult
@@ -328,6 +414,7 @@ extension Chart {
 
         return measure.chordEvents.isEmpty
             && measure.rhythmMap == nil
+            && measure.handwrittenRhythmicNotationData == nil
             && measure.cueTextIDs.isEmpty
             && measure.roadmapObjectIDs.isEmpty
     }

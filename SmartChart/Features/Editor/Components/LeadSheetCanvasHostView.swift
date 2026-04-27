@@ -8,6 +8,8 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     @Binding var selectedMeasureID: UUID?
     let interactionMode: EditorCanvasMode
     var onTimeSignatureTargetRequested: ((UUID) -> Void)? = nil
+    var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)? = nil
+    var onRhythmicNotationValidationError: ((String) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
         Coordinator(chart: $chart, selectedMeasureID: $selectedMeasureID)
@@ -25,6 +27,8 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
             context.coordinator.chart.wrappedValue = updatedChart
         }
         view.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
+        view.onRhythmicNotationProposal = onRhythmicNotationProposal
+        view.onRhythmicNotationValidationError = onRhythmicNotationValidationError
         return view
     }
 
@@ -39,6 +43,8 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
             context.coordinator.chart.wrappedValue = updatedChart
         }
         uiView.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
+        uiView.onRhythmicNotationProposal = onRhythmicNotationProposal
+        uiView.onRhythmicNotationValidationError = onRhythmicNotationValidationError
     }
 
     final class Coordinator {
@@ -68,6 +74,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 return
             }
 
+            if shouldFinalizeRhythmicNotation(from: oldValue, to: selectedMeasureID),
+               let oldValue,
+               !finalizeRhythmicNotationIfNeeded(for: oldValue) {
+                restoreSelectedMeasureID(oldValue)
+                return
+            }
+
+            syncPageInkCanvas()
             setNeedsDisplay()
         }
     }
@@ -77,7 +91,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 return
             }
 
-            if !interactionMode.allowsPageInkEditing {
+            if oldValue.allowsAnyInkEditing && !interactionMode.allowsAnyInkEditing {
                 persistActiveInkIfNeeded()
             }
 
@@ -89,6 +103,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     var onMeasureSelectionChanged: ((UUID?) -> Void)?
     var onChartChanged: ((Chart) -> Void)?
     var onTimeSignatureTargetRequested: ((UUID) -> Void)?
+    var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)?
+    var onRhythmicNotationValidationError: ((String) -> Void)?
 
     private var pageLayout: LeadSheetPageLayout?
     private let pageInkCanvasView = PKCanvasView()
@@ -103,6 +119,11 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private var isSyncingInkCanvasFromModel = false
     private var pendingInkPersistWorkItem: DispatchWorkItem?
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
+    private var isRestoringSelection = false
+    private var isApplyingTapSelection = false
+    private var notationRenderer: LeadSheetNotationRenderer {
+        LeadSheetNotationRenderer(chart: chart)
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -125,12 +146,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return
         }
 
+        let renderer = notationRenderer
         context.clear(rect)
-        drawPaper(pageLayout.paperFrame, in: context)
-        drawHeader(pageLayout.header)
+        renderer.drawPaper(pageLayout.paperFrame, in: context)
+        renderer.drawHeader(pageLayout.header)
 
         for system in pageLayout.systems {
-            drawSystem(system)
+            drawSystem(system, using: renderer)
         }
 
         if !interactionMode.allowsPageInkEditing {
@@ -139,7 +161,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if interactionMode.showsMeasureResizeHandles,
            let selectedMeasure = selectedMeasureLayout() {
-            drawMeasureResizeHandles(for: selectedMeasure)
+            drawMeasureResizeHandles(for: selectedMeasure, using: renderer)
         }
     }
 
@@ -179,115 +201,33 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         setNeedsDisplay()
     }
 
-    private func drawPaper(_ frame: CGRect, in context: CGContext) {
-        context.saveGState()
-        let shadowColor = UIColor.black.withAlphaComponent(0.12).cgColor
-        context.setShadow(offset: CGSize(width: 0, height: 8), blur: 24, color: shadowColor)
-        let shadowPath = UIBezierPath(roundedRect: frame, cornerRadius: 4)
-        UIColor.white.setFill()
-        shadowPath.fill()
-        context.restoreGState()
-
-        let paperPath = UIBezierPath(rect: frame)
-        UIColor(white: 0.995, alpha: 1).setFill()
-        paperPath.fill()
-        UIColor(white: 0.35, alpha: 1).setStroke()
-        paperPath.lineWidth = 1.2
-        paperPath.stroke()
-    }
-
-    private func drawHeader(_ header: LeadSheetHeaderLayout) {
-        let title = chart.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        drawText(
-            title.isEmpty ? "UNTITLED CHART" : title.uppercased(),
-            in: header.titleFrame,
-            font: markerFont(size: 38, weight: .regular),
-            color: UIColor(white: 0.06, alpha: 1),
-            alignment: .center
-        )
-
-        if let composerFrame = header.composerFrame,
-           let composerCredit = normalizedText(chart.composerCredit) {
-            drawText(
-                "—\(composerCredit)",
-                in: composerFrame,
-                font: markerFont(size: 16, weight: .regular),
-                color: UIColor(white: 0.12, alpha: 1),
-                alignment: .right
-            )
-        }
-
-        if let styleNoteFrame = header.styleNoteFrame,
-           let styleNote = LeadSheetPageLayoutEngine.resolvedStyleNote(for: chart) {
-            drawText(
-                "(\(styleNote))",
-                in: styleNoteFrame,
-                font: markerFont(size: 15, weight: .regular),
-                color: UIColor(white: 0.14, alpha: 1)
-            )
-        }
-
-        drawText(
-            chart.documentKey.transposed(for: chart.defaultTranspositionView).displayText.uppercased(),
-            in: header.keyFrame,
-            font: markerFont(size: 14, weight: .regular),
-            color: UIColor(white: 0.14, alpha: 1)
-        )
-        drawText(
-            chart.defaultMeter.displayText,
-            in: header.meterFrame,
-            font: markerFont(size: 14, weight: .regular),
-            color: UIColor(white: 0.14, alpha: 1)
-        )
-
-        let underlinePath = UIBezierPath()
-        underlinePath.move(to: CGPoint(x: header.titleFrame.minX + 28, y: header.titleFrame.maxY - 4))
-        underlinePath.addLine(to: CGPoint(x: header.titleFrame.maxX - 28, y: header.titleFrame.maxY - 4))
-        underlinePath.lineWidth = 2.6
-        UIColor(white: 0.08, alpha: 1).setStroke()
-        underlinePath.stroke()
-    }
-
-    private func drawSystem(_ system: LeadSheetSystemLayout) {
+    private func drawSystem(_ system: LeadSheetSystemLayout, using renderer: LeadSheetNotationRenderer) {
         if let sectionTextFrame = system.sectionTextFrame,
            let sectionText = system.sectionText {
-            drawText(
-                sectionText.uppercased(),
-                in: sectionTextFrame,
-                font: markerFont(size: 15, weight: .regular),
-                color: UIColor(white: 0.12, alpha: 1)
-            )
+            renderer.drawSectionText(sectionText, in: sectionTextFrame)
         }
 
         if let roadmapTextFrame = system.roadmapTextFrame,
            let roadmapText = system.roadmapText {
-            drawText(
-                roadmapText.uppercased(),
-                in: roadmapTextFrame,
-                font: markerFont(size: 13, weight: .regular),
-                color: UIColor(white: 0.22, alpha: 1),
-                alignment: .right
-            )
+            renderer.drawRoadmapText(roadmapText, in: roadmapTextFrame)
         }
 
-        drawStaffLines(for: system)
+        renderer.drawStaffLines(for: system)
 
         if let clefFrame = system.clefFrame {
-            drawText(
-                "𝄞",
-                in: clefFrame,
-                font: UIFont.systemFont(ofSize: 40),
-                color: UIColor(white: 0.08, alpha: 1),
-                alignment: .center
-            )
+            renderer.drawClef(in: clefFrame)
         }
 
         if let timeSignatureFrame = system.timeSignatureFrame {
-            drawStackedTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
+            renderer.drawTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
         }
 
         if let firstMeasure = system.measures.first {
-            drawSingleBarline(at: firstMeasure.frame.minX, from: firstMeasure.staffFrame.minY, to: firstMeasure.staffFrame.maxY, width: 1.5)
+            renderer.drawSingleBarline(
+                at: firstMeasure.frame.minX,
+                from: firstMeasure.staffFrame.minY,
+                to: firstMeasure.staffFrame.maxY
+            )
         }
 
         for measure in system.measures {
@@ -296,27 +236,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             }
 
             for chordLayout in measure.chordLayouts {
-                drawText(
-                    chordLayout.text,
-                    in: chordLayout.frame,
-                    font: markerFont(size: 18, weight: .regular),
-                    color: UIColor(white: 0.06, alpha: 1)
-                )
+                renderer.drawChord(chordLayout)
             }
 
             for noteLayout in measure.noteLayouts {
-                drawNote(noteLayout)
+                renderer.drawNote(noteLayout)
             }
+
+            drawSavedMeasureRhythmicNotation(measure)
 
             if let trailingMeterChange = measure.trailingMeterChange,
                let trailingMeterChangeFrame = measure.trailingMeterChangeFrame {
-                drawStackedTimeSignature(trailingMeterChange, in: trailingMeterChangeFrame)
+                renderer.drawTimeSignature(trailingMeterChange, in: trailingMeterChangeFrame)
             }
 
             if measure.isOpen {
-                drawOpenMeasureHint(measure)
+                renderer.drawOpenMeasureHint(measure)
             } else {
-                drawBarline(measure.barlineAfter, in: measure.trailingBarlineFrame)
+                renderer.drawBarline(measure.barlineAfter, in: measure.trailingBarlineFrame)
             }
         }
     }
@@ -331,13 +268,20 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         selectionPath.stroke()
     }
 
-    private func drawMeasureResizeHandles(for measure: LeadSheetMeasureLayout) {
+    private func drawMeasureResizeHandles(
+        for measure: LeadSheetMeasureLayout,
+        using renderer: LeadSheetNotationRenderer
+    ) {
         let handleRects = measureResizeHandleRects(for: measure)
-        drawMeasureResizeHandle(handleRects.left, symbol: "⇠")
-        drawMeasureResizeHandle(handleRects.right, symbol: "⇢")
+        drawMeasureResizeHandle(handleRects.left, symbol: "⇠", using: renderer)
+        drawMeasureResizeHandle(handleRects.right, symbol: "⇢", using: renderer)
     }
 
-    private func drawMeasureResizeHandle(_ rect: CGRect, symbol: String) {
+    private func drawMeasureResizeHandle(
+        _ rect: CGRect,
+        symbol: String,
+        using renderer: LeadSheetNotationRenderer
+    ) {
         let handlePath = UIBezierPath(roundedRect: rect, cornerRadius: 8)
         UIColor.white.withAlphaComponent(0.95).setFill()
         handlePath.fill()
@@ -345,7 +289,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         handlePath.lineWidth = 1.2
         handlePath.stroke()
 
-        drawText(
+        renderer.drawText(
             symbol,
             in: rect.insetBy(dx: 1, dy: 3),
             font: UIFont.systemFont(ofSize: 16, weight: .semibold),
@@ -370,188 +314,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         image.draw(in: writingFrame)
     }
 
-    private func drawStackedTimeSignature(_ meter: Meter, in frame: CGRect) {
-        let numeratorRect = CGRect(
-            x: frame.minX,
-            y: frame.minY,
-            width: frame.width,
-            height: frame.height / 2
+    private func drawSavedMeasureRhythmicNotation(_ measure: LeadSheetMeasureLayout) {
+        guard let sourceMeasureID = measure.sourceMeasureID,
+              let drawingData = chart.measure(id: sourceMeasureID)?.handwrittenRhythmicNotationData,
+              let drawing = try? PKDrawing(data: drawingData),
+              !drawing.strokes.isEmpty else {
+            return
+        }
+
+        if interactionMode.allowsDirectRhythmicNotationInk,
+           selectedMeasureID == sourceMeasureID {
+            return
+        }
+
+        let image = drawing.image(
+            from: CGRect(origin: .zero, size: measure.writableFrame.size),
+            scale: UIScreen.main.scale
         )
-        let denominatorRect = CGRect(
-            x: frame.minX,
-            y: frame.midY - 2,
-            width: frame.width,
-            height: frame.height / 2
-        )
-
-        drawText(
-            "\(meter.numerator)",
-            in: numeratorRect,
-            font: markerFont(size: 22, weight: .regular),
-            color: UIColor(white: 0.08, alpha: 1),
-            alignment: .center
-        )
-        drawText(
-            "\(meter.denominator)",
-            in: denominatorRect,
-            font: markerFont(size: 22, weight: .regular),
-            color: UIColor(white: 0.08, alpha: 1),
-            alignment: .center
-        )
-    }
-
-    private func drawStaffLines(for system: LeadSheetSystemLayout) {
-        for lineY in system.staffLineYPositions {
-            let path = UIBezierPath()
-            path.move(to: CGPoint(x: system.frame.minX, y: lineY))
-            path.addLine(to: CGPoint(x: system.frame.maxX, y: lineY))
-            path.lineWidth = 1
-            UIColor(white: 0.15, alpha: 1).setStroke()
-            path.stroke()
-        }
-    }
-
-    private func drawBarline(_ barline: BarlineType, in frame: CGRect) {
-        switch barline {
-        case .single:
-            drawSingleBarline(at: frame.midX, from: frame.minY, to: frame.maxY, width: 1.4)
-        case .double:
-            drawSingleBarline(at: frame.midX - 2.5, from: frame.minY, to: frame.maxY, width: 1.1)
-            drawSingleBarline(at: frame.midX + 1.5, from: frame.minY, to: frame.maxY, width: 1.4)
-        case .final:
-            drawSingleBarline(at: frame.midX - 3.5, from: frame.minY, to: frame.maxY, width: 1.1)
-            drawSingleBarline(at: frame.midX + 1.5, from: frame.minY, to: frame.maxY, width: 2.6)
-        }
-    }
-
-    private func drawSingleBarline(at x: CGFloat, from startY: CGFloat, to endY: CGFloat, width: CGFloat) {
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: x, y: startY))
-        path.addLine(to: CGPoint(x: x, y: endY))
-        path.lineWidth = width
-        UIColor(white: 0.1, alpha: 1).setStroke()
-        path.stroke()
-    }
-
-    private func drawNote(_ noteLayout: LeadSheetNoteLayout) {
-        let notePath = UIBezierPath(ovalIn: noteLayout.noteheadFrame)
-
-        switch noteLayout.headStyle {
-        case .whole:
-            UIColor.white.setFill()
-            notePath.fill()
-            UIColor(white: 0.08, alpha: 1).setStroke()
-            notePath.lineWidth = 1.5
-            notePath.stroke()
-        case .half:
-            UIColor.white.setFill()
-            notePath.fill()
-            UIColor(white: 0.08, alpha: 1).setStroke()
-            notePath.lineWidth = 1.5
-            notePath.stroke()
-        case .filled:
-            UIColor(white: 0.05, alpha: 1).setFill()
-            notePath.fill()
-        }
-
-        if let stemStart = noteLayout.stemStart,
-           let stemEnd = noteLayout.stemEnd {
-            let stemPath = UIBezierPath()
-            stemPath.move(to: stemStart)
-            stemPath.addLine(to: stemEnd)
-            stemPath.lineWidth = 1.2
-            UIColor(white: 0.06, alpha: 1).setStroke()
-            stemPath.stroke()
-
-            if noteLayout.flagStyle == .single {
-                let flagPath = UIBezierPath()
-                if noteLayout.stemGoesUp {
-                    flagPath.move(to: stemEnd)
-                    flagPath.addCurve(
-                        to: CGPoint(x: stemEnd.x + 6, y: stemEnd.y + 10),
-                        controlPoint1: CGPoint(x: stemEnd.x + 8, y: stemEnd.y + 2),
-                        controlPoint2: CGPoint(x: stemEnd.x + 9, y: stemEnd.y + 7)
-                    )
-                } else {
-                    flagPath.move(to: stemEnd)
-                    flagPath.addCurve(
-                        to: CGPoint(x: stemEnd.x + 6, y: stemEnd.y - 10),
-                        controlPoint1: CGPoint(x: stemEnd.x + 8, y: stemEnd.y - 2),
-                        controlPoint2: CGPoint(x: stemEnd.x + 9, y: stemEnd.y - 7)
-                    )
-                }
-                flagPath.lineWidth = 1.2
-                UIColor(white: 0.06, alpha: 1).setStroke()
-                flagPath.stroke()
-            }
-        }
-
-        if let dotFrame = noteLayout.dotFrame {
-            let dotPath = UIBezierPath(ovalIn: dotFrame)
-            UIColor(white: 0.06, alpha: 1).setFill()
-            dotPath.fill()
-        }
-
-        if let tieFrame = noteLayout.tieFrame {
-            let tiePath = UIBezierPath()
-            tiePath.move(to: CGPoint(x: tieFrame.minX, y: tieFrame.midY))
-            tiePath.addCurve(
-                to: CGPoint(x: tieFrame.maxX, y: tieFrame.midY),
-                controlPoint1: CGPoint(x: tieFrame.minX + tieFrame.width * 0.28, y: tieFrame.maxY),
-                controlPoint2: CGPoint(x: tieFrame.maxX - tieFrame.width * 0.28, y: tieFrame.maxY)
-            )
-            tiePath.lineWidth = 1.1
-            UIColor(white: 0.06, alpha: 1).setStroke()
-            tiePath.stroke()
-        }
-    }
-
-    private func drawOpenMeasureHint(_ measure: LeadSheetMeasureLayout) {
-        let guidePath = UIBezierPath()
-        guidePath.move(to: CGPoint(x: measure.trailingBarlineFrame.midX, y: measure.staffFrame.minY))
-        guidePath.addLine(to: CGPoint(x: measure.trailingBarlineFrame.midX, y: measure.staffFrame.maxY))
-        guidePath.lineWidth = 1
-        guidePath.setLineDash([4, 4], count: 2, phase: 0)
-        UIColor(white: 0.55, alpha: 0.6).setStroke()
-        guidePath.stroke()
-    }
-
-    private func drawText(
-        _ text: String,
-        in rect: CGRect,
-        font: UIFont,
-        color: UIColor,
-        alignment: NSTextAlignment = .left
-    ) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = alignment
-        paragraphStyle.lineBreakMode = .byClipping
-
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: color,
-            .paragraphStyle: paragraphStyle
-        ]
-
-        (text as NSString).draw(
-            with: rect,
-            options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
-            attributes: attributes,
-            context: nil
-        )
-    }
-
-    private func markerFont(size: CGFloat, weight: UIFont.Weight) -> UIFont {
-        if let markerFelt = UIFont(name: "MarkerFelt-Wide", size: size) {
-            return markerFelt
-        }
-
-        return UIFont.systemFont(ofSize: size, weight: weight)
-    }
-
-    private func normalizedText(_ text: String?) -> String? {
-        let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed?.isEmpty == false ? trimmed : nil
+        image.draw(in: measure.writableFrame)
     }
 
     private func selectedMeasureLayout() -> LeadSheetMeasureLayout? {
@@ -559,9 +339,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return nil
         }
 
-        return pageLayout?.systems
+        return measureLayout(for: selectedMeasureID)
+    }
+
+    private func measureLayout(for measureID: UUID) -> LeadSheetMeasureLayout? {
+        pageLayout?.systems
             .flatMap(\.measures)
-            .first(where: { $0.sourceMeasureID == selectedMeasureID })
+            .first(where: { $0.sourceMeasureID == measureID })
     }
 
     private func measureResizeHandleRects(
@@ -629,11 +413,17 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         let location = recognizer.location(in: self)
-        let tappedMeasureID = pageLayout?.systems
-            .flatMap(\.measures)
-            .first(where: { $0.frame.insetBy(dx: -6, dy: -6).contains(location) })?
-            .sourceMeasureID
-        onMeasureSelectionChanged?(tappedMeasureID)
+        let tappedMeasure = measureLayout(at: location)
+        let tappedMeasureID = tappedMeasure?.sourceMeasureID
+
+        if shouldFinalizeRhythmicNotationTap(at: location, nextMeasureID: tappedMeasureID),
+           let activeMeasureID = selectedMeasureID,
+           !finalizeRhythmicNotationIfNeeded(for: activeMeasureID) {
+            restoreSelectedMeasureID(activeMeasureID)
+            return
+        }
+
+        applyTapSelection(tappedMeasureID)
 
         if interactionMode.showsTimeSignatureTargeting,
            let tappedMeasureID {
@@ -677,25 +467,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func syncPageInkCanvas() {
-        guard interactionMode.allowsPageInkEditing else {
-            pageInkCanvasView.isHidden = true
-            pageInkCanvasView.isUserInteractionEnabled = false
-            return
-        }
+        guard let activeInkScope = activeInkScope() else {
+            if !interactionMode.allowsAnyInkEditing {
+                pageInkCanvasView.isHidden = true
+                pageInkCanvasView.isUserInteractionEnabled = false
+                return
+            }
 
-        guard let pageLayout else {
             persistActiveInkIfNeeded()
             pageInkCanvasView.isHidden = true
             return
         }
 
-        let writingFrame = pageWritingFrame(for: pageLayout)
         pageInkCanvasView.isHidden = false
         pageInkCanvasView.isUserInteractionEnabled = true
-        pageInkCanvasView.frame = writingFrame
-        pageInkCanvasView.contentSize = writingFrame.size
+        pageInkCanvasView.frame = activeInkScope.frame
+        pageInkCanvasView.contentSize = activeInkScope.frame.size
 
-        let desiredData = chart.pageHandwrittenNotationData
+        let desiredData = drawingData(for: activeInkScope)
         let currentData = currentCanvasDrawingData()
         guard currentData != desiredData else {
             return
@@ -725,18 +514,134 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         pendingInkPersistWorkItem?.cancel()
         pendingInkPersistWorkItem = nil
 
-        let drawingData = currentCanvasDrawingData()
-        guard chart.pageHandwrittenNotationData != drawingData else {
+        guard let activeInkScope = activeInkScope() else {
             return
         }
 
+        let drawingData = currentCanvasDrawingData()
         var updatedChart = chart
-        guard updatedChart.setPageHandwrittenNotationDrawing(drawingData) else {
-            return
+
+        switch activeInkScope {
+        case .page:
+            guard chart.pageHandwrittenNotationData != drawingData,
+                  updatedChart.setPageHandwrittenNotationDrawing(drawingData) else {
+                return
+            }
+        case .rhythmicMeasure(let measureID, _):
+            guard chart.measure(id: measureID)?.handwrittenRhythmicNotationData != drawingData,
+                  updatedChart.setMeasureHandwrittenRhythmicNotationDrawing(drawingData, for: measureID) else {
+                return
+            }
         }
 
         chart = updatedChart
         onChartChanged?(updatedChart)
+    }
+
+    private func shouldFinalizeRhythmicNotation(from previousMeasureID: UUID?, to nextMeasureID: UUID?) -> Bool {
+        interactionMode.allowsDirectRhythmicNotationInk
+            && !isRestoringSelection
+            && !isApplyingTapSelection
+            && previousMeasureID != nil
+            && previousMeasureID != nextMeasureID
+    }
+
+    private func shouldFinalizeRhythmicNotationTap(
+        at location: CGPoint,
+        nextMeasureID: UUID?
+    ) -> Bool {
+        guard interactionMode.allowsDirectRhythmicNotationInk,
+              let activeMeasureID = selectedMeasureID,
+              let activeMeasureLayout = measureLayout(for: activeMeasureID) else {
+            return false
+        }
+
+        if nextMeasureID != activeMeasureID {
+            return true
+        }
+
+        let activeWritingFrame = activeMeasureLayout.writableFrame.insetBy(dx: -8, dy: -8)
+        return !activeWritingFrame.contains(location)
+    }
+
+    private func finalizeRhythmicNotationIfNeeded(for measureID: UUID) -> Bool {
+        let liveDrawingData = currentCanvasDrawingData()
+        var workingChart = chart
+        if interactionMode.allowsDirectRhythmicNotationInk,
+           workingChart.setMeasureHandwrittenRhythmicNotationDrawing(liveDrawingData, for: measureID) {
+            chart = workingChart
+            onChartChanged?(workingChart)
+        }
+
+        guard let measure = workingChart.measure(id: measureID),
+              let drawingData = measure.handwrittenRhythmicNotationData,
+              !drawingData.isEmpty,
+              let measureLayout = measureLayout(for: measureID) else {
+            return true
+        }
+
+        do {
+            let quantizedValues = try RhythmicNotationQuantizer.quantize(
+                drawingData: drawingData,
+                meter: measure.resolvedMeter(defaultMeter: chart.defaultMeter),
+                drawingFrame: CGRect(
+                    origin: .zero,
+                    size: measureLayout.writableFrame.insetBy(dx: 2, dy: 2).size
+                )
+            )
+
+            if let onRhythmicNotationProposal {
+                onRhythmicNotationProposal(measureID, quantizedValues, drawingData)
+                return false
+            }
+
+            var updatedChart = workingChart
+            let appliedRhythmMap = updatedChart.setMeasureRhythmMap(
+                quantizedValues,
+                drawingData: drawingData,
+                for: measureID
+            )
+            let clearedInk = updatedChart.clearMeasureRhythmicNotation(
+                for: measureID,
+                clearRhythmMap: false
+            )
+
+            if appliedRhythmMap || clearedInk {
+                chart = updatedChart
+                onChartChanged?(updatedChart)
+            }
+
+            return true
+        } catch let error as RhythmicNotationQuantizationError {
+            onRhythmicNotationValidationError?(error.userFacingMessage)
+            return false
+        } catch {
+            onRhythmicNotationValidationError?(
+                "That rhythm couldn’t be matched yet. The measure is still selected so you can adjust or rewrite it."
+            )
+            return false
+        }
+    }
+
+    private func restoreSelectedMeasureID(_ measureID: UUID?) {
+        guard !isRestoringSelection else {
+            return
+        }
+
+        isRestoringSelection = true
+        selectedMeasureID = measureID
+        isRestoringSelection = false
+
+        DispatchQueue.main.async { [weak self] in
+            self?.onMeasureSelectionChanged?(measureID)
+        }
+    }
+
+    private func applyTapSelection(_ measureID: UUID?) {
+        isApplyingTapSelection = true
+        selectedMeasureID = measureID
+        isApplyingTapSelection = false
+        onMeasureSelectionChanged?(measureID)
     }
 
     private func currentCanvasDrawingData() -> Data? {
@@ -747,13 +652,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private func updateInteractionMode() {
         selectionTapRecognizer.isEnabled = interactionMode.allowsMeasureSelection
         measureResizePanRecognizer.isEnabled = interactionMode.showsMeasureResizeHandles
-        pageInkCanvasView.isUserInteractionEnabled = interactionMode.allowsPageInkEditing
+        pageInkCanvasView.isUserInteractionEnabled = interactionMode.allowsAnyInkEditing
 
         if !interactionMode.showsMeasureResizeHandles {
             activeMeasureResizeDrag = nil
         }
 
-        if !interactionMode.allowsPageInkEditing {
+        if !interactionMode.allowsAnyInkEditing {
             pageInkCanvasView.isHidden = true
             pageInkCanvasView.resignFirstResponder()
         }
@@ -761,6 +666,42 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
     private func pageWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
         pageLayout.paperFrame.insetBy(dx: 10, dy: 10)
+    }
+
+    private func activeInkScope() -> ActiveInkScope? {
+        if interactionMode.allowsDirectRhythmicNotationInk,
+           let selectedMeasureID,
+           let targetMeasureLayout = measureLayout(for: selectedMeasureID) {
+            return .rhythmicMeasure(
+                measureID: selectedMeasureID,
+                frame: targetMeasureLayout.writableFrame.insetBy(dx: 2, dy: 2)
+            )
+        }
+
+        guard interactionMode.allowsPageInkEditing else {
+            return nil
+        }
+
+        guard let pageLayout else {
+            return nil
+        }
+
+        return .page(frame: pageWritingFrame(for: pageLayout))
+    }
+
+    private func drawingData(for inkScope: ActiveInkScope) -> Data? {
+        switch inkScope {
+        case .page:
+            return chart.pageHandwrittenNotationData
+        case .rhythmicMeasure(let measureID, _):
+            return chart.measure(id: measureID)?.handwrittenRhythmicNotationData
+        }
+    }
+
+    private func measureLayout(at location: CGPoint) -> LeadSheetMeasureLayout? {
+        pageLayout?.systems
+            .flatMap(\.measures)
+            .first(where: { $0.frame.insetBy(dx: -6, dy: -6).contains(location) })
     }
 
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
@@ -782,5 +723,17 @@ private struct ActiveMeasureResizeDrag {
     var measureID: UUID
     var edge: Edge
     var initialWidth: CGFloat
+}
+
+private enum ActiveInkScope {
+    case page(frame: CGRect)
+    case rhythmicMeasure(measureID: UUID, frame: CGRect)
+
+    var frame: CGRect {
+        switch self {
+        case .page(let frame), .rhythmicMeasure(_, let frame):
+            return frame
+        }
+    }
 }
 #endif

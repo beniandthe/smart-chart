@@ -4,11 +4,12 @@ enum EditorCanvasMode: Hashable {
     case browse
     case measureEdit
     case timeSignatureEdit
+    case rhythmicNotationEdit
     case freeHand
 
     var freeHandTabTitle: String {
         switch self {
-        case .browse, .measureEdit, .timeSignatureEdit:
+        case .browse, .measureEdit, .timeSignatureEdit, .rhythmicNotationEdit:
             return "Free-Hand"
         case .freeHand:
             return "Done"
@@ -17,7 +18,7 @@ enum EditorCanvasMode: Hashable {
 
     var freeHandTabSymbol: String {
         switch self {
-        case .browse, .measureEdit, .timeSignatureEdit:
+        case .browse, .measureEdit, .timeSignatureEdit, .rhythmicNotationEdit:
             return "pencil.and.scribble"
         case .freeHand:
             return "pencil.slash"
@@ -32,6 +33,10 @@ enum EditorCanvasMode: Hashable {
         self == .timeSignatureEdit
     }
 
+    var showsRhythmicNotationTargeting: Bool {
+        self == .rhythmicNotationEdit
+    }
+
     var locksDocumentActions: Bool {
         self == .freeHand
     }
@@ -40,8 +45,16 @@ enum EditorCanvasMode: Hashable {
         self != .freeHand
     }
 
+    var allowsDirectRhythmicNotationInk: Bool {
+        self == .rhythmicNotationEdit
+    }
+
     var allowsPageInkEditing: Bool {
         self == .freeHand
+    }
+
+    var allowsAnyInkEditing: Bool {
+        allowsPageInkEditing || allowsDirectRhythmicNotationInk
     }
 
     var disablesPageScroll: Bool {

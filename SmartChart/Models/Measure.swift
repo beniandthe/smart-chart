@@ -16,6 +16,7 @@ struct Measure: Identifiable, Codable, Hashable {
     var beatGridPreset: BeatGridPreset
     var rhythmMap: MeasureRhythmMap? = nil
     var manualLayoutWidth: Double? = nil
+    var handwrittenRhythmicNotationData: Data? = nil
     var barlineAfter: BarlineType
     var chordEvents: [ChordEvent]
     var cueTextIDs: [UUID]
@@ -29,6 +30,7 @@ struct Measure: Identifiable, Codable, Hashable {
         beatGridPreset: BeatGridPreset,
         rhythmMap: MeasureRhythmMap? = nil,
         manualLayoutWidth: Double? = nil,
+        handwrittenRhythmicNotationData: Data? = nil,
         barlineAfter: BarlineType,
         chordEvents: [ChordEvent],
         cueTextIDs: [UUID],
@@ -41,6 +43,7 @@ struct Measure: Identifiable, Codable, Hashable {
         self.beatGridPreset = beatGridPreset
         self.rhythmMap = rhythmMap
         self.manualLayoutWidth = manualLayoutWidth
+        self.handwrittenRhythmicNotationData = handwrittenRhythmicNotationData
         self.barlineAfter = barlineAfter
         self.chordEvents = chordEvents
         self.cueTextIDs = cueTextIDs
@@ -55,6 +58,7 @@ struct Measure: Identifiable, Codable, Hashable {
         case beatGridPreset
         case rhythmMap
         case manualLayoutWidth
+        case handwrittenRhythmicNotationData
         case barlineAfter
         case chordEvents
         case cueTextIDs
@@ -70,6 +74,7 @@ struct Measure: Identifiable, Codable, Hashable {
         beatGridPreset = try container.decode(BeatGridPreset.self, forKey: .beatGridPreset)
         rhythmMap = try container.decodeIfPresent(MeasureRhythmMap.self, forKey: .rhythmMap)
         manualLayoutWidth = try container.decodeIfPresent(Double.self, forKey: .manualLayoutWidth)
+        handwrittenRhythmicNotationData = try container.decodeIfPresent(Data.self, forKey: .handwrittenRhythmicNotationData)
         barlineAfter = try container.decode(BarlineType.self, forKey: .barlineAfter)
         chordEvents = try container.decode([ChordEvent].self, forKey: .chordEvents)
         cueTextIDs = try container.decode([UUID].self, forKey: .cueTextIDs)
@@ -85,6 +90,7 @@ struct Measure: Identifiable, Codable, Hashable {
         try container.encode(beatGridPreset, forKey: .beatGridPreset)
         try container.encodeIfPresent(rhythmMap, forKey: .rhythmMap)
         try container.encodeIfPresent(manualLayoutWidth, forKey: .manualLayoutWidth)
+        try container.encodeIfPresent(handwrittenRhythmicNotationData, forKey: .handwrittenRhythmicNotationData)
         try container.encode(barlineAfter, forKey: .barlineAfter)
         try container.encode(chordEvents, forKey: .chordEvents)
         try container.encode(cueTextIDs, forKey: .cueTextIDs)

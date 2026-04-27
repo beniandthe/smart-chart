@@ -79,6 +79,7 @@ struct MeasureRhythmSlot: Identifiable, Hashable {
     let duration: RhythmValue
 
     var id: Int { index }
+    var isPlayable: Bool { !duration.isRest && duration != .tiedContinuation }
 }
 
 struct MeasureChordPlacement: Identifiable, Hashable {
@@ -144,7 +145,7 @@ extension Measure {
             return []
         }
 
-        let validIndices = Set(slots.indices)
+        let validIndices = Set(slots.indices.filter { slots[$0].isPlayable })
         return Set(
             chordEvents.compactMap { event in
                 guard event.id != chordEventID,
@@ -166,7 +167,9 @@ extension Measure {
         let occupiedSlotIndices = Set(
             renderedChordPlacements(defaultMeter: defaultMeter).compactMap(\.resolvedRhythmSlotIndex)
         )
-        return slots.indices.first { !occupiedSlotIndices.contains($0) }
+        return slots.indices.first {
+            slots[$0].isPlayable && !occupiedSlotIndices.contains($0)
+        }
     }
 
     func suggestedChordInsertion(
@@ -195,7 +198,9 @@ extension Measure {
                     .filter { $0.chordEvent.id != chordEventID }
                     .compactMap(\.resolvedRhythmSlotIndex)
             )
-            let candidateIndices = slots.indices.filter { !occupiedSlotIndices.contains($0) }
+            let candidateIndices = slots.indices.filter {
+                slots[$0].isPlayable && !occupiedSlotIndices.contains($0)
+            }
             let searchIndices = candidateIndices.isEmpty ? Array(slots.indices) : candidateIndices
 
             if let fraction,
@@ -359,11 +364,14 @@ extension Measure {
         if let slots = resolvedRhythmSlots(defaultMeter: defaultMeter),
            !slots.isEmpty {
             let explicitlyReservedSlotIndices = explicitlyAssignedRhythmSlotIndices(defaultMeter: defaultMeter)
-            var automaticallyAvailableSlotIndices = slots.indices.filter { !explicitlyReservedSlotIndices.contains($0) }
+            var automaticallyAvailableSlotIndices = slots.indices.filter {
+                slots[$0].isPlayable && !explicitlyReservedSlotIndices.contains($0)
+            }
 
             return chordEvents.map { event in
                 if let mappedRhythmSlotIndex = event.mappedRhythmSlotIndex,
-                   slots.indices.contains(mappedRhythmSlotIndex) {
+                   slots.indices.contains(mappedRhythmSlotIndex),
+                   slots[mappedRhythmSlotIndex].isPlayable {
                     return mappedPlacement(
                         for: event,
                         in: slots[mappedRhythmSlotIndex],
@@ -411,14 +419,13 @@ extension Measure {
     }
 
     mutating func clearInvalidRhythmSlotAssignments(defaultMeter: Meter) {
-        guard let slots = resolvedRhythmSlots(defaultMeter: defaultMeter) else {
-            return
-        }
+        let playableIndices = resolvedRhythmSlots(defaultMeter: defaultMeter).map { slots in
+            Set(slots.indices.filter { slots[$0].isPlayable })
+        } ?? []
 
-        let validIndices = Set(slots.indices)
         chordEvents = chordEvents.map { chordEvent in
             guard let mappedRhythmSlotIndex = chordEvent.mappedRhythmSlotIndex,
-                  !validIndices.contains(mappedRhythmSlotIndex) else {
+                  !playableIndices.contains(mappedRhythmSlotIndex) else {
                 return chordEvent
             }
 

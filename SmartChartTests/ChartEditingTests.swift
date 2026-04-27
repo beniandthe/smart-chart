@@ -50,6 +50,63 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.systems[0].measures[0].authoringState, .open)
     }
 
+    func testAppearanceSettersUpdateDocumentAppearanceChoices() {
+        var chart = Chart.blank(title: "Test Chart")
+
+        chart.setStylePreset(.gigSheet)
+        chart.setNotationFont(.finaleJazz)
+        chart.setEngravingPreset(.wide)
+
+        XCTAssertEqual(chart.stylePreset, .gigSheet)
+        XCTAssertEqual(chart.notationFont, .finaleJazz)
+        XCTAssertEqual(chart.engravingPreset, .wide)
+    }
+
+    func testChartDecodingDefaultsMissingAppearanceFieldsForOlderSnapshots() throws {
+        let chart = Chart.blank(title: "Older Snapshot")
+        let encodedData = try JSONEncoder().encode(chart)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encodedData) as? [String: Any])
+        object.removeValue(forKey: "notationFont")
+        object.removeValue(forKey: "engravingPreset")
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+        let decodedChart = try JSONDecoder().decode(Chart.self, from: legacyData)
+
+        XCTAssertEqual(decodedChart.notationFont, .petaluma)
+        XCTAssertEqual(decodedChart.engravingPreset, .balanced)
+    }
+
+    func testNotationGlyphCatalogProvidesSemanticSmuflSymbols() {
+        XCTAssertEqual(NotationGlyphCatalog.trebleClef, "\u{E050}")
+        XCTAssertEqual(NotationGlyphCatalog.noteheadWhole, "\u{E0A2}")
+        XCTAssertEqual(NotationGlyphCatalog.noteheadHalf, "\u{E0A3}")
+        XCTAssertEqual(NotationGlyphCatalog.noteheadBlack, "\u{E0A4}")
+        XCTAssertEqual(NotationGlyphCatalog.slashNotehead, "\u{E100}")
+        XCTAssertEqual(NotationGlyphCatalog.slashWholeNotehead, "\u{E102}")
+        XCTAssertEqual(NotationGlyphCatalog.slashHalfNotehead, "\u{E103}")
+        XCTAssertEqual(NotationGlyphCatalog.augmentationDot, "\u{E1E7}")
+        XCTAssertEqual(NotationGlyphCatalog.flag8thUp, "\u{E240}")
+        XCTAssertEqual(NotationGlyphCatalog.flag8thDown, "\u{E241}")
+        XCTAssertEqual(NotationGlyphCatalog.wholeRest, "\u{E4E3}")
+        XCTAssertEqual(NotationGlyphCatalog.halfRest, "\u{E4E4}")
+        XCTAssertEqual(NotationGlyphCatalog.quarterRest, "\u{E4E5}")
+        XCTAssertEqual(NotationGlyphCatalog.eighthRest, "\u{E4E6}")
+        XCTAssertEqual(NotationGlyphCatalog.timeSignatureDigit(4), "\u{E084}")
+        XCTAssertNil(NotationGlyphCatalog.timeSignatureDigit(12))
+        XCTAssertEqual(NotationGlyphCatalog.glyph(for: .trebleClef), NotationGlyphCatalog.trebleClef)
+        XCTAssertEqual(NotationGlyphCatalog.glyph(for: .noteheadBlack), NotationGlyphCatalog.noteheadBlack)
+        XCTAssertEqual(NotationGlyphCatalog.glyph(for: .timeSignatureDigit(4)), "\u{E084}")
+        XCTAssertNil(NotationGlyphCatalog.glyph(for: .timeSignatureDigit(12)))
+        XCTAssertEqual(NotationGlyphCatalog.pointSize(for: .trebleClef, staffSpace: 10.5), 42, accuracy: 0.001)
+    }
+
+    func testNotationFontPresetsExposeOfficialSmuflEngravingDefaults() {
+        XCTAssertEqual(NotationFontPreset.bravura.smuflEngravingDefaults.staffLineThickness, 0.13)
+        XCTAssertEqual(NotationFontPreset.finaleJazz.smuflEngravingDefaults.stemThickness, 0.15)
+        XCTAssertEqual(NotationFontPreset.leland.smuflEngravingDefaults.thickBarlineThickness, 0.55)
+        XCTAssertEqual(NotationFontPreset.finaleEngraver.smuflEngravingDefaults.tieMidpointThickness, 0.25)
+    }
+
     func testSetPageHandwrittenNotationDrawingStoresAndClearsRawInk() {
         var chart = Chart.draft(title: "New Chart")
         let drawingData = Data([4, 3, 2, 1])
@@ -58,6 +115,49 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.pageHandwrittenNotationData, drawingData)
         XCTAssertTrue(chart.setPageHandwrittenNotationDrawing(nil))
         XCTAssertNil(chart.pageHandwrittenNotationData)
+    }
+
+    func testSetMeasureHandwrittenRhythmicNotationDrawingStoresAndClearsRawInk() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let drawingData = Data([9, 8, 7, 6])
+
+        XCTAssertTrue(chart.setMeasureHandwrittenRhythmicNotationDrawing(drawingData, for: measureID))
+        XCTAssertEqual(chart.measure(id: measureID)?.handwrittenRhythmicNotationData, drawingData)
+        XCTAssertTrue(chart.setMeasureHandwrittenRhythmicNotationDrawing(nil, for: measureID))
+        XCTAssertNil(chart.measure(id: measureID)?.handwrittenRhythmicNotationData)
+    }
+
+    func testSetMeasureRhythmMapStoresAndClearsQuantizedRhythm() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+
+        XCTAssertTrue(
+            chart.setMeasureRhythmMap(
+                [.quarter, .quarter, .quarter, .quarter],
+                drawingData: Data([1, 2, 3]),
+                for: measureID
+            )
+        )
+        XCTAssertEqual(
+            chart.measure(id: measureID)?.rhythmMap?.values,
+            [.quarter, .quarter, .quarter, .quarter]
+        )
+
+        XCTAssertTrue(chart.clearMeasureRhythmicNotation(for: measureID, clearRhythmMap: true))
+        XCTAssertNil(chart.measure(id: measureID)?.rhythmMap)
     }
 
     func testSetMeasureManualLayoutWidthStoresClampedOverride() throws {
