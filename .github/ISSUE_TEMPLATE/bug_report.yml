@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report a reproducible problem in Smart Chart.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps To Reproduce
+      description: Tell us the exact sequence that triggers the problem.
+      placeholder: |
+        1. Open...
+        2. Tap...
+        3. Draw...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should Smart Chart have done?
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Device, simulator, iPadOS/Xcode version, and branch if relevant.
+      placeholder: iPad Air 11-inch simulator, iPadOS 26.4, Xcode 26.4
+    validations:
+      required: false

@@ -1,5 +1,8 @@
 # Smart Chart
 
+[![CI](https://github.com/beniandthe/smart-chart/actions/workflows/ci.yml/badge.svg)](https://github.com/beniandthe/smart-chart/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/beniandthe/smart-chart/actions/workflows/codeql.yml/badge.svg)](https://github.com/beniandthe/smart-chart/actions/workflows/codeql.yml)
+
 Smart Chart is an iPad-first, rhythm-aware chord chart builder for working musicians. It sits between paper charts, iReal Pro, and full notation software: fast enough for rehearsal prep, clean enough to hand to other players, and structured enough to transpose, edit, and export reliably.
 
 ## Core idea

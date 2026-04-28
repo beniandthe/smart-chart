@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - "codex/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  swift-package:
+    name: SwiftPM tests
+    runs-on: macos-26
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Run Swift package tests
+        run: swift test
+
+  ios-simulator:
+    name: iOS simulator tests
+    runs-on: macos-26
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Select iPad simulator
+        run: .github/scripts/select-ipad-simulator.sh
+
+      - name: Run Xcode tests
+        run: |
+          xcodebuild test \
+            -scheme SmartChart \
+            -destination "$SIMULATOR_DESTINATION" \
+            -resultBundlePath "$RUNNER_TEMP/SmartChart.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload Xcode result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartChart-xcresult
+          path: ${{ runner.temp }}/SmartChart.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
