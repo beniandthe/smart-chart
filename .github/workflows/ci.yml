@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload Xcode result bundle on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SmartChart-xcresult
           path: ${{ runner.temp }}/SmartChart.xcresult
