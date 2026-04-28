@@ -1,0 +1,27 @@
+name: Feature Request
+description: Propose an improvement or next build slice for Smart Chart.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What user workflow should this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Desired Behavior
+      description: Describe the intended app behavior as concretely as possible.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints Or Notes
+      description: Any design, notation, recognition, or testing constraints we should preserve?
+    validations:
+      required: false
