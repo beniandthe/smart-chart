@@ -110,6 +110,7 @@ final class ChartLibraryStoreTests: XCTestCase {
                 .halfNote,
                 .dottedHalfNote,
                 .quarterNote,
+                .slash,
                 .dottedQuarterNote,
                 .eighthNote,
                 .wholeRest,

@@ -45,7 +45,7 @@ These systems are on the correct path and should stay:
   - `SmartChart/Models/MeasureRhythmMapping.swift`
   - `SmartChart/Models/ChartEditing.swift`
 - support layers that still serve the jazz page
-  - parsing/transposition
+  - parsing and non-destructive transposition views
   - persistence
   - PDF export
   - timing validation
@@ -80,7 +80,7 @@ The repository is simpler now:
 - the editor owns a small set of deliberate top-level actions
 - free-hand mode is page-wide raw ink only
 - structured measure growth still exists through `commitOpenMeasure()` and `positionOpenMeasure(after:)`
-- chord and rhythm interpretation are no longer pretending to be production-ready in the live path
+- rhythm interpretation now runs through a confirmation-first handwritten quantizer, while chord interpretation remains outside the current live path
 
 That makes the codebase much closer to the actual product goal: build the page authoring experience first, then add interpretation back on top of a stable surface.
 

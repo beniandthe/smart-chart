@@ -975,7 +975,7 @@ private struct RhythmValueGlyphPreview: View {
             return NotationGlyphCatalog.quarterRest
         case .eighthRest:
             return NotationGlyphCatalog.eighthRest
-        case .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
+        case .slash, .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
             return nil
         }
     }
@@ -986,7 +986,7 @@ private struct RhythmValueGlyphPreview: View {
             return NotationGlyphCatalog.slashWholeNotehead
         case .half, .dottedHalf:
             return NotationGlyphCatalog.slashHalfNotehead
-        case .eighth, .quarter, .dottedQuarter:
+        case .slash, .eighth, .quarter, .dottedQuarter:
             return NotationGlyphCatalog.slashNotehead
         case .eighthRest, .quarterRest, .halfRest, .wholeRest, .tiedContinuation:
             return NotationGlyphCatalog.slashNotehead
@@ -999,7 +999,7 @@ private struct RhythmValueGlyphPreview: View {
 
     private var showsStem: Bool {
         switch value {
-        case .whole, .wholeRest, .halfRest, .quarterRest, .eighthRest, .tiedContinuation:
+        case .slash, .whole, .wholeRest, .halfRest, .quarterRest, .eighthRest, .tiedContinuation:
             return false
         case .eighth, .quarter, .dottedQuarter, .half, .dottedHalf:
             return true
@@ -1014,7 +1014,7 @@ private struct RhythmValueGlyphPreview: View {
             return 27
         case .wholeRest, .halfRest:
             return 24
-        case .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
+        case .slash, .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
             return 24
         }
     }
@@ -1029,7 +1029,7 @@ private struct RhythmValueGlyphPreview: View {
             return -3
         case .halfRest:
             return 2
-        case .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
+        case .slash, .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
             return 0
         }
     }
@@ -1219,6 +1219,8 @@ private struct FlowItem {
 private extension RhythmValue {
     var editMenuTitle: String {
         switch self {
+        case .slash:
+            return "Slash"
         case .eighth:
             return "Eighth Note"
         case .eighthRest:
@@ -1248,13 +1250,15 @@ private extension RhythmValue {
         switch self {
         case .dottedQuarter, .dottedHalf:
             return true
-        case .eighth, .eighthRest, .quarter, .quarterRest, .half, .halfRest, .whole, .wholeRest, .tiedContinuation:
+        case .slash, .eighth, .eighthRest, .quarter, .quarterRest, .half, .halfRest, .whole, .wholeRest, .tiedContinuation:
             return false
         }
     }
 
     var debugConfirmationLabel: String {
         switch self {
+        case .slash:
+            return "slash"
         case .eighth:
             return "eighth"
         case .eighthRest:

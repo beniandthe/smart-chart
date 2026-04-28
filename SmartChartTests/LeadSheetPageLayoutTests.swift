@@ -215,6 +215,34 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertEqual(firstMeasure.noteLayouts[4].symbolStyle, .quarterRest)
     }
 
+    func testLeadSheetLayoutRendersSlashPlaceholdersAsStemlessBeatSlots() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.slash, .eighth, .eighth, .half],
+            for: firstMeasureID
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        let slashPlaceholder = try XCTUnwrap(firstMeasure.noteLayouts.first)
+
+        XCTAssertEqual(slashPlaceholder.symbolStyle, .slash)
+        XCTAssertEqual(slashPlaceholder.noteheadSymbol, .slashNotehead)
+        XCTAssertNil(slashPlaceholder.stemStart)
+        XCTAssertNil(slashPlaceholder.stemEnd)
+        XCTAssertEqual(slashPlaceholder.flagStyle, .none)
+
+        let usableWidth = firstMeasure.staffFrame.width - 16
+        let beatStep = usableWidth / 4
+        XCTAssertEqual(slashPlaceholder.noteheadFrame.midX, firstMeasure.staffFrame.minX + 8 + beatStep * 0.5, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.noteLayouts[1].noteheadFrame.midX, firstMeasure.staffFrame.minX + 8 + beatStep * 1.25, accuracy: 0.001)
+    }
+
     func testLeadSheetLayoutKeepsRestGlyphsUprightInsideStaffBody() throws {
         var chart = makeBlankLeadSheet()
         let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)

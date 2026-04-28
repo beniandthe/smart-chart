@@ -786,7 +786,7 @@ enum LeadSheetPageLayoutEngine {
                     fallbackSize: CGSize(width: 10, height: 16)
                 )
                 let fallbackStemStart = CGPoint(x: noteheadFrame.minX + 1, y: noteheadFrame.maxY - 2)
-                let stemStart = slot.duration == .whole
+                let stemStart = slot.duration == .whole || slot.duration == .slash
                     ? nil
                     : stemAnchorPoint(
                         for: noteheadSymbol,
@@ -1053,7 +1053,7 @@ enum LeadSheetPageLayoutEngine {
             return .whole
         case .half, .dottedHalf, .halfRest:
             return .half
-        case .quarter, .dottedQuarter, .eighth, .quarterRest, .eighthRest, .tiedContinuation:
+        case .slash, .quarter, .dottedQuarter, .eighth, .quarterRest, .eighthRest, .tiedContinuation:
             return .filled
         }
     }
@@ -1062,7 +1062,7 @@ enum LeadSheetPageLayoutEngine {
         switch duration {
         case .dottedQuarter, .dottedHalf:
             return true
-        case .eighth, .eighthRest, .quarter, .quarterRest, .half, .halfRest, .whole, .wholeRest, .tiedContinuation:
+        case .slash, .eighth, .eighthRest, .quarter, .quarterRest, .half, .halfRest, .whole, .wholeRest, .tiedContinuation:
             return false
         }
     }

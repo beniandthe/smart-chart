@@ -167,7 +167,6 @@ Keep these ideas and artifacts:
 - `SmartChart/Models/ChartAnnotations.swift`
 - `SmartChart/Models/MusicTheory.swift`
 - `SmartChart/Services/ChartParsers.swift`
-- `SmartChart/Services/ChartTransposer.swift`
 - `SmartChart/Services/MeasureTimingValidator.swift`
 - `docs/core-design-document.md`
 - `docs/developer-mvp-spec.md`

@@ -23,11 +23,6 @@ extension Chart {
         updatedAt = .now
     }
 
-    mutating func setDocumentFont(_ preset: ChartFontPreset) {
-        documentFont = preset
-        updatedAt = .now
-    }
-
     mutating func setStylePreset(_ preset: StylePreset) {
         stylePreset = preset
         updatedAt = .now
@@ -40,11 +35,6 @@ extension Chart {
 
     mutating func setEngravingPreset(_ preset: EngravingPreset) {
         engravingPreset = preset
-        updatedAt = .now
-    }
-
-    mutating func setDocumentKey(_ key: DocumentKey) {
-        documentKey = key
         updatedAt = .now
     }
 

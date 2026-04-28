@@ -83,6 +83,7 @@ extension BeatPosition {
 }
 
 enum RhythmValue: String, Codable, CaseIterable, Hashable {
+    case slash
     case eighth
     case eighthRest
     case quarter
@@ -97,6 +98,8 @@ enum RhythmValue: String, Codable, CaseIterable, Hashable {
 
     var displayText: String {
         switch self {
+        case .slash:
+            return "slash"
         case .eighth:
             return "eighth"
         case .eighthRest:
@@ -124,6 +127,8 @@ enum RhythmValue: String, Codable, CaseIterable, Hashable {
 
     var wholeNoteLength: Double {
         switch self {
+        case .slash:
+            return 0.25
         case .eighth:
             return 0.125
         case .eighthRest:
@@ -153,7 +158,7 @@ enum RhythmValue: String, Codable, CaseIterable, Hashable {
         switch self {
         case .eighthRest, .quarterRest, .halfRest, .wholeRest:
             return true
-        case .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
+        case .slash, .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole, .tiedContinuation:
             return false
         }
     }

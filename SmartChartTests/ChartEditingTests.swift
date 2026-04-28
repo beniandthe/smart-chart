@@ -184,6 +184,28 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(chart.measure(id: measureID)?.rhythmMap?.drawingData)
     }
 
+    func testReplaceMeasureRhythmValueAllowsSlashWhenDurationStillFits() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        XCTAssertTrue(
+            chart.setMeasureRhythmMap(
+                [.quarter, .quarter, .quarter, .quarter],
+                for: measureID
+            )
+        )
+
+        let result = chart.replaceMeasureRhythmValue(.slash, at: 1, in: measureID)
+
+        XCTAssertEqual(result, .applied)
+        XCTAssertEqual(chart.measure(id: measureID)?.rhythmMap?.values, [.quarter, .slash, .quarter, .quarter])
+    }
+
     func testReplaceMeasureRhythmValueRejectsChangesThatBreakMeterLength() throws {
         var chart = Chart.draft(title: "New Chart")
         chart.completeInitialSetup(

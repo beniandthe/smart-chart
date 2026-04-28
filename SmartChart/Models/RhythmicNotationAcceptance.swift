@@ -5,6 +5,7 @@ enum RhythmicNotationPrimitive: String, Codable, CaseIterable, Hashable, Identif
     case halfNote
     case dottedHalfNote
     case quarterNote
+    case slash
     case dottedQuarterNote
     case eighthNote
     case tie
@@ -25,6 +26,8 @@ enum RhythmicNotationPrimitive: String, Codable, CaseIterable, Hashable, Identif
             return "Dotted Half Note"
         case .quarterNote:
             return "Quarter Note"
+        case .slash:
+            return "Slash"
         case .dottedQuarterNote:
             return "Dotted Quarter Note"
         case .eighthNote:
@@ -52,6 +55,8 @@ enum RhythmicNotationPrimitive: String, Codable, CaseIterable, Hashable, Identif
             return "H."
         case .quarterNote:
             return "Q"
+        case .slash:
+            return "/"
         case .dottedQuarterNote:
             return "Q."
         case .eighthNote:
@@ -149,6 +154,26 @@ enum RhythmicNotationPrimitive: String, Codable, CaseIterable, Hashable, Identif
                     "A top flag or hook appears",
                     "A separate dot appears to the right",
                     "The head stays hollow like a half note"
+                ]
+            )
+        case .slash:
+            return RhythmicNotationUniversalGuide(
+                primitive: self,
+                acceptanceSummary: "Accept one simple diagonal slash as a one-beat placeholder. It should behave like a quarter-note beat slot without adding a stem, flag, dot, or rest shape.",
+                mustContain: [
+                    "One straight or gently handwritten diagonal stroke",
+                    "Enough diagonal travel to read as a slash rather than a dot",
+                    "No notehead, stem, flag, dot, or rest zig-zag attached"
+                ],
+                allowedVariations: [
+                    "Forward slash or backslash direction",
+                    "Slight lean or mild curve from natural handwriting",
+                    "A short overdraw at either end"
+                ],
+                rejectWhen: [
+                    "The mark becomes mostly vertical like a stem",
+                    "The mark becomes a zig-zag quarter rest",
+                    "A notehead, dot, flag, or rest tail is attached"
                 ]
             )
         case .dottedQuarterNote:

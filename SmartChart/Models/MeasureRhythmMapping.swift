@@ -471,7 +471,7 @@ extension Measure {
 
 extension RhythmValue {
     static var sketchPalette: [RhythmValue] {
-        [.eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole]
+        [.slash, .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole]
     }
 
     static var singularEditPalette: [RhythmValue] {
@@ -480,6 +480,7 @@ extension RhythmValue {
             .dottedHalf,
             .half,
             .dottedQuarter,
+            .slash,
             .quarter,
             .eighth,
             .wholeRest,
