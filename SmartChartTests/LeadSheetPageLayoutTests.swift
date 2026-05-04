@@ -18,7 +18,7 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertTrue(layout.header.titleFrame.midX > layout.paperFrame.minX)
     }
 
-    func testFiveLineLayoutPlacesChordTextAboveStaffAndBuildsNoteGlyphs() throws {
+    func testFiveLineLayoutPlacesChordTextAboveStaffWithoutImplicitNotes() throws {
         let chart = ChartSamples.straightAheadSwing
 
         let layout = LeadSheetPageLayoutEngine.pageLayout(
@@ -29,16 +29,103 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         let firstSystem = try XCTUnwrap(layout.systems.first)
         let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
         let firstChord = try XCTUnwrap(firstMeasure.chordLayouts.first)
-        let firstNote = try XCTUnwrap(firstMeasure.noteLayouts.first)
 
         XCTAssertLessThan(firstChord.frame.maxY, firstMeasure.staffFrame.minY)
+        XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
+    }
+
+    func testChordLayoutsSnapToBeatGridWhenMeasureHasNoRhythmMap() throws {
+        var chart = makeBlankLeadSheet()
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
         XCTAssertTrue(
-            firstMeasure.staffFrame.insetBy(dx: 0, dy: -firstNote.staffSpace).contains(
-                CGPoint(x: firstNote.noteheadFrame.midX, y: firstNote.noteheadFrame.midY)
+            chart.appendRecognizedChord(
+                ChordSymbol(root: .c, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil),
+                rawInput: "C",
+                to: measureID,
+                atFraction: 0.03
             )
         )
-        XCTAssertNotNil(firstNote.stemStart)
-        XCTAssertNotNil(firstNote.stemEnd)
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                ChordSymbol(root: .f, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil),
+                rawInput: "F",
+                to: measureID,
+                atFraction: 0.62
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        let chordLayouts = firstMeasure.chordLayouts
+
+        XCTAssertEqual(chordLayouts.map(\.text), ["C", "F"])
+        let usableWidth = firstMeasure.staffFrame.width - 16
+        let beatStep = usableWidth / 4
+        XCTAssertEqual(chordLayouts[0].frame.midX, firstMeasure.staffFrame.minX + 8 + beatStep * 0.5, accuracy: 0.001)
+        XCTAssertEqual(chordLayouts[1].frame.midX, firstMeasure.staffFrame.minX + 8 + beatStep * 2.5, accuracy: 0.001)
+        XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
+    }
+
+    func testChordLayoutsAlignWithRhythmAttackCentersWhenMeasureHasRhythmMap() throws {
+        var chart = makeBlankLeadSheet()
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap(
+            [.quarter, .quarter, .quarter, .quarter],
+            for: measureID
+        )
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                ChordSymbol(root: .c, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil),
+                rawInput: "C",
+                to: measureID,
+                atFraction: 0.03
+            )
+        )
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                ChordSymbol(root: .g, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil),
+                rawInput: "G",
+                to: measureID,
+                atFraction: 0.62
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+
+        XCTAssertEqual(firstMeasure.chordLayouts.map(\.text), ["C", "G"])
+        XCTAssertEqual(firstMeasure.noteLayouts.count, 4)
+        XCTAssertEqual(firstMeasure.chordLayouts[0].frame.midX, firstMeasure.noteLayouts[0].noteheadFrame.midX, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.chordLayouts[1].frame.midX, firstMeasure.noteLayouts[2].noteheadFrame.midX, accuracy: 0.001)
+    }
+
+    func testLeadSheetLayoutUsesExpandedChordWritingBandWithoutOverlappingPriorSystem() throws {
+        var chart = makeBlankLeadSheet()
+        _ = chart.commitOpenMeasure()
+        _ = chart.commitOpenMeasure()
+        _ = chart.commitOpenMeasure()
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let secondSystem = try XCTUnwrap(layout.systems.last)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let secondMeasure = try XCTUnwrap(secondSystem.measures.first)
+
+        XCTAssertGreaterThanOrEqual(firstMeasure.chordBandFrame.height, 44)
+        XCTAssertLessThan(firstMeasure.chordBandFrame.maxY, firstMeasure.staffFrame.minY)
+        XCTAssertGreaterThan(secondMeasure.chordBandFrame.minY, firstMeasure.staffFrame.maxY)
     }
 
     func testOpenFiveLineMeasureUsesSingleOpenMeasureWidthAndNoCommittedBarline() throws {

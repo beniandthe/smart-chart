@@ -232,7 +232,7 @@ extension Measure {
             let quantizedPosition = quantizedBeatPosition(
                 for: fraction,
                 meter: meter,
-                subdivisionsPerBeat: 2
+                subdivisionsPerBeat: 1
             )
             return MeasureChordInsertionSuggestion(
                 startPosition: quantizedPosition,
@@ -395,7 +395,8 @@ extension Measure {
         }
 
         if chordEvents.count == 1,
-           let onlyChord = chordEvents.first {
+           let onlyChord = chordEvents.first,
+           isMeasureStart(onlyChord.startPosition, in: meter) {
             return [
                 MeasureChordPlacement(
                     chordEvent: onlyChord,
@@ -412,6 +413,14 @@ extension Measure {
         }
 
         return chordEvents.map(rawPlacement(for:))
+    }
+
+    private func isMeasureStart(_ position: BeatPosition, in meter: Meter) -> Bool {
+        guard let offset = position.startOffset(in: meter) else {
+            return false
+        }
+
+        return abs(offset) < 0.0001
     }
 
     mutating func setRhythmMap(_ values: [RhythmValue], drawingData: Data? = nil) {

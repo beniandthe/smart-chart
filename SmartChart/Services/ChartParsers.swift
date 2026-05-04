@@ -8,6 +8,7 @@ enum MeterParseError: Error {
 enum ChordSymbolParseError: Error {
     case invalidRoot
     case invalidSlashBass
+    case unsupportedMajorQuality
 }
 
 enum MeterParser {
@@ -48,6 +49,10 @@ enum ChordSymbolParser {
         if slashBass != nil,
            parsedSlashBass == nil {
             throw ChordSymbolParseError.invalidSlashBass
+        }
+
+        if isUnsupportedMajorDescriptor(descriptor) {
+            throw ChordSymbolParseError.unsupportedMajorQuality
         }
 
         let parsedDescriptor = parseDescriptor(descriptor)
@@ -96,8 +101,24 @@ enum ChordSymbolParser {
         var extensions: [String] = []
         var alterations: [String] = []
 
+        let descriptor = descriptor.trimmingCharacters(in: .whitespacesAndNewlines)
         let characters = Array(descriptor)
         var index = 0
+        let lowercasedDescriptor = descriptor.lowercased()
+
+        if lowercasedDescriptor.hasPrefix("minor") {
+            quality = "-"
+            index = 5
+        } else if lowercasedDescriptor.hasPrefix("min") {
+            quality = "-"
+            index = 3
+        } else if descriptor.hasPrefix("m") {
+            quality = "-"
+            index = 1
+        } else if lowercasedDescriptor.hasPrefix("-") {
+            quality = "-"
+            index = 1
+        }
 
         while index < characters.count {
             let character = characters[index]
@@ -131,5 +152,17 @@ enum ChordSymbolParser {
         }
 
         return (quality, extensions, alterations)
+    }
+
+    private static func isUnsupportedMajorDescriptor(_ descriptor: String) -> Bool {
+        let trimmedDescriptor = descriptor.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowercasedDescriptor = trimmedDescriptor.lowercased()
+
+        if trimmedDescriptor == "M" {
+            return true
+        }
+
+        return lowercasedDescriptor.hasPrefix("maj")
+            || lowercasedDescriptor.hasPrefix("major")
     }
 }

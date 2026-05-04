@@ -21,6 +21,7 @@ struct Chart: Identifiable, Codable, Hashable {
     var stylePreset: StylePreset
     var engravingPreset: EngravingPreset
     var pageHandwrittenNotationData: Data?
+    var pageHandwrittenChordData: Data?
     var createdAt: Date
     var updatedAt: Date
 
@@ -49,6 +50,7 @@ struct Chart: Identifiable, Codable, Hashable {
         stylePreset: StylePreset,
         engravingPreset: EngravingPreset = .balanced,
         pageHandwrittenNotationData: Data? = nil,
+        pageHandwrittenChordData: Data? = nil,
         createdAt: Date,
         updatedAt: Date
     ) {
@@ -72,6 +74,7 @@ struct Chart: Identifiable, Codable, Hashable {
         self.stylePreset = stylePreset
         self.engravingPreset = engravingPreset
         self.pageHandwrittenNotationData = pageHandwrittenNotationData
+        self.pageHandwrittenChordData = pageHandwrittenChordData
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -97,6 +100,7 @@ struct Chart: Identifiable, Codable, Hashable {
         case stylePreset
         case engravingPreset
         case pageHandwrittenNotationData
+        case pageHandwrittenChordData
         case createdAt
         case updatedAt
     }
@@ -123,6 +127,7 @@ struct Chart: Identifiable, Codable, Hashable {
         stylePreset = try container.decode(StylePreset.self, forKey: .stylePreset)
         engravingPreset = try container.decodeIfPresent(EngravingPreset.self, forKey: .engravingPreset) ?? .balanced
         pageHandwrittenNotationData = try container.decodeIfPresent(Data.self, forKey: .pageHandwrittenNotationData)
+        pageHandwrittenChordData = try container.decodeIfPresent(Data.self, forKey: .pageHandwrittenChordData)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
     }
@@ -152,6 +157,8 @@ struct DocumentKey: Codable, Hashable {
     }
 
     func transposed(for view: TranspositionView) -> DocumentKey {
+        guard view.semitoneOffsetFromConcert != 0 else { return self }
+
         let pitch = ChordPitch(root: tonic, accidental: accidental)
         let preference = PitchSpellingPreference.forAccidental(accidental)
         let transposedPitch = pitch.transposed(by: view.semitoneOffsetFromConcert).spelled(using: preference)

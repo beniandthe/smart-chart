@@ -30,6 +30,15 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(displayedKey.mode, .major)
     }
 
+    func testDocumentKeyConcertViewPreservesWrittenEnharmonicSpelling() {
+        let writtenKey = DocumentKey(tonic: .c, accidental: .flat, mode: .major)
+        let displayedKey = writtenKey.transposed(for: .concert)
+
+        XCTAssertEqual(displayedKey.tonic, .c)
+        XCTAssertEqual(displayedKey.accidental, .flat)
+        XCTAssertEqual(displayedKey.displayText, "Cb major")
+    }
+
     func testCompleteInitialSetupStoresPromptSelections() {
         var chart = Chart.draft(title: "New Chart")
 
@@ -117,6 +126,20 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(chart.pageHandwrittenNotationData)
     }
 
+    func testSetPageHandwrittenChordDrawingStoresSeparatelyFromFreeHandInk() {
+        var chart = Chart.draft(title: "New Chart")
+        let freeHandData = Data([4, 3, 2, 1])
+        let chordData = Data([8, 7, 6, 5])
+
+        XCTAssertTrue(chart.setPageHandwrittenNotationDrawing(freeHandData))
+        XCTAssertTrue(chart.setPageHandwrittenChordDrawing(chordData))
+        XCTAssertEqual(chart.pageHandwrittenNotationData, freeHandData)
+        XCTAssertEqual(chart.pageHandwrittenChordData, chordData)
+        XCTAssertTrue(chart.setPageHandwrittenChordDrawing(nil))
+        XCTAssertNil(chart.pageHandwrittenChordData)
+        XCTAssertEqual(chart.pageHandwrittenNotationData, freeHandData)
+    }
+
     func testSetMeasureHandwrittenRhythmicNotationDrawingStoresAndClearsRawInk() throws {
         var chart = Chart.draft(title: "New Chart")
         chart.completeInitialSetup(
@@ -158,6 +181,94 @@ final class ChartEditingTests: XCTestCase {
 
         XCTAssertTrue(chart.clearMeasureRhythmicNotation(for: measureID, clearRhythmMap: true))
         XCTAssertNil(chart.measure(id: measureID)?.rhythmMap)
+    }
+
+    func testAppendRecognizedChordAddsCleanChordSymbolAtRequestedFraction() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let symbol = try XCTUnwrap(BasicMajorChordCompendium.match("Db")?.symbol)
+
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                symbol,
+                rawInput: "D flat",
+                to: measureID,
+                atFraction: 0.55
+            )
+        )
+
+        let chord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
+        XCTAssertEqual(chord.symbol.displayText, "Db")
+        XCTAssertEqual(chord.rawInput, "D flat")
+        XCTAssertEqual(chord.startPosition.displayText, "3")
+    }
+
+    func testDeleteChordEventRemovesRenderedChordFromMeasure() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let symbol = ChordSymbol(root: .c, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+        XCTAssertTrue(chart.appendRecognizedChord(symbol, rawInput: "C", to: measureID, atFraction: 0.03))
+        let chordID = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first?.id)
+
+        XCTAssertTrue(chart.deleteChordEvent(chordID))
+
+        XCTAssertTrue(chart.measure(id: measureID)?.chordEvents.isEmpty == true)
+        XCTAssertFalse(chart.deleteChordEvent(chordID))
+    }
+
+    func testMoveChordEventSnapsExistingChordToRequestedBeat() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let symbol = ChordSymbol(root: .f, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+        XCTAssertTrue(chart.appendRecognizedChord(symbol, rawInput: "F", to: measureID, atFraction: 0.03))
+        let chordID = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first?.id)
+
+        XCTAssertTrue(chart.moveChordEvent(chordID, to: measureID, atFraction: 0.68))
+
+        let movedChord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
+        XCTAssertEqual(movedChord.id, chordID)
+        XCTAssertEqual(movedChord.startPosition.displayText, "4")
+        XCTAssertNil(movedChord.mappedRhythmSlotIndex)
+    }
+
+    func testMoveChordEventSnapsExistingChordToRhythmSlot() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        XCTAssertTrue(chart.setMeasureRhythmMap([.quarter, .quarter, .quarter, .quarter], for: measureID))
+        let symbol = ChordSymbol(root: .g, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+        XCTAssertTrue(chart.appendRecognizedChord(symbol, rawInput: "G", to: measureID, atFraction: 0.03))
+        let chordID = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first?.id)
+
+        XCTAssertTrue(chart.moveChordEvent(chordID, to: measureID, atFraction: 0.62))
+
+        let movedChord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
+        XCTAssertEqual(movedChord.startPosition.displayText, "3")
+        XCTAssertEqual(movedChord.mappedRhythmSlotIndex, 2)
+        XCTAssertEqual(movedChord.duration, .quarter)
     }
 
     func testReplaceMeasureRhythmValueUpdatesSelectedSlotWhenMeasureStillFits() throws {

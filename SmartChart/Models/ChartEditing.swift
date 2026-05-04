@@ -143,6 +143,18 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func setPageHandwrittenChordDrawing(_ drawingData: Data?) -> Bool {
+        let normalizedData = drawingData?.isEmpty == true ? nil : drawingData
+        guard pageHandwrittenChordData != normalizedData else {
+            return false
+        }
+
+        pageHandwrittenChordData = normalizedData
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
     mutating func setMeasureHandwrittenRhythmicNotationDrawing(
         _ drawingData: Data?,
         for measureID: UUID
@@ -228,6 +240,97 @@ extension Chart {
         systems[location.systemIndex].measures[location.measureIndex] = measure
         updatedAt = .now
         return .applied
+    }
+
+    @discardableResult
+    mutating func appendRecognizedChord(
+        _ symbol: ChordSymbol,
+        rawInput: String?,
+        to measureID: UUID,
+        atFraction fraction: Double?
+    ) -> Bool {
+        guard let location = measureLocation(id: measureID) else {
+            return false
+        }
+
+        var measure = systems[location.systemIndex].measures[location.measureIndex]
+        let suggestion = measure.suggestedChordInsertion(
+            atFraction: fraction,
+            defaultMeter: defaultMeter
+        )
+        measure.appendChordEvent(
+            symbol: symbol,
+            rawInput: rawInput,
+            suggestion: suggestion
+        )
+
+        systems[location.systemIndex].measures[location.measureIndex] = measure
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func deleteChordEvent(_ chordEventID: UUID) -> Bool {
+        for systemIndex in systems.indices {
+            for measureIndex in systems[systemIndex].measures.indices {
+                guard let chordIndex = systems[systemIndex].measures[measureIndex].chordEvents.firstIndex(where: { $0.id == chordEventID }) else {
+                    continue
+                }
+
+                systems[systemIndex].measures[measureIndex].chordEvents.remove(at: chordIndex)
+                updatedAt = .now
+                return true
+            }
+        }
+
+        return false
+    }
+
+    @discardableResult
+    mutating func moveChordEvent(
+        _ chordEventID: UUID,
+        to targetMeasureID: UUID,
+        atFraction fraction: Double?
+    ) -> Bool {
+        guard let sourceLocation = chordEventLocation(id: chordEventID),
+              let targetLocation = measureLocation(id: targetMeasureID) else {
+            return false
+        }
+
+        var chordEvent = systems[sourceLocation.systemIndex]
+            .measures[sourceLocation.measureIndex]
+            .chordEvents[sourceLocation.chordIndex]
+
+        if sourceLocation.systemIndex == targetLocation.systemIndex,
+           sourceLocation.measureIndex == targetLocation.measureIndex {
+            var measure = systems[targetLocation.systemIndex].measures[targetLocation.measureIndex]
+            let suggestion = measure.suggestedChordInsertion(
+                atFraction: fraction,
+                defaultMeter: defaultMeter,
+                excluding: chordEventID
+            )
+            chordEvent.apply(suggestion: suggestion)
+            measure.chordEvents[sourceLocation.chordIndex] = chordEvent
+            systems[targetLocation.systemIndex].measures[targetLocation.measureIndex] = measure
+            updatedAt = .now
+            return true
+        }
+
+        systems[sourceLocation.systemIndex]
+            .measures[sourceLocation.measureIndex]
+            .chordEvents
+            .remove(at: sourceLocation.chordIndex)
+
+        var targetMeasure = systems[targetLocation.systemIndex].measures[targetLocation.measureIndex]
+        let suggestion = targetMeasure.suggestedChordInsertion(
+            atFraction: fraction,
+            defaultMeter: defaultMeter
+        )
+        chordEvent.apply(suggestion: suggestion)
+        targetMeasure.chordEvents.append(chordEvent)
+        systems[targetLocation.systemIndex].measures[targetLocation.measureIndex] = targetMeasure
+        updatedAt = .now
+        return true
     }
 
     @discardableResult
@@ -382,6 +485,18 @@ extension Chart {
         for (systemIndex, system) in systems.enumerated() {
             if let measureIndex = system.measures.firstIndex(where: { $0.id == id }) {
                 return (systemIndex, measureIndex)
+            }
+        }
+
+        return nil
+    }
+
+    private func chordEventLocation(id: UUID) -> (systemIndex: Int, measureIndex: Int, chordIndex: Int)? {
+        for (systemIndex, system) in systems.enumerated() {
+            for (measureIndex, measure) in system.measures.enumerated() {
+                if let chordIndex = measure.chordEvents.firstIndex(where: { $0.id == id }) {
+                    return (systemIndex, measureIndex, chordIndex)
+                }
             }
         }
 

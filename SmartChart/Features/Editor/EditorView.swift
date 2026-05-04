@@ -22,6 +22,9 @@ struct EditorView: View {
     @State private var isExporting = false
     @State private var rhythmicNotationErrorMessage = ""
     @State private var showingRhythmicNotationError = false
+    @State private var chordRecognitionErrorMessage = ""
+    @State private var showingChordRecognitionError = false
+    @State private var pendingChordRecognitionConfirmation: ChordRecognitionProposal?
     @State private var pendingRhythmicNotationConfirmation: PendingRhythmicNotationConfirmation?
     @State private var selectedMeasureID: UUID?
     @State private var selectedNoteSelection: LeadSheetNoteSelection?
@@ -128,6 +131,30 @@ struct EditorView: View {
                 }
             )
         }
+        .sheet(item: $pendingChordRecognitionConfirmation) { confirmation in
+            ChordRecognitionConfirmationSheetView(
+                confirmation: confirmation,
+                supportedMatches: ChordRecognitionCompendium.supportedMatches,
+                onUseSuggestedChord: {
+                    handleChordRecognitionConfirmationAccepted(
+                        confirmation,
+                        symbol: confirmation.symbol,
+                        rawInput: confirmation.rawInput
+                    )
+                },
+                onUseChord: { match in
+                    handleChordRecognitionConfirmationAccepted(
+                        confirmation,
+                        symbol: match.symbol,
+                        rawInput: match.rawInput
+                    )
+                },
+                onKeepEditing: {
+                    pendingChordRecognitionConfirmation = nil
+                    canvasMode = .chordEntry
+                }
+            )
+        }
         .confirmationDialog(
             "Change Time Signature",
             isPresented: Binding(
@@ -194,12 +221,17 @@ struct EditorView: View {
         } message: {
             Text(rhythmicNotationErrorMessage)
         }
+        .alert("Chord Recognition", isPresented: $showingChordRecognitionError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(chordRecognitionErrorMessage)
+        }
         .alert("Rhythm Edit", isPresented: $showingNoteEditError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(noteEditErrorMessage)
         }
-        .onChange(of: selectedNoteSelection) { selection in
+        .onChange(of: selectedNoteSelection) { _, selection in
             if selection == nil {
                 isNoteEditMenuPresented = false
                 noteEditMenuStage = .actions
@@ -208,7 +240,7 @@ struct EditorView: View {
                 isNoteEditMenuPresented = true
             }
         }
-        .onChange(of: canvasMode) { mode in
+        .onChange(of: canvasMode) { _, mode in
             if mode != .noteEdit {
                 isNoteEditMenuPresented = false
                 noteEditMenuStage = .actions
@@ -301,6 +333,18 @@ struct EditorView: View {
                     )
                     .presentationCompactAdaptation(.popover)
                 }
+
+                Button {
+                    handleChordTabTapped()
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Chord",
+                        systemImage: "textformat.alt",
+                        isSelected: canvasMode == .chordEntry
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions && canvasMode != .chordEntry)
+                .buttonStyle(.plain)
 
                 Button {
                     selectedMeasureID = nil
@@ -413,7 +457,10 @@ struct EditorView: View {
             onTimeSignatureTargetRequested: handleTimeSignatureTargetRequested,
             onRhythmicNotationProposal: handleRhythmicNotationProposal,
             onRhythmicNotationValidationError: handleRhythmicNotationValidationError,
-            onNoteSelectionChanged: handleNoteSelectionChanged
+            onChordRecognitionProposal: handleChordRecognitionProposal,
+            onChordRecognitionError: handleChordRecognitionError,
+            onNoteSelectionChanged: handleNoteSelectionChanged,
+            chordRecognitionRequiresConfirmation: true
         )
     }
 
@@ -557,6 +604,21 @@ struct EditorView: View {
         canvasMode = .freeHand
     }
 
+    private func handleChordTabTapped() {
+        guard chart.hasCompletedInitialSetup else {
+            showingSetupSheet = true
+            return
+        }
+
+        selectedMeasureID = nil
+        selectedNoteSelection = nil
+        pendingTimeSignatureSourceMeasureID = nil
+        pendingTimeSignaturePlacement = nil
+        freeHandReturnMode = .browse
+
+        canvasMode = canvasMode == .chordEntry ? .browse : .chordEntry
+    }
+
     private func handleEditTabTapped() {
         guard chart.hasCompletedInitialSetup else {
             showingSetupSheet = true
@@ -608,6 +670,78 @@ struct EditorView: View {
         rhythmicNotationErrorMessage = message
         showingRhythmicNotationError = true
         canvasMode = .rhythmicNotationEdit
+    }
+
+    private func handleChordRecognitionError(_ message: String) {
+        chordRecognitionErrorMessage = message
+        showingChordRecognitionError = true
+        pendingChordRecognitionConfirmation = nil
+        canvasMode = .chordEntry
+    }
+
+    private func handleChordRecognitionProposal(_ proposal: ChordRecognitionProposal) {
+        pendingChordRecognitionConfirmation = proposal
+        selectedMeasureID = nil
+        selectedNoteSelection = nil
+        canvasMode = .chordEntry
+    }
+
+    private func handleChordRecognitionConfirmationAccepted(
+        _ confirmation: ChordRecognitionProposal,
+        symbol: ChordSymbol,
+        rawInput: String
+    ) {
+        var updatedChart = chart
+        guard updatedChart.appendRecognizedChord(
+            symbol,
+            rawInput: rawInput,
+            to: confirmation.measureID,
+            atFraction: confirmation.insertionFraction
+        ) else {
+            chordRecognitionErrorMessage = "That measure is no longer available. Keep editing and try the chord again."
+            showingChordRecognitionError = true
+            pendingChordRecognitionConfirmation = nil
+            canvasMode = .chordEntry
+            return
+        }
+
+        recordConfirmedChordExample(
+            confirmation,
+            symbol: symbol,
+            rawInput: rawInput
+        )
+        _ = updatedChart.setPageHandwrittenChordDrawing(confirmation.remainingChordDrawingData)
+        chart = updatedChart
+        pendingChordRecognitionConfirmation = nil
+        selectedMeasureID = confirmation.measureID
+        selectedNoteSelection = nil
+        canvasMode = .chordEntry
+    }
+
+    private func recordConfirmedChordExample(
+        _ confirmation: ChordRecognitionProposal,
+        symbol: ChordSymbol,
+        rawInput: String
+    ) {
+        guard let learningInk = confirmation.learningInk else {
+            return
+        }
+
+        let match = ChordRecognitionMatch(rawInput: rawInput, symbol: symbol)
+        ChordRecognitionLearningStore.recordConfirmedExample(
+            ChordRecognitionLearningExample(
+                match: match,
+                ink: learningInk,
+                sourceMethod: confirmation.methodName,
+                sourceConfidence: confirmation.confidence,
+                sourceReportSummary: confirmation.reportSummary,
+                suggestedDisplayText: confirmation.symbol.displayText,
+                suggestedMethod: confirmation.methodName,
+                suggestedConfidence: confirmation.confidence,
+                wasCorrection: symbol.displayText != confirmation.symbol.displayText,
+                sourceTelemetryID: confirmation.telemetryID
+            )
+        )
     }
 
     private func handleRhythmicNotationProposal(
@@ -756,7 +890,7 @@ struct EditorView: View {
             for: chart,
             pageWidth: 900
         )
-        return max(1200, CGFloat(visibleSystemCount) * 136 + 320)
+        return max(1200, CGFloat(visibleSystemCount) * 168 + 320)
     }
 
     @ViewBuilder

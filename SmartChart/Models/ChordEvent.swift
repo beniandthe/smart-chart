@@ -34,6 +34,13 @@ struct ChordEvent: Identifiable, Codable, Hashable {
         copy.symbol = symbol.transposed(by: view.semitoneOffsetFromConcert)
         return copy
     }
+
+    mutating func apply(suggestion: MeasureChordInsertionSuggestion) {
+        startPosition = suggestion.startPosition
+        duration = suggestion.duration
+        rhythmPlacement = suggestion.isRhythmMapped ? .aboveChord : .inline
+        mappedRhythmSlotIndex = suggestion.mappedRhythmSlotIndex
+    }
 }
 
 struct ChordSymbol: Codable, Hashable {
@@ -53,6 +60,8 @@ struct ChordSymbol: Codable, Hashable {
     }
 
     func transposed(by semitones: Int) -> ChordSymbol {
+        guard semitones != 0 else { return self }
+
         let originalPitch = ChordPitch(root: root, accidental: accidental)
         let preference = PitchSpellingPreference.forAccidental(accidental)
         let transposedRoot = originalPitch.transposed(by: semitones).spelled(using: preference)

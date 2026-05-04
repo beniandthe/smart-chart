@@ -2,7 +2,7 @@ import XCTest
 @testable import SmartChart
 
 final class MeasureRhythmMappingTests: XCTestCase {
-    func testSingleChordWithoutRhythmMapAutoFillsMeasure() {
+    func testSingleChordAtMeasureStartWithoutRhythmMapAutoFillsMeasure() {
         let meter = Meter(numerator: 3, denominator: 4)
         let measure = Measure(
             id: UUID(),
@@ -14,7 +14,7 @@ final class MeasureRhythmMappingTests: XCTestCase {
                 ChordEvent(
                     id: UUID(),
                     symbol: ChordSymbol(root: .c, accidental: .natural, quality: "7", extensions: [], alterations: [], slashBass: nil),
-                    startPosition: BeatPosition(beat: 2, subdivision: 0, subdivisionsPerBeat: 2),
+                    startPosition: BeatPosition(beat: 1, subdivision: 0, subdivisionsPerBeat: 1),
                     duration: .quarter,
                     rhythmPlacement: .belowChord,
                     tieOut: false,
@@ -33,6 +33,38 @@ final class MeasureRhythmMappingTests: XCTestCase {
         XCTAssertEqual(placements[0].startPosition.beat, 1)
         XCTAssertEqual(placements[0].durationDisplayText, "whole measure")
         XCTAssertEqual(placements[0].effectiveWholeNoteLength, meter.measureLengthInWholeNotes)
+    }
+
+    func testSingleChordWithoutRhythmMapHonorsWrittenBeatWhenNotAtMeasureStart() {
+        let meter = Meter(numerator: 4, denominator: 4)
+        let measure = Measure(
+            id: UUID(),
+            index: 1,
+            meterOverride: nil,
+            beatGridPreset: .simple,
+            barlineAfter: .single,
+            chordEvents: [
+                ChordEvent(
+                    id: UUID(),
+                    symbol: ChordSymbol(root: .c, accidental: .natural, quality: "7", extensions: [], alterations: [], slashBass: nil),
+                    startPosition: BeatPosition(beat: 3, subdivision: 0, subdivisionsPerBeat: 1),
+                    duration: .quarter,
+                    rhythmPlacement: .aboveChord,
+                    tieOut: false,
+                    hitStyle: .none,
+                    rawInput: nil
+                )
+            ],
+            cueTextIDs: [],
+            roadmapObjectIDs: []
+        )
+
+        let placements = measure.renderedChordPlacements(defaultMeter: meter)
+
+        XCTAssertEqual(placements.count, 1)
+        XCTAssertFalse(placements[0].isAutoFill)
+        XCTAssertEqual(placements[0].startPosition.displayText, "3")
+        XCTAssertEqual(placements[0].durationDisplayText, "quarter")
     }
 
     func testRhythmMapResolvesAndSnapsChordPlacements() {
@@ -222,7 +254,7 @@ final class MeasureRhythmMappingTests: XCTestCase {
         XCTAssertEqual(suggestion.duration, .quarter)
     }
 
-    func testSuggestedChordInsertionAtFractionQuantizesToNearestSubdivisionWithoutRhythmMap() {
+    func testSuggestedChordInsertionAtFractionQuantizesToNearestBeatWithoutRhythmMap() {
         let meter = Meter(numerator: 4, denominator: 4)
         let measure = Measure(
             id: UUID(),
@@ -238,7 +270,29 @@ final class MeasureRhythmMappingTests: XCTestCase {
         let suggestion = measure.suggestedChordInsertion(atFraction: 0.61, defaultMeter: meter)
 
         XCTAssertNil(suggestion.mappedRhythmSlotIndex)
-        XCTAssertEqual(suggestion.startPosition.displayText, "3&")
+        XCTAssertEqual(suggestion.startPosition.displayText, "3")
+        XCTAssertEqual(suggestion.startPosition.subdivisionsPerBeat, 1)
+        XCTAssertEqual(suggestion.duration, .quarter)
+    }
+
+    func testSuggestedChordInsertionAtLeadingEdgeSnapsToFirstBeatWithoutRhythmMap() {
+        let meter = Meter(numerator: 4, denominator: 4)
+        let measure = Measure(
+            id: UUID(),
+            index: 1,
+            meterOverride: nil,
+            beatGridPreset: .simple,
+            barlineAfter: .single,
+            chordEvents: [],
+            cueTextIDs: [],
+            roadmapObjectIDs: []
+        )
+
+        let suggestion = measure.suggestedChordInsertion(atFraction: 0.03, defaultMeter: meter)
+
+        XCTAssertNil(suggestion.mappedRhythmSlotIndex)
+        XCTAssertEqual(suggestion.startPosition.displayText, "1")
+        XCTAssertEqual(suggestion.startPosition.subdivisionsPerBeat, 1)
         XCTAssertEqual(suggestion.duration, .quarter)
     }
 

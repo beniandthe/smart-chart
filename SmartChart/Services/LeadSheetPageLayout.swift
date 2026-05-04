@@ -254,7 +254,7 @@ enum LeadSheetPageLayoutEngine {
         let metrics = chart.engravingPreset.layoutMetrics
         let lineSpacing = metrics.staffLineSpacing
         let chordBandHeight = metrics.chordBandHeight
-        let staffTop = frame.minY + 28
+        let staffTop = frame.minY + chordBandHeight + 2
         let staffLineYPositions = (0..<5).map { staffTop + CGFloat($0) * lineSpacing }
         let staffFrame = CGRect(
             x: frame.minX,
@@ -494,7 +494,8 @@ enum LeadSheetPageLayoutEngine {
                 for: placement,
                 chart: chart,
                 meter: meter,
-                chordBandFrame: chordBandFrame
+                chordBandFrame: chordBandFrame,
+                staffFrame: staffFrame
             )
         }
         let noteLayouts = slashNoteLayouts(
@@ -503,16 +504,7 @@ enum LeadSheetPageLayoutEngine {
             meter: meter,
             staffFrame: staffFrame,
             staffLineYPositions: staffLineYPositions
-        ) ?? displayedPlacements.enumerated().map { placementIndex, placement in
-            noteLayout(
-                for: placement,
-                chart: chart,
-                meter: meter,
-                index: placementIndex,
-                staffFrame: staffFrame,
-                staffLineYPositions: staffLineYPositions
-            )
-        }
+        ) ?? []
 
         return LeadSheetMeasureLayout(
             id: measure.id,
@@ -536,15 +528,21 @@ enum LeadSheetPageLayoutEngine {
         for placement: MeasureChordPlacement,
         chart: Chart,
         meter: Meter,
-        chordBandFrame: CGRect
+        chordBandFrame: CGRect,
+        staffFrame: CGRect
     ) -> LeadSheetChordLayout {
         let event = placement.chordEvent.transposed(for: chart.defaultTranspositionView)
-        let startFraction = placement.startPosition.startOffset(in: meter)
-            .map { $0 / meter.measureLengthInWholeNotes }
-            ?? 0
         let textWidth = max(24, CGFloat(max(2, event.symbol.displayText.count)) * 11)
+        let usableWidth = staffFrame.width - 16
+        let attackCenterX = beatAttackCenterX(
+            startPosition: placement.startPosition,
+            duration: placement.duration ?? .quarter,
+            meter: meter,
+            staffFrame: staffFrame,
+            usableWidth: usableWidth
+        )
         let chordX = min(
-            max(chordBandFrame.minX + 1, chordBandFrame.minX + CGFloat(startFraction) * chordBandFrame.width - 2),
+            max(chordBandFrame.minX + 1, attackCenterX - textWidth / 2),
             chordBandFrame.maxX - textWidth
         )
 
@@ -553,19 +551,6 @@ enum LeadSheetPageLayoutEngine {
             text: event.symbol.displayText,
             frame: CGRect(x: chordX, y: chordBandFrame.minY, width: textWidth, height: chordBandFrame.height)
         )
-    }
-
-    private static func pitchedNoteheadSymbol(
-        for headStyle: LeadSheetNoteLayout.HeadStyle
-    ) -> NotationGlyphCatalog.Symbol {
-        switch headStyle {
-        case .whole:
-            return .noteheadWhole
-        case .half:
-            return .noteheadHalf
-        case .filled:
-            return .noteheadBlack
-        }
     }
 
     private static func slashNoteheadSymbol(
@@ -642,100 +627,6 @@ enum LeadSheetPageLayoutEngine {
 
     private static func smuflScale(staffSpace: CGFloat, engravingPreset: EngravingPreset) -> CGFloat {
         staffSpace * CGFloat(engravingPreset.glyphScale)
-    }
-
-    private static func noteLayout(
-        for placement: MeasureChordPlacement,
-        chart: Chart,
-        meter: Meter,
-        index: Int,
-        staffFrame: CGRect,
-        staffLineYPositions: [CGFloat]
-    ) -> LeadSheetNoteLayout {
-        let event = placement.chordEvent.transposed(for: chart.defaultTranspositionView)
-        let startFraction = placement.startPosition.startOffset(in: meter)
-            .map { $0 / meter.measureLengthInWholeNotes }
-            ?? 0
-        let usableWidth = staffFrame.width - 12
-        let noteCenterX = staffFrame.minX + 8 + usableWidth * CGFloat(startFraction)
-        let stepOffset = pitchStep(for: event.symbol)
-        let halfStepSpacing = (staffLineYPositions[1] - staffLineYPositions[0]) / 2
-        let staffSpace = halfStepSpacing * 2
-        let clampedStep = min(4, max(-4, stepOffset))
-        let staffMiddleY = staffLineYPositions[2]
-        let unclampedCenterY = staffMiddleY - CGFloat(clampedStep) * halfStepSpacing
-        let noteCenterY = min(
-            max(staffFrame.minY + 5, unclampedCenterY),
-            staffFrame.maxY - 5
-        )
-        let headStyle = headStyle(for: event.duration)
-        let noteheadSymbol = pitchedNoteheadSymbol(for: headStyle)
-        let noteheadFrame = noteheadFrame(
-            for: noteheadSymbol,
-            centeredAt: CGPoint(x: noteCenterX, y: noteCenterY),
-            staffSpace: staffSpace,
-            notationFont: chart.notationFont,
-            engravingPreset: chart.engravingPreset,
-            fallbackSize: CGSize(width: 9, height: 7)
-        )
-        let stemGoesUp = noteCenterY > staffMiddleY
-        let stemLength: CGFloat = 28
-        let fallbackStemStart = CGPoint(
-            x: stemGoesUp ? noteheadFrame.maxX - 0.5 : noteheadFrame.minX + 0.5,
-            y: noteCenterY
-        )
-        let stemStart = headStyle == .whole
-            ? nil
-            : stemAnchorPoint(
-                for: noteheadSymbol,
-                centeredAt: noteheadFrame.center,
-                staffSpace: staffSpace,
-                notationFont: chart.notationFont,
-                engravingPreset: chart.engravingPreset,
-                stemGoesUp: stemGoesUp,
-                fallback: fallbackStemStart
-            )
-        let stemEnd = stemStart.map { startPoint in
-            CGPoint(
-                x: startPoint.x,
-                y: stemGoesUp ? startPoint.y - stemLength : startPoint.y + stemLength
-            )
-        }
-        let dotFrame = dottedDuration(event.duration)
-            ? CGRect(
-                x: noteheadFrame.maxX + 3,
-                y: noteCenterY - 1.5,
-                width: 3,
-                height: 3
-            )
-            : nil
-        let tieFrame: CGRect?
-        if event.tieOut || event.duration == .whole || event.duration == .dottedHalf {
-            tieFrame = CGRect(
-                x: noteheadFrame.minX - 1,
-                y: noteheadFrame.maxY + 7,
-                width: max(18, staffFrame.maxX - noteheadFrame.minX - 8),
-                height: 10
-            )
-        } else {
-            tieFrame = nil
-        }
-
-        return LeadSheetNoteLayout(
-            id: UUID(uuidString: placement.chordEvent.id.uuidString) ?? UUID(),
-            symbolStyle: .pitchedNote,
-            noteheadSymbol: noteheadSymbol,
-            noteheadFrame: noteheadFrame,
-            staffSpace: staffSpace,
-            headStyle: headStyle,
-            stemStart: stemStart,
-            stemEnd: stemEnd,
-            stemGoesUp: stemGoesUp,
-            flagStyle: event.duration == .eighth ? .single : .none,
-            dotFrame: dotFrame,
-            tieFrame: tieFrame,
-            beamEndPoint: nil
-        )
     }
 
     private static func slashNoteLayouts(
@@ -901,8 +792,24 @@ enum LeadSheetPageLayoutEngine {
         staffFrame: CGRect,
         usableWidth: CGFloat
     ) -> CGFloat {
-        let startOffset = slot.startPosition.startOffset(in: meter) ?? 0
-        let attackLaneLength = slashAttackLaneLength(for: slot.duration, meter: meter)
+        beatAttackCenterX(
+            startPosition: slot.startPosition,
+            duration: slot.duration,
+            meter: meter,
+            staffFrame: staffFrame,
+            usableWidth: usableWidth
+        )
+    }
+
+    private static func beatAttackCenterX(
+        startPosition: BeatPosition,
+        duration: RhythmValue,
+        meter: Meter,
+        staffFrame: CGRect,
+        usableWidth: CGFloat
+    ) -> CGFloat {
+        let startOffset = startPosition.startOffset(in: meter) ?? 0
+        let attackLaneLength = slashAttackLaneLength(for: duration, meter: meter)
         let attackCenterOffset = min(
             meter.measureLengthInWholeNotes,
             startOffset + attackLaneLength / 2
@@ -1067,28 +974,6 @@ enum LeadSheetPageLayoutEngine {
         }
     }
 
-    private static func pitchStep(for symbol: ChordSymbol) -> Int {
-        let pitchText = symbol.slashBass ?? "\(symbol.root.rawValue)\(symbol.accidental.rawValue)"
-        let pitch = ChordPitch.parse(pitchText) ?? ChordPitch(root: symbol.root, accidental: symbol.accidental)
-
-        switch pitch.root {
-        case .c:
-            return -1
-        case .d:
-            return 0
-        case .e:
-            return 1
-        case .f:
-            return 2
-        case .g:
-            return 3
-        case .a:
-            return 4
-        case .b:
-            return 5
-        }
-    }
-
     static func resolvedStyleNote(for chart: Chart) -> String? {
         if let explicitStyleNote = normalizedText(chart.styleNote), !explicitStyleNote.isEmpty {
             return explicitStyleNote
@@ -1217,40 +1102,40 @@ private extension EngravingPreset {
         case .compact:
             return LeadSheetEngravingMetrics(
                 measureWidthScale: 0.88,
-                systemHeight: 100,
+                systemHeight: 124,
                 systemSpacing: 18,
                 staffLineSpacing: 9.8,
-                chordBandHeight: 24,
+                chordBandHeight: 48,
                 firstSystemSignatureWidth: 74,
                 continuationSystemSignatureWidth: 16
             )
         case .balanced:
             return LeadSheetEngravingMetrics(
                 measureWidthScale: 1,
-                systemHeight: 106,
+                systemHeight: 132,
                 systemSpacing: 22,
                 staffLineSpacing: 10.5,
-                chordBandHeight: 26,
+                chordBandHeight: 52,
                 firstSystemSignatureWidth: 78,
                 continuationSystemSignatureWidth: 18
             )
         case .wide:
             return LeadSheetEngravingMetrics(
                 measureWidthScale: 1.18,
-                systemHeight: 112,
+                systemHeight: 140,
                 systemSpacing: 26,
                 staffLineSpacing: 11.2,
-                chordBandHeight: 28,
+                chordBandHeight: 56,
                 firstSystemSignatureWidth: 82,
                 continuationSystemSignatureWidth: 20
             )
         case .bold:
             return LeadSheetEngravingMetrics(
                 measureWidthScale: 1.04,
-                systemHeight: 110,
+                systemHeight: 137,
                 systemSpacing: 24,
                 staffLineSpacing: 10.8,
-                chordBandHeight: 27,
+                chordBandHeight: 54,
                 firstSystemSignatureWidth: 80,
                 continuationSystemSignatureWidth: 18
             )
