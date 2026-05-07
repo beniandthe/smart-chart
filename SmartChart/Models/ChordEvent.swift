@@ -10,6 +10,7 @@ struct ChordEvent: Identifiable, Codable, Hashable {
     var tieOut: Bool
     var hitStyle: HitStyle
     var rawInput: String?
+    var sourceInkData: Data? = nil
 
     var displaySummary: String {
         var components = [symbol.displayText, "@\(startPosition.displayText)", duration.displayText]
@@ -52,11 +53,12 @@ struct ChordSymbol: Codable, Hashable {
     var slashBass: String?
 
     var displayText: String {
+        let qualityText = displayQualityText
         let extensionText = extensions.joined()
         let alterationText = alterations.joined()
         let slashText = slashBass.map { "/\($0)" } ?? ""
 
-        return "\(root.rawValue)\(accidental.rawValue)\(quality)\(extensionText)\(alterationText)\(slashText)"
+        return "\(root.rawValue)\(accidental.rawValue)\(qualityText)\(extensionText)\(alterationText)\(slashText)"
     }
 
     func transposed(by semitones: Int) -> ChordSymbol {
@@ -77,6 +79,22 @@ struct ChordSymbol: Codable, Hashable {
         }
 
         return copy
+    }
+
+    private var displayQualityText: String {
+        if quality == "△" || quality == "Δ" || quality == "∆" {
+            return "△"
+        }
+
+        if quality == "maj" || quality == "major" || quality == "M" {
+            return "△"
+        }
+
+        if quality.hasPrefix("maj") {
+            return "△" + String(quality.dropFirst(3))
+        }
+
+        return quality
     }
 }
 

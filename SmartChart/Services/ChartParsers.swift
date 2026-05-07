@@ -40,7 +40,9 @@ enum ChordSymbolParser {
 
         let descriptorStart = descriptorStartIndex(in: trimmed)
         let descriptorText = String(trimmed[descriptorStart...])
-        let pieces = descriptorText.split(separator: "/", maxSplits: 1).map(String.init)
+        let pieces = descriptorText
+            .split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false)
+            .map(String.init)
         let descriptor = pieces.first ?? ""
         let slashBass = pieces.count > 1 ? pieces[1] : nil
 
@@ -106,7 +108,11 @@ enum ChordSymbolParser {
         var index = 0
         let lowercasedDescriptor = descriptor.lowercased()
 
-        if lowercasedDescriptor.hasPrefix("minor") {
+        if let firstCharacter = characters.first,
+           firstCharacter.isMajorTriangleQuality {
+            quality = "△"
+            index = 1
+        } else if lowercasedDescriptor.hasPrefix("minor") {
             quality = "-"
             index = 5
         } else if lowercasedDescriptor.hasPrefix("min") {
@@ -143,6 +149,9 @@ enum ChordSymbolParser {
                 }
 
                 extensions.append(token)
+            } else if character.isMajorTriangleQuality {
+                quality = "△"
+                index += 1
             } else if !character.isWhitespace {
                 quality.append(character)
                 index += 1
@@ -162,7 +171,20 @@ enum ChordSymbolParser {
             return true
         }
 
+        if trimmedDescriptor.first == "M" {
+            let suffix = trimmedDescriptor.dropFirst()
+            if suffix.allSatisfy(\.isNumber) {
+                return true
+            }
+        }
+
         return lowercasedDescriptor.hasPrefix("maj")
             || lowercasedDescriptor.hasPrefix("major")
+    }
+}
+
+private extension Character {
+    var isMajorTriangleQuality: Bool {
+        self == "△" || self == "Δ" || self == "∆"
     }
 }

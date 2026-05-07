@@ -28,13 +28,17 @@ enum ChordRecognitionCompendium {
         }
 
         let normalizedInput = normalized(text)
-        guard let entry = entries.first(where: { entry in
+        if let entry = entries.first(where: { entry in
             entry.normalizedAliases.contains(normalizedInput)
-        }) else {
-            return nil
+        }) {
+            return ChordRecognitionMatch(rawInput: text, symbol: entry.symbol)
         }
 
-        return ChordRecognitionMatch(rawInput: text, symbol: entry.symbol)
+        if let parsedSymbol = try? ChordSymbolParser.parse(text) {
+            return ChordRecognitionMatch(rawInput: text, symbol: parsedSymbol)
+        }
+
+        return nil
     }
 
     static func match(candidates: [String]) -> ChordRecognitionMatch? {
@@ -59,7 +63,11 @@ enum ChordRecognitionCompendium {
             .replacingOccurrences(of: "FLAT", with: "b")
             .replacingOccurrences(of: "SHARP", with: "#")
             .filter { character in
-                character.isLetter || character.isNumber || character == "#" || character == "-"
+                character.isLetter
+                    || character.isNumber
+                    || character == "#"
+                    || character == "-"
+                    || character == "/"
             }
             .uppercased()
     }
@@ -78,7 +86,7 @@ enum ChordRecognitionCompendium {
             return false
         }
 
-        if suffix == "M",
+        if (suffix == "M" || suffix.dropFirst().allSatisfy(\.isNumber)),
            text.contains("M"),
            !text.contains("m") {
             return true

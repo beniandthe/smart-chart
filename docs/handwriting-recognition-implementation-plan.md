@@ -469,6 +469,22 @@ Whenever recognition fails on real iPad input:
 
 This is the main guardrail against recurring regressions.
 
+### Live fixture capture loop
+
+For exact data collection, use the confirmation sheet as a labeling tool rather
+than as a chart-entry tool:
+
+1. write exactly one chord symbol in chord mode
+2. correct `Intended chord` to the exact target spelling
+3. tap `Copy Test Fixture`
+4. let `scripts/watch_simulator_chord_fixtures.py` import the copied sample
+5. tap `Clear & Next Sample`
+6. repeat
+
+The corrected `Intended chord` label is the source of truth for the captured
+fixture. Do not tap `Use Chord` during a fixture pass unless the goal is to test
+normal chart entry instead of data capture.
+
 ## Milestones
 
 ### Milestone 1: Stabilize symbolic recognition
@@ -565,20 +581,22 @@ Recognition should identify tokens. Beat placement, snapping, and page layout sh
 
 ## First Implementation Checklist
 
-- [ ] Add this plan to the repo.
-- [ ] Expand `ChordSymbolParserTests` around compendium behavior.
-- [ ] Add `SmartChart/Recognition` folder.
-- [ ] Add pure Swift ink data types.
-- [ ] Add fixture loader for recognition tests.
-- [ ] Add `StrokeClusterer` with deterministic heuristics.
-- [ ] Add a minimal point-cloud glyph recognizer.
-- [ ] Add initial glyph templates.
-- [ ] Add `ChordInkCandidateComposer`.
-- [ ] Add `ChordInkRecognizer` facade.
-- [ ] Wire final matching through `ChordRecognitionCompendium.match(candidates:)`.
-- [ ] Add PencilKit capture overlay.
-- [ ] Add candidate UI.
-- [ ] Commit accepted candidates into `ChordEvent`.
+- [x] Add this plan to the repo.
+- [x] Expand `ChordSymbolParserTests` around compendium behavior.
+- [x] Add `SmartChart/Recognition` folder.
+- [x] Add pure Swift ink data types.
+- [x] Add fixture loader for recognition tests.
+- [x] Add `StrokeClusterer` with deterministic heuristics.
+- [x] Add a minimal point-cloud glyph recognizer.
+- [x] Add initial glyph templates.
+- [x] Add `ChordInkCandidateComposer`.
+- [x] Add `ChordInkRecognizer` facade.
+- [x] Wire final matching through `ChordRecognitionCompendium.match(candidates:)`.
+- [x] Add PencilKit capture overlay.
+- [x] Add candidate UI.
+- [x] Commit accepted candidates into `ChordEvent`.
+- [x] Add fixture export path for real iPad handwriting samples.
+- [x] Add fixture import path for real iPad handwriting samples.
 - [ ] Add real iPad handwriting samples as fixtures.
 
 ## Success Criteria

@@ -289,7 +289,8 @@ extension Measure {
         symbol: ChordSymbol,
         rawInput: String?,
         suggestion: MeasureChordInsertionSuggestion,
-        hitStyle: HitStyle = .none
+        hitStyle: HitStyle = .none,
+        sourceInkData: Data? = nil
     ) {
         chordEvents.append(
             ChordEvent(
@@ -301,7 +302,8 @@ extension Measure {
                 mappedRhythmSlotIndex: suggestion.mappedRhythmSlotIndex,
                 tieOut: false,
                 hitStyle: hitStyle,
-                rawInput: rawInput
+                rawInput: rawInput,
+                sourceInkData: sourceInkData
             )
         )
     }

@@ -193,19 +193,22 @@ final class ChartEditingTests: XCTestCase {
         )
         let measureID = try XCTUnwrap(chart.measures.first?.id)
         let symbol = try XCTUnwrap(BasicMajorChordCompendium.match("Db")?.symbol)
+        let sourceInkData = Data([1, 9, 7, 5])
 
         XCTAssertTrue(
             chart.appendRecognizedChord(
                 symbol,
                 rawInput: "D flat",
                 to: measureID,
-                atFraction: 0.55
+                atFraction: 0.55,
+                sourceInkData: sourceInkData
             )
         )
 
         let chord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
         XCTAssertEqual(chord.symbol.displayText, "Db")
         XCTAssertEqual(chord.rawInput, "D flat")
+        XCTAssertEqual(chord.sourceInkData, sourceInkData)
         XCTAssertEqual(chord.startPosition.displayText, "3")
     }
 

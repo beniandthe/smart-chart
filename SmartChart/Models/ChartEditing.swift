@@ -247,7 +247,8 @@ extension Chart {
         _ symbol: ChordSymbol,
         rawInput: String?,
         to measureID: UUID,
-        atFraction fraction: Double?
+        atFraction fraction: Double?,
+        sourceInkData: Data? = nil
     ) -> Bool {
         guard let location = measureLocation(id: measureID) else {
             return false
@@ -261,7 +262,8 @@ extension Chart {
         measure.appendChordEvent(
             symbol: symbol,
             rawInput: rawInput,
-            suggestion: suggestion
+            suggestion: suggestion,
+            sourceInkData: sourceInkData
         )
 
         systems[location.systemIndex].measures[location.measureIndex] = measure

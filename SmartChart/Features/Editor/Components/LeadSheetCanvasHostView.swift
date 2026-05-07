@@ -11,6 +11,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     var onTimeSignatureTargetRequested: ((UUID) -> Void)? = nil
     var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)? = nil
     var onRhythmicNotationValidationError: ((String) -> Void)? = nil
+    var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?) -> Void)? = nil
     var onNoteSelectionChanged: ((LeadSheetNoteSelection?) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
@@ -40,6 +41,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         view.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
         view.onRhythmicNotationProposal = onRhythmicNotationProposal
         view.onRhythmicNotationValidationError = onRhythmicNotationValidationError
+        view.onChordInkRecognitionProposal = onChordInkRecognitionProposal
         return view
     }
 
@@ -61,6 +63,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         uiView.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
         uiView.onRhythmicNotationProposal = onRhythmicNotationProposal
         uiView.onRhythmicNotationValidationError = onRhythmicNotationValidationError
+        uiView.onChordInkRecognitionProposal = onChordInkRecognitionProposal
     }
 
     final class Coordinator {
@@ -140,11 +143,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     var onTimeSignatureTargetRequested: ((UUID) -> Void)?
     var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)?
     var onRhythmicNotationValidationError: ((String) -> Void)?
+    var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?) -> Void)?
     var onNoteSelectionChanged: ((LeadSheetNoteSelection?) -> Void)?
 
     private var pageLayout: LeadSheetPageLayout?
     private let pageInkCanvasView = PKCanvasView()
     private let chordEditHitOverlayView = ChordEditHitOverlayView()
+    private let chordInkRecognizer = ChordInkRecognizer()
     private lazy var selectionTapRecognizer = UITapGestureRecognizer(
         target: self,
         action: #selector(handleTap(_:))
@@ -167,6 +172,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     )
     private var isSyncingInkCanvasFromModel = false
     private var pendingInkPersistWorkItem: DispatchWorkItem?
+    private var pendingChordRecognitionWorkItem: DispatchWorkItem?
+    private var lastRecognizedChordDrawingData: Data?
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
     private var isRestoringSelection = false
@@ -888,11 +895,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func schedulePersistActiveInk() {
-        guard !interactionMode.allowsChordInkEditing else {
-            pendingInkPersistWorkItem?.cancel()
-            pendingInkPersistWorkItem = nil
-            // Chord symbols are often built from multiple strokes. Persisting after
-            // every pen-up can resync the PKCanvas right as the next stroke begins.
+        if interactionMode.allowsChordInkEditing {
+            scheduleChordInkRecognition()
             return
         }
 
@@ -904,9 +908,23 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.22, execute: workItem)
     }
 
+    private func scheduleChordInkRecognition() {
+        pendingInkPersistWorkItem?.cancel()
+        pendingInkPersistWorkItem = nil
+        pendingChordRecognitionWorkItem?.cancel()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.recognizeChordInkIfNeeded()
+        }
+        pendingChordRecognitionWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.70, execute: workItem)
+    }
+
     private func persistActiveInkIfNeeded() {
         pendingInkPersistWorkItem?.cancel()
         pendingInkPersistWorkItem = nil
+        pendingChordRecognitionWorkItem?.cancel()
+        pendingChordRecognitionWorkItem = nil
 
         guard let activeInkScope = activeInkScope() else {
             return
@@ -937,6 +955,44 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         chart = updatedChart
         onChartChanged?(updatedChart)
+    }
+
+    private func recognizeChordInkIfNeeded() {
+        pendingChordRecognitionWorkItem?.cancel()
+        pendingChordRecognitionWorkItem = nil
+
+        guard interactionMode.allowsChordInkEditing,
+              let activeInkScope = activeInkScope(),
+              case .chords(let chordFrame) = activeInkScope,
+              let drawingData = currentCanvasDrawingData(),
+              drawingData != lastRecognizedChordDrawingData,
+              let target = chordInkTarget(
+                for: pageInkCanvasView.drawing,
+                chordFrame: chordFrame
+              ) else {
+            return
+        }
+
+        var updatedChart = chart
+        if updatedChart.setPageHandwrittenChordDrawing(drawingData) {
+            chart = updatedChart
+            onChartChanged?(updatedChart)
+        }
+
+        let result = chordInkRecognizer.recognize(
+            strokes: PencilKitInkAdapter.inkStrokes(from: pageInkCanvasView.drawing)
+        )
+        guard !result.rawCandidates.isEmpty else {
+            return
+        }
+
+        lastRecognizedChordDrawingData = drawingData
+        onChordInkRecognitionProposal?(
+            target.measureID,
+            result,
+            drawingData,
+            target.fraction
+        )
     }
 
     private func shouldFinalizeRhythmicNotation(from previousMeasureID: UUID?, to nextMeasureID: UUID?) -> Bool {
@@ -1032,6 +1088,65 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             }
     }
 
+    private func chordInkTarget(
+        for drawing: PKDrawing,
+        chordFrame: CGRect
+    ) -> (measureID: UUID, fraction: Double)? {
+        guard let pageLayout else {
+            return nil
+        }
+
+        let inkBounds = drawing.strokes.reduce(CGRect.null) { partialBounds, stroke in
+            let strokeBounds = stroke.renderBounds
+            guard !strokeBounds.isNull else {
+                return partialBounds
+            }
+
+            return partialBounds.isNull ? strokeBounds : partialBounds.union(strokeBounds)
+        }
+        guard !inkBounds.isNull,
+              inkBounds.width >= 4 || inkBounds.height >= 4 else {
+            return nil
+        }
+
+        let inkBoundsInView = inkBounds.offsetBy(dx: chordFrame.minX, dy: chordFrame.minY)
+        let inkCenter = CGPoint(x: inkBoundsInView.midX, y: inkBoundsInView.midY)
+        let candidateMeasures = pageLayout.systems.flatMap(\.measures).compactMap { measure -> LeadSheetMeasureLayout? in
+            guard measure.sourceMeasureID != nil else {
+                return nil
+            }
+
+            return measure
+        }
+
+        let targetMeasure = candidateMeasures.max { lhs, rhs in
+            chordInkScore(inkBoundsInView, center: inkCenter, for: lhs)
+                < chordInkScore(inkBoundsInView, center: inkCenter, for: rhs)
+        }
+        guard let targetMeasure,
+              let measureID = targetMeasure.sourceMeasureID,
+              chordInkScore(inkBoundsInView, center: inkCenter, for: targetMeasure) > 0 else {
+            return nil
+        }
+
+        let fraction = (inkCenter.x - targetMeasure.chordBandFrame.minX)
+            / max(1, targetMeasure.chordBandFrame.width)
+        return (measureID, Double(min(max(fraction, 0), 0.9999)))
+    }
+
+    private func chordInkScore(
+        _ inkBounds: CGRect,
+        center: CGPoint,
+        for measure: LeadSheetMeasureLayout
+    ) -> CGFloat {
+        let generousBandFrame = measure.chordBandFrame.insetBy(dx: -14, dy: -18)
+        let intersection = generousBandFrame.intersection(inkBounds)
+        let intersectionArea = intersection.isNull ? 0 : intersection.width * intersection.height
+        let centerBonus: CGFloat = generousBandFrame.contains(center) ? 10_000 : 0
+
+        return intersectionArea + centerBonus
+    }
+
     private func restoreSelectedMeasureID(_ measureID: UUID?) {
         guard !isRestoringSelection else {
             return
@@ -1075,6 +1190,9 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if !interactionMode.allowsChordInkEditing {
             activeChordMoveDrag = nil
+            pendingChordRecognitionWorkItem?.cancel()
+            pendingChordRecognitionWorkItem = nil
+            lastRecognizedChordDrawingData = nil
         }
 
         if !interactionMode.allowsAnyInkEditing {
