@@ -146,8 +146,8 @@ struct ChordInkRecognitionDecision: Hashable {
 }
 
 enum ChordInkRecognitionPolicy {
-    static let autoRenderMinimumConfidence = 4.15
-    static let closeRaceConfidenceGap = 0.35
+    static let autoRenderMinimumConfidence = 3.95
+    static let closeRaceConfidenceGap = 0.10
 
     static func decision(for result: ChordInkRecognitionResult) -> ChordInkRecognitionDecision {
         guard let match = result.match else {
@@ -181,6 +181,21 @@ enum ChordInkRecognitionPolicy {
            let competingText = runnerUp.displayText {
             let gap = bestConfidence - runnerUp.confidence
             if gap <= closeRaceConfidenceGap {
+                if shouldAutoRenderCloseSpellingRace(
+                    acceptedText: acceptedText,
+                    competingText: competingText,
+                    gap: gap
+                ) {
+                    return ChordInkRecognitionDecision(
+                        action: .autoRender,
+                        acceptedText: acceptedText,
+                        reason: "Confident read. Placed automatically.",
+                        isCloseRace: false,
+                        competingCandidateText: nil,
+                        confidenceGap: nil
+                    )
+                }
+
                 return ChordInkRecognitionDecision(
                     action: .confirm,
                     acceptedText: acceptedText,
@@ -234,6 +249,24 @@ enum ChordInkRecognitionPolicy {
 
             return (lhs.displayText ?? lhs.text) < (rhs.displayText ?? rhs.text)
         }
+    }
+
+    private static func shouldAutoRenderCloseSpellingRace(
+        acceptedText: String,
+        competingText: String,
+        gap: Double
+    ) -> Bool {
+        gap >= 0.04
+            && !hasUncommonRootSpelling(acceptedText)
+            && hasUncommonRootSpelling(competingText)
+    }
+
+    private static func hasUncommonRootSpelling(_ text: String) -> Bool {
+        guard let symbol = try? ChordSymbolParser.parse(text) else {
+            return false
+        }
+
+        return ["B#", "E#", "Cb", "Fb"].contains("\(symbol.root.rawValue)\(symbol.accidental.rawValue)")
     }
 }
 

@@ -263,7 +263,7 @@ final class ChordInkRecognizerTests: XCTestCase {
             confidence: 4.80,
             scores: [
                 candidateScore("C", confidence: 4.80),
-                candidateScore("G", confidence: 4.52)
+                candidateScore("G", confidence: 4.72)
             ]
         )
 
@@ -278,9 +278,9 @@ final class ChordInkRecognizerTests: XCTestCase {
     func testResolutionPolicyPromptsForLowConfidenceMatches() throws {
         let result = recognitionResult(
             matchText: "C",
-            confidence: 4.00,
+            confidence: 3.80,
             scores: [
-                candidateScore("C", confidence: 4.00),
+                candidateScore("C", confidence: 3.80),
                 candidateScore("G", confidence: 3.00)
             ]
         )
@@ -290,6 +290,93 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertEqual(decision.action, .confirm)
         XCTAssertEqual(decision.acceptedText, "C")
         XCTAssertFalse(decision.isCloseRace)
+    }
+
+    func testResolutionPolicyAutoRendersClearLoopCandidatesBelowOldThreshold() throws {
+        let result = recognitionResult(
+            matchText: "C",
+            confidence: 3.965,
+            scores: [
+                candidateScore("C", confidence: 3.965)
+            ]
+        )
+
+        let decision = ChordInkRecognitionPolicy.decision(for: result)
+
+        XCTAssertEqual(decision.action, .autoRender)
+        XCTAssertEqual(decision.acceptedText, "C")
+        XCTAssertFalse(decision.isCloseRace)
+    }
+
+    func testResolutionPolicyAutoRendersClearSlashWinnerFromLiveLoop() throws {
+        let result = recognitionResult(
+            matchText: "G/B",
+            confidence: 4.9767,
+            scores: [
+                candidateScore("G/B", confidence: 4.9767),
+                candidateScore("G/D", confidence: 4.8564),
+                candidateScore("G/A", confidence: 4.8178)
+            ]
+        )
+
+        let decision = ChordInkRecognitionPolicy.decision(for: result)
+
+        XCTAssertEqual(decision.action, .autoRender)
+        XCTAssertEqual(decision.acceptedText, "G/B")
+        XCTAssertFalse(decision.isCloseRace)
+    }
+
+    func testResolutionPolicyStillPromptsForTightLiveLoopCollisions() throws {
+        let result = recognitionResult(
+            matchText: "Db7(b9)",
+            confidence: 4.8158,
+            scores: [
+                candidateScore("Db7(b9)", confidence: 4.8158),
+                candidateScore("Db7(b5)", confidence: 4.7952)
+            ]
+        )
+
+        let decision = ChordInkRecognitionPolicy.decision(for: result)
+
+        XCTAssertEqual(decision.action, .confirm)
+        XCTAssertEqual(decision.acceptedText, "Db7(b9)")
+        XCTAssertTrue(decision.isCloseRace)
+        XCTAssertEqual(decision.competingCandidateText, "Db7(b5)")
+    }
+
+    func testResolutionPolicyAutoRendersCommonSpellingOverUncommonCloseRunnerUp() throws {
+        let result = recognitionResult(
+            matchText: "F#",
+            confidence: 3.9796,
+            scores: [
+                candidateScore("F#", confidence: 3.9796),
+                candidateScore("B#", confidence: 3.9324)
+            ]
+        )
+
+        let decision = ChordInkRecognitionPolicy.decision(for: result)
+
+        XCTAssertEqual(decision.action, .autoRender)
+        XCTAssertEqual(decision.acceptedText, "F#")
+        XCTAssertFalse(decision.isCloseRace)
+    }
+
+    func testResolutionPolicyStillPromptsWhenUncommonSpellingIsTheWinner() throws {
+        let result = recognitionResult(
+            matchText: "B#",
+            confidence: 3.9796,
+            scores: [
+                candidateScore("B#", confidence: 3.9796),
+                candidateScore("F#", confidence: 3.9324)
+            ]
+        )
+
+        let decision = ChordInkRecognitionPolicy.decision(for: result)
+
+        XCTAssertEqual(decision.action, .confirm)
+        XCTAssertEqual(decision.acceptedText, "B#")
+        XCTAssertTrue(decision.isCloseRace)
+        XCTAssertEqual(decision.competingCandidateText, "F#")
     }
 
     func testResolutionPolicyPromptsWhenNoSupportedChordIsRead() {

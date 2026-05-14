@@ -646,6 +646,15 @@ struct ChordInkCandidateComposer {
             }
         }
 
+        if isMajorSixthText(text),
+           hasLikelyRootFlatCollision(
+               in: glyphCandidates,
+               candidateColumns: candidateColumns,
+               totalClusterCount: totalClusterCount
+           ) {
+            score -= 0.35
+        }
+
         if hasTriangleQuality(text),
            glyphCandidates.contains(where: { $0.text == "△" && $0.confidence >= 0.60 }) {
             score += 0.62
@@ -741,6 +750,41 @@ struct ChordInkCandidateComposer {
         return symbol.quality == "-"
             && symbol.extensions == ["6"]
             && symbol.alterations.isEmpty
+    }
+
+    private func isMajorSixthText(_ text: String) -> Bool {
+        guard let symbol = try? ChordSymbolParser.parse(text) else {
+            return false
+        }
+
+        return symbol.quality.isEmpty
+            && symbol.extensions == ["6"]
+            && symbol.alterations.isEmpty
+            && symbol.slashBass == nil
+    }
+
+    private func hasLikelyRootFlatCollision(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]],
+        totalClusterCount: Int
+    ) -> Bool {
+        guard totalClusterCount == 2,
+              glyphCandidates.count == 2,
+              let rootCandidate = glyphCandidates.first,
+              "ABCDEFG".contains(rootCandidate.text),
+              let finalSixCandidate = glyphCandidates.last,
+              finalSixCandidate.text == "6",
+              let finalColumn = candidateColumns.last else {
+            return false
+        }
+
+        let flatConfidence = finalColumn
+            .filter { $0.text == "b" }
+            .map(\.confidence)
+            .max() ?? 0
+
+        return flatConfidence >= 0.45
+            && flatConfidence + 0.18 >= finalSixCandidate.confidence
     }
 
     private func hasTriangleQuality(_ text: String) -> Bool {

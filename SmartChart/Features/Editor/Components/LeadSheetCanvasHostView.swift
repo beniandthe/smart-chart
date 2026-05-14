@@ -155,6 +155,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private let chordEditHitOverlayView = ChordEditHitOverlayView()
     private let chordInkRecognizer = ChordInkRecognizer()
     private let chordInkRecognitionIdleDelay: TimeInterval = 1.3
+    private let chordInkRecognitionQueue = DispatchQueue(
+        label: "com.smartchart.chord-ink-recognition",
+        qos: .userInitiated
+    )
     private lazy var selectionTapRecognizer = UITapGestureRecognizer(
         target: self,
         action: #selector(handleTap(_:))
@@ -178,6 +182,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private var isSyncingInkCanvasFromModel = false
     private var pendingInkPersistWorkItem: DispatchWorkItem?
     private var pendingChordRecognitionWorkItem: DispatchWorkItem?
+    private var activeChordRecognitionRequestID: UUID?
     private var lastRecognizedChordDrawingData: Data?
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
@@ -946,6 +951,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         pendingInkPersistWorkItem = nil
         pendingChordRecognitionWorkItem?.cancel()
         pendingChordRecognitionWorkItem = nil
+        activeChordRecognitionRequestID = nil
 
         guard let activeInkScope = activeInkScope() else {
             return
@@ -993,6 +999,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
               ) else {
             return
         }
+        let strokes = PencilKitInkAdapter.inkStrokes(from: pageInkCanvasView.drawing)
 
         var updatedChart = chart
         if updatedChart.setPageHandwrittenChordDrawing(drawingData) {
@@ -1000,10 +1007,36 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             onChartChanged?(updatedChart)
         }
 
-        let result = chordInkRecognizer.recognize(
-            strokes: PencilKitInkAdapter.inkStrokes(from: pageInkCanvasView.drawing)
-        )
-        guard !result.rawCandidates.isEmpty else {
+        let requestID = UUID()
+        let recognizer = chordInkRecognizer
+        activeChordRecognitionRequestID = requestID
+        chordInkRecognitionQueue.async { [weak self] in
+            let result = recognizer.recognize(strokes: strokes)
+            DispatchQueue.main.async { [weak self] in
+                self?.finishChordInkRecognition(
+                    requestID: requestID,
+                    result: result,
+                    drawingData: drawingData,
+                    target: target
+                )
+            }
+        }
+    }
+
+    private func finishChordInkRecognition(
+        requestID: UUID,
+        result: ChordInkRecognitionResult,
+        drawingData: Data,
+        target: (measureID: UUID, fraction: Double)
+    ) {
+        guard activeChordRecognitionRequestID == requestID else {
+            return
+        }
+        activeChordRecognitionRequestID = nil
+
+        guard interactionMode.allowsChordInkEditing,
+              currentCanvasDrawingData() == drawingData,
+              !result.rawCandidates.isEmpty else {
             return
         }
 
@@ -1213,6 +1246,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             activeChordMoveDrag = nil
             pendingChordRecognitionWorkItem?.cancel()
             pendingChordRecognitionWorkItem = nil
+            activeChordRecognitionRequestID = nil
             lastRecognizedChordDrawingData = nil
         }
 

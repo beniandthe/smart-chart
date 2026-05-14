@@ -41,6 +41,7 @@ struct EditorView: View {
     @State private var pendingTimeSignaturePlacement: PendingTimeSignaturePlacement?
     @State private var freeHandReturnMode: EditorCanvasMode = .browse
     @State private var canvasMode: EditorCanvasMode = .browse
+    @State private var pendingChordDiagnosticReconciliationWorkItem: DispatchWorkItem?
     private let exporter: any ChartExporting
 
     init(
@@ -260,6 +261,13 @@ struct EditorView: View {
                 isNoteEditMenuPresented = false
                 noteEditMenuStage = .actions
             }
+        }
+        .onChange(of: chart) { _, updatedChart in
+            scheduleChordEntryDiagnosticReconciliation(for: updatedChart)
+        }
+        .onDisappear {
+            pendingChordDiagnosticReconciliationWorkItem?.cancel()
+            pendingChordDiagnosticReconciliationWorkItem = nil
         }
         .task {
             if chart.staffStyle != .fiveLine {
@@ -930,7 +938,9 @@ struct EditorView: View {
         )
 
         do {
-            try ChordEntryDiagnosticsRecorder.live().append(event)
+            let recorder = ChordEntryDiagnosticsRecorder.live()
+            try recorder.append(event)
+            try recorder.reconcileRenderedChordEvents(for: chartSnapshot)
         } catch {
             print("SmartChart chord diagnostic error: \(error)")
         }
@@ -965,12 +975,40 @@ struct EditorView: View {
         )
 
         do {
-            try ChordEntryDiagnosticsRecorder.live().append(event)
+            let recorder = ChordEntryDiagnosticsRecorder.live()
+            try recorder.append(event)
+            try recorder.reconcileRenderedChordEvents(for: chartSnapshot)
         } catch {
             print("SmartChart chord diagnostic error: \(error)")
         }
     }
+
     #endif
+
+    private func scheduleChordEntryDiagnosticReconciliation(for chartSnapshot: Chart) {
+        #if DEBUG || targetEnvironment(simulator)
+        let hasRenderedChordEvents = chartSnapshot.systems
+            .flatMap(\.measures)
+            .contains { !$0.chordEvents.isEmpty }
+        guard hasRenderedChordEvents else {
+            pendingChordDiagnosticReconciliationWorkItem?.cancel()
+            pendingChordDiagnosticReconciliationWorkItem = nil
+            return
+        }
+
+        pendingChordDiagnosticReconciliationWorkItem?.cancel()
+        let workItem = DispatchWorkItem {
+            do {
+                _ = try ChordEntryDiagnosticsRecorder.live()
+                    .reconcileRenderedChordEvents(for: chartSnapshot)
+            } catch {
+                print("SmartChart chord diagnostic reconciliation error: \(error)")
+            }
+        }
+        pendingChordDiagnosticReconciliationWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: workItem)
+        #endif
+    }
 
     private func handleChordInkFixtureCopyRequested(
         _ candidateText: String,

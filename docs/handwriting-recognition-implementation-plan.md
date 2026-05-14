@@ -542,6 +542,32 @@ correct them, commit structured `ChordEvent` values to the chart, preserve raw
 ink for the confirmation cycle, and keep fixture copy tooling behind a
 debug/data-collection path.
 
+After each normal chart-entry pass, run
+`scripts/audit_chord_entry_diagnostics.py --strict` before tuning recognition.
+The audit compares rendered `ChordEvent` IDs in the disposable test chart with
+`chord-entry-diagnostics.jsonl` so stale simulator logs or missing auto-render
+events do not get mistaken for recognizer evidence. When several disposable
+charts share the same title, the audit should prefer the selected matching
+chart, then the newest matching chart; pass `--chart-id` only when replaying a
+specific historical chart.
+Use `scripts/audit_chord_entry_diagnostics.py --strict --details --scores 3`
+when deciding what to tune next. The detail view is the canonical quick read
+for a pass: it shows each accepted/rendered chord, whether it auto-rendered or
+needed confirmation, the winning confidence, the close-race gap, and the top
+candidate scores without treating confirmed close races as failures.
+If a pass rendered before live diagnostics were complete, use
+`scripts/audit_chord_entry_diagnostics.py --reconcile-missing --strict` once to
+backfill explicitly labeled `reconciledRenderedChord` rows from rendered chart
+state. These rows prove coverage but must not be treated as recognizer
+confidence wins.
+
+Current checkpoint expectation for the chord-writing loop is a mixed but
+intentional result: obvious roots and clean root/accidental forms should
+auto-render, while compact suffix collisions such as minor sevenths, altered
+dominants, and suspended forms may still request confirmation if the candidate
+gap is genuinely tight. The next tuning target should be visible in the
+diagnostic detail output before recognition heuristics are changed.
+
 - natural roots: at least 4 captured samples each for `A`, `B`, `C`, `D`, `E`,
   `F`, and `G`
 - common accidentals: at least 3 captured samples each for `A#`, `Ab`, `Bb`,

@@ -5,6 +5,7 @@ enum ChordEntryDiagnosticResolution: String, Codable, Equatable {
     case confirmedSuggestion
     case manualCorrection
     case renderedChordCorrection
+    case reconciledRenderedChord
 }
 
 struct ChordEntryDiagnosticEvent: Codable, Equatable {
@@ -45,7 +46,7 @@ struct ChordEntryDiagnosticsRecorder {
         let data = try Self.encoder.encode(event)
         let line = data + Data([0x0A])
 
-        if fileManager.fileExists(atPath: url.path()) {
+        if fileManager.fileExists(atPath: url.fileSystemPath) {
             let handle = try FileHandle(forWritingTo: url)
             defer { try? handle.close() }
             try handle.seekToEnd()
@@ -56,7 +57,7 @@ struct ChordEntryDiagnosticsRecorder {
     }
 
     func reset() throws {
-        guard fileManager.fileExists(atPath: url.path()) else {
+        guard fileManager.fileExists(atPath: url.fileSystemPath) else {
             return
         }
 
@@ -64,7 +65,7 @@ struct ChordEntryDiagnosticsRecorder {
     }
 
     func loadEvents() throws -> [ChordEntryDiagnosticEvent] {
-        guard fileManager.fileExists(atPath: url.path()) else {
+        guard fileManager.fileExists(atPath: url.fileSystemPath) else {
             return []
         }
 
@@ -81,6 +82,60 @@ struct ChordEntryDiagnosticsRecorder {
                     from: Data(line.utf8)
                 )
             }
+    }
+
+    @discardableResult
+    func reconcileRenderedChordEvents(for chart: Chart, timestamp: Date = .now) throws -> [ChordEntryDiagnosticEvent] {
+        let events = try loadEvents()
+        let report = ChordEntryDiagnosticCoverage.report(for: chart, events: events)
+        guard !report.missingChordEventIDs.isEmpty else {
+            return []
+        }
+
+        let missingEventIDSet = Set(report.missingChordEventIDs)
+        let fallbackEvents = chart.systems.flatMap(\.measures).flatMap { measure in
+            measure.chordEvents.compactMap { chordEvent -> ChordEntryDiagnosticEvent? in
+                guard missingEventIDSet.contains(chordEvent.id) else {
+                    return nil
+                }
+
+                let displayText = chordEvent.symbol.displayText
+                let acceptedText = chordEvent.rawInput ?? displayText
+                return ChordEntryDiagnosticEvent(
+                    timestamp: timestamp,
+                    chartID: chart.id,
+                    chartTitle: chart.title,
+                    measureID: measure.id,
+                    measureIndex: measure.index,
+                    chordEventID: chordEvent.id,
+                    resolution: .reconciledRenderedChord,
+                    acceptedText: acceptedText,
+                    previousRenderedDisplayText: nil,
+                    renderedDisplayText: displayText,
+                    bestCandidateText: acceptedText,
+                    suggestedCandidateTexts: [acceptedText],
+                    rawCandidates: [acceptedText],
+                    candidateScores: [],
+                    confidence: 0,
+                    recognitionReason: "Reconciled rendered chord event missing live diagnostic.",
+                    wasCloseRace: false,
+                    confidenceGap: nil,
+                    targetFraction: nil
+                )
+            }
+        }
+
+        for event in fallbackEvents {
+            try append(event)
+        }
+
+        return fallbackEvents
+    }
+}
+
+private extension URL {
+    var fileSystemPath: String {
+        path(percentEncoded: false)
     }
 }
 

@@ -197,6 +197,32 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "Bb6")
     }
 
+    func testBareFlatAccidentalBeatsBareSixthLookalike() {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.96)],
+            [
+                glyph("6", confidence: 0.91),
+                glyph("b", confidence: 0.89)
+            ]
+        ])
+
+        XCTAssertEqual(candidates.first?.text, "Bb")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "Bb")
+    }
+
+    func testBareSixthCanStillWinWithStrongExplicitSixEvidence() {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.96)],
+            [
+                glyph("6", confidence: 0.96),
+                glyph("b", confidence: 0.70)
+            ]
+        ])
+
+        XCTAssertEqual(candidates.first?.text, "B6")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "B6")
+    }
+
     func testNaturalThirteenthBeatsWeakAccidentalSeventhLookalike() throws {
         let candidates = composer.compose(glyphCandidates: [
             [glyph("C", confidence: 0.95)],
