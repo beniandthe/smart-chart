@@ -938,6 +938,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         pendingInkPersistWorkItem?.cancel()
         pendingInkPersistWorkItem = nil
         pendingChordRecognitionWorkItem?.cancel()
+        activeChordRecognitionRequestID = nil
 
         let workItem = DispatchWorkItem { [weak self] in
             self?.recognizeChordInkIfNeeded()
@@ -1035,7 +1036,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         activeChordRecognitionRequestID = nil
 
         guard interactionMode.allowsChordInkEditing,
-              currentCanvasDrawingData() == drawingData,
               !result.rawCandidates.isEmpty else {
             return
         }
