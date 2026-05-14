@@ -113,7 +113,7 @@ enum ChordInkFixtureExporter {
         canonicalDisplayText: String
     ) -> [String] {
         let normalizedWrittenText = normalizedWrittenGlyphText(writtenText)
-        let supportedGlyphs = Set(["A", "B", "C", "D", "E", "F", "G", "#", "b", "+", "△", "°", "ø", "m", "-", "6", "7", "9", "1", "3", "5", "/"])
+        let supportedGlyphs = Set(["A", "B", "C", "D", "E", "F", "G", "#", "b", "+", "△", "°", "ø", "m", "-", "a", "l", "t", "s", "u", "4", "6", "7", "9", "1", "3", "5", "/"])
         let writtenGlyphs = normalizedWrittenText
             .map(String.init)
             .filter { supportedGlyphs.contains($0) }
@@ -140,6 +140,7 @@ enum ChordInkFixtureExporter {
             .replacingOccurrences(of: "halfdim", with: "ø", options: [.caseInsensitive])
             .replacingOccurrences(of: "augmented", with: "+", options: [.caseInsensitive])
             .replacingOccurrences(of: "aug", with: "+", options: [.caseInsensitive])
+            .replacingOccurrences(of: "alt", with: "alt", options: [.caseInsensitive])
             .replacingOccurrences(of: "diminished", with: "°", options: [.caseInsensitive])
             .replacingOccurrences(of: "dim", with: "°", options: [.caseInsensitive])
             .replacingOccurrences(of: "minor", with: "m", options: [.caseInsensitive])

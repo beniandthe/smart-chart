@@ -54,6 +54,7 @@ struct ChordInkCandidateComposer {
                     let confidence = score(
                         text: variant,
                         glyphCandidates: sequence,
+                        candidateColumns: candidateColumns,
                         totalClusterCount: candidateColumns.count
                     )
                     let candidate = ChordInkCandidate(
@@ -95,6 +96,18 @@ struct ChordInkCandidateComposer {
         let column = sortedColumns[index]
         var selected = Array(column.prefix(configuration.maxAlternativesPerCluster))
 
+        if index == 0,
+           let rootCandidate = column.first(where: { candidate in
+               candidate.confidence >= 0.85 && "ABCDEFG".contains(candidate.text)
+           }) {
+            selected.removeAll { candidate in
+                candidate.text == "b" || candidate.text == "#"
+            }
+            if !selected.contains(where: { $0.text == rootCandidate.text }) {
+                selected.insert(rootCandidate, at: 0)
+            }
+        }
+
         func promoteCandidate(
             _ text: String,
             minimumConfidence: Double? = nil,
@@ -120,6 +133,18 @@ struct ChordInkCandidateComposer {
 
         if shouldExposePlainFinalExtensionCandidate("6", at: index, in: sortedColumns) {
             promoteCandidate("6", minimumConfidence: 0.72)
+        }
+
+        if shouldExposePlainSuspendedSCandidate(at: index, in: sortedColumns) {
+            promoteCandidate("s", minimumConfidence: 0.84, fallbackConfidence: 0.72)
+        }
+
+        if shouldExposePlainSuspendedUCandidate(at: index, in: sortedColumns) {
+            promoteCandidate("u", minimumConfidence: 0.96, fallbackConfidence: 0.72)
+        }
+
+        if shouldExposeSuspendedFourthCandidate(at: index, in: sortedColumns) {
+            promoteCandidate("4", minimumConfidence: 0.84, fallbackConfidence: 0.72)
         }
 
         if shouldExposeAlteredDominantNumberCandidate(at: index, in: sortedColumns) {
@@ -193,9 +218,7 @@ struct ChordInkCandidateComposer {
             }
         }
         let hasDominantSevenBeforeExtension = sortedColumns[..<index].contains { column in
-            column.contains { candidate in
-                candidate.confidence >= 0.50 && candidate.text == "7"
-            }
+            column.hasStandaloneDominantSevenEvidence
         }
 
         return columnContainsExtension
@@ -204,6 +227,140 @@ struct ChordInkCandidateComposer {
             && !(text == "6"
                  && competingPlusConfidence >= 0.45
                  && competingPlusConfidence >= extensionConfidence)
+    }
+
+    private func shouldExposePlainSuspendedSCandidate(
+        at index: Int,
+        in sortedColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard index >= 1 else {
+            return false
+        }
+
+        let currentHasS = sortedColumns[index].hasSuspendedContextCandidate("s")
+        let previousHasU = sortedColumns[index - 1].hasSuspendedContextCandidate("u")
+        let nextHasU = index + 1 < sortedColumns.count
+            && sortedColumns[index + 1].hasSuspendedContextCandidate("u")
+        let hasRootOrAccidentalBefore = sortedColumns[..<index].contains { column in
+            column.contains { candidate in
+                candidate.confidence >= 0.45
+                    && ["A", "B", "C", "D", "E", "F", "G", "#", "b"].contains(candidate.text)
+            }
+        }
+        let hasDominantSuspendedContext = hasDominantSuspendedContext(around: index, in: sortedColumns)
+        let hasMinorOrDominantBefore = hasStandaloneMinorOrDominantColumn(before: index, in: sortedColumns)
+
+        return currentHasS
+            && (!hasMinorOrDominantBefore || hasDominantSuspendedContext)
+            && (previousHasU || nextHasU && hasRootOrAccidentalBefore)
+    }
+
+    private func shouldExposePlainSuspendedUCandidate(
+        at index: Int,
+        in sortedColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard index >= 1,
+              index + 1 < sortedColumns.count else {
+            return false
+        }
+
+        let currentHasU = sortedColumns[index].hasSuspendedContextCandidate("u")
+        let previousHasS = sortedColumns[index - 1].hasSuspendedContextCandidate("s")
+        let nextHasS = sortedColumns[index + 1].hasSuspendedContextCandidate("s")
+        let hasDominantSuspendedContext = hasDominantSuspendedContext(around: index, in: sortedColumns)
+        let hasMinorOrDominantBefore = hasStandaloneMinorOrDominantColumn(before: index, in: sortedColumns)
+
+        return currentHasU
+            && previousHasS
+            && nextHasS
+            && (!hasMinorOrDominantBefore || hasDominantSuspendedContext)
+    }
+
+    private func hasDominantSuspendedContext(
+        around index: Int,
+        in sortedColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        if index >= 2,
+           index + 2 < sortedColumns.count,
+           sortedColumns[index - 1].hasConfidentStandaloneDominantSevenEvidence,
+           sortedColumns[index].hasSuspendedContextCandidate("s"),
+           sortedColumns[index + 1].hasSuspendedContextCandidate("u"),
+           sortedColumns[index + 2].hasSuspendedContextCandidate("s") {
+            return true
+        }
+
+        if index >= 3,
+           index + 1 < sortedColumns.count,
+           sortedColumns[index - 2].hasConfidentStandaloneDominantSevenEvidence,
+           sortedColumns[index - 1].hasSuspendedContextCandidate("s"),
+           sortedColumns[index].hasSuspendedContextCandidate("u"),
+           sortedColumns[index + 1].hasSuspendedContextCandidate("s") {
+            return true
+        }
+
+        if index >= 4,
+           sortedColumns[index - 3].hasConfidentStandaloneDominantSevenEvidence,
+           sortedColumns[index - 2].hasSuspendedContextCandidate("s"),
+           sortedColumns[index - 1].hasSuspendedContextCandidate("u"),
+           sortedColumns[index].hasSuspendedContextCandidate("s") {
+            return true
+        }
+
+        return false
+    }
+
+    private func shouldExposeSuspendedFourthCandidate(
+        at index: Int,
+        in sortedColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard index >= 4,
+              index == sortedColumns.count - 1 else {
+            return false
+        }
+
+        let suffixTexts = sortedColumns[(index - 3)..<index].map { column in
+            column.firstSuspendedContextText
+        }
+        let currentHasFour = sortedColumns[index].contains { candidate in
+            candidate.text == "4" && candidate.confidence >= 0.35
+        }
+        let currentHasContextualFour = sortedColumns[index].contains { candidate in
+            candidate.text == "4" && candidate.source == .composer
+        }
+        let currentHasStrongQualityConflict = sortedColumns[index].contains { candidate in
+            candidate.confidence >= 0.86
+                && ["-", "m", "7", "°", "ø", "△", "+", "/", "6", "9", "1", "3", "5"].contains(candidate.text)
+        }
+
+        return suffixTexts == ["s", "u", "s"]
+            && currentHasFour
+            && (!currentHasStrongQualityConflict || currentHasContextualFour)
+    }
+
+    private func hasStandaloneMinorOrDominantColumn(
+        before index: Int,
+        in sortedColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        sortedColumns[..<index].contains { column in
+            let participatesInSuspendedContext = column.contains { candidate in
+                ["s", "u"].contains(candidate.text)
+                    && (candidate.confidence >= 0.70 || candidate.source == .composer)
+            }
+            if participatesInSuspendedContext {
+                return false
+            }
+
+            let hasStrongRootOrAccidental = column.contains { candidate in
+                candidate.confidence >= 0.85
+                    && ["A", "B", "C", "D", "E", "F", "G", "#", "b"].contains(candidate.text)
+            }
+            let hasModifier = column.contains { candidate in
+                candidate.confidence >= 0.45
+                    && ["-", "m", "7"].contains(candidate.text)
+            }
+
+            return hasModifier && !hasStrongRootOrAccidental
+        }
     }
 
     private func shouldExposeAlteredDominantNumberCandidate(
@@ -342,7 +499,19 @@ struct ChordInkCandidateComposer {
             return expansions
         }
 
-        return Array(Set(variants + expandedVariants)).sorted()
+        let canonicalVariants = (variants + expandedVariants).map(canonicalTextVariant)
+        return Array(Set(canonicalVariants)).sorted()
+    }
+
+    private func canonicalTextVariant(for text: String) -> String {
+        guard let symbol = try? ChordSymbolParser.parse(text),
+              symbol.quality == "-",
+              symbol.extensions == ["6"],
+              symbol.alterations.isEmpty else {
+            return text
+        }
+
+        return symbol.displayText
     }
 
     private func expandedCompactSharpElevenVariant(for text: String) -> String? {
@@ -362,6 +531,24 @@ struct ChordInkCandidateComposer {
 
     private func expandedSharpElevenWrapperVariants(for text: String) -> [String] {
         ["71#11", "7b#11", "7C#11"].compactMap { wrapperPattern in
+            guard let range = text.range(of: wrapperPattern) else {
+                return nil
+            }
+
+            var expandedText = text
+            expandedText.replaceSubrange(range, with: "7#11")
+            return expandedText
+        }
+        + ["77#11", "73#11", "75#11"].compactMap { wrapperPattern in
+            guard let range = text.range(of: wrapperPattern) else {
+                return nil
+            }
+
+            var expandedText = text
+            expandedText.replaceSubrange(range, with: "7#11")
+            return expandedText
+        }
+        + ["71#1", "77#1", "73#1", "75#1"].compactMap { wrapperPattern in
             guard let range = text.range(of: wrapperPattern) else {
                 return nil
             }
@@ -409,6 +596,7 @@ struct ChordInkCandidateComposer {
     private func score(
         text: String,
         glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]],
         totalClusterCount: Int
     ) -> Double {
         let averageGlyphConfidence = glyphCandidates
@@ -445,6 +633,19 @@ struct ChordInkCandidateComposer {
             score += 0.08
         }
 
+        if isMinorSixthText(text) {
+            if hasExplicitMinorSixthEvidence(
+                in: glyphCandidates,
+                candidateColumns: candidateColumns
+            ) {
+                score += 0.12
+            }
+
+            if hasSuspendedColumnSuffixEvidence(in: candidateColumns) {
+                score -= 0.65
+            }
+        }
+
         if text.contains("7#11") || text.contains("7(#11)") {
             let hasStrongSharp = (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= 0.65
             if hasExplicitSharpElevenNumberTail(in: glyphCandidates)
@@ -462,7 +663,7 @@ struct ChordInkCandidateComposer {
 
         if hasDominantSharpAlteration(text),
            (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 1.0) < 0.65 {
-            score -= 0.06
+            score -= 0.70
         }
 
         if hasValidSlashBass(text),
@@ -470,6 +671,20 @@ struct ChordInkCandidateComposer {
             score += 0.85
         } else if text.contains("/") {
             score -= 0.75
+        }
+
+        if text.hasSuffix("sus") || text.hasSuffix("sus4") {
+            if hasSuspendedSuffixEvidence(for: text, in: glyphCandidates) {
+                if text.hasSuffix("sus4") {
+                    score += 1.75
+                } else if text.hasSuffix("7sus") {
+                    score += 1.65
+                } else {
+                    score += 0.25
+                }
+            } else {
+                score -= 0.35
+            }
         }
 
         // Prefer candidates that explain more of the written glyphs, so C-7 wins
@@ -511,6 +726,50 @@ struct ChordInkCandidateComposer {
         ["#5", "#9", "#11"].contains { alteration in
             text.contains("7\(alteration)") || text.contains("7(\(alteration))")
         }
+    }
+
+    private func isMinorSixthText(_ text: String) -> Bool {
+        guard let symbol = try? ChordSymbolParser.parse(text) else {
+            return false
+        }
+
+        return symbol.quality == "-"
+            && symbol.extensions == ["6"]
+            && symbol.alterations.isEmpty
+    }
+
+    private func hasExplicitMinorSixthEvidence(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard glyphCandidates.contains(where: { candidate in
+                  candidate.text == "m" && candidate.confidence >= 0.75
+              }),
+              let finalSix = glyphCandidates.last,
+              finalSix.text == "6",
+              finalSix.confidence >= 0.45 else {
+            return false
+        }
+
+        let finalColumn = candidateColumns.last ?? []
+        let strongSevenConfidence = finalColumn
+            .filter { $0.text == "7" }
+            .map(\.confidence)
+            .max() ?? 0
+
+        return strongSevenConfidence < 0.85
+            || strongSevenConfidence <= finalSix.confidence + 0.15
+    }
+
+    private func hasSuspendedColumnSuffixEvidence(in candidateColumns: [[GlyphCandidate]]) -> Bool {
+        guard candidateColumns.count >= 4 else {
+            return false
+        }
+
+        let suffixColumns = Array(candidateColumns.suffix(3))
+        return suffixColumns[0].hasSuspendedContextCandidate("s")
+            && suffixColumns[1].hasSuspendedContextCandidate("u")
+            && suffixColumns[2].hasSuspendedContextCandidate("s")
     }
 
     private func dominantAlterationAccidentalConfidence(
@@ -629,6 +888,21 @@ struct ChordInkCandidateComposer {
             .map(\.confidence)
             .max() ?? 0
     }
+
+    private func hasSuspendedSuffixEvidence(
+        for text: String,
+        in glyphCandidates: [GlyphCandidate]
+    ) -> Bool {
+        guard glyphCandidates.count >= 4 else {
+            return false
+        }
+
+        if text.hasSuffix("sus4") {
+            return glyphCandidates.suffix(4).map(\.text) == ["s", "u", "s", "4"]
+        }
+
+        return glyphCandidates.suffix(3).map(\.text) == ["s", "u", "s"]
+    }
 }
 
 private extension Array where Element == GlyphCandidate {
@@ -640,6 +914,44 @@ private extension Array where Element == GlyphCandidate {
 
             return lhs.text < rhs.text
         }
+    }
+
+    var hasStandaloneDominantSevenEvidence: Bool {
+        let hasSeven = contains { candidate in
+            candidate.text == "7" && candidate.confidence >= 0.50
+        }
+        let hasStrongRootOrAccidental = contains { candidate in
+            candidate.confidence >= 0.85
+                && ["A", "B", "C", "D", "E", "F", "G", "#", "b"].contains(candidate.text)
+        }
+
+        return hasSeven && !hasStrongRootOrAccidental
+    }
+
+    var hasConfidentStandaloneDominantSevenEvidence: Bool {
+        let hasSeven = contains { candidate in
+            candidate.text == "7" && candidate.confidence >= 0.85
+        }
+        let hasStrongRootOrAccidental = contains { candidate in
+            candidate.confidence >= 0.85
+                && ["A", "B", "C", "D", "E", "F", "G", "#", "b"].contains(candidate.text)
+        }
+
+        return hasSeven && !hasStrongRootOrAccidental
+    }
+
+    func hasSuspendedContextCandidate(_ text: String) -> Bool {
+        contains { candidate in
+            candidate.text == text
+                && (candidate.confidence >= 0.70 || candidate.source == .composer)
+        }
+    }
+
+    var firstSuspendedContextText: String? {
+        first { candidate in
+            ["s", "u"].contains(candidate.text)
+                && (candidate.confidence >= 0.70 || candidate.source == .composer)
+        }?.text
     }
 }
 

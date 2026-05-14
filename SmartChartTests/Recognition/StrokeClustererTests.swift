@@ -12,7 +12,7 @@ final class StrokeClustererTests: XCTestCase {
 
             let clusters = clusterer.cluster(fixture.strokes)
 
-            if fixture.allowsCompactSharpElevenClusters {
+            if fixture.allowsCompactSemanticClusters {
                 XCTAssertGreaterThanOrEqual(
                     clusters.count,
                     max(1, expectedClusterCount - 2),
@@ -60,14 +60,24 @@ final class StrokeClustererTests: XCTestCase {
     }
 
     func testSlashBassKeepsSlashAsSeparatorCluster() throws {
-        let fixture = try InkFixtureLoader.load("GSlashB", file: #filePath)
-        let clusters = clusterer.cluster(fixture.strokes)
+        for fixtureName in [
+            "GSlashB",
+            "GSlashBCaptured02",
+            "FSlashA",
+            "BFlatSlashDCaptured01",
+            "DSlashFSharpCaptured02",
+            "FSharpSlashASharpCaptured01"
+        ] {
+            let fixture = try InkFixtureLoader.load(fixtureName, file: #filePath)
+            let clusters = clusterer.cluster(fixture.strokes)
+            let slashIndex = try XCTUnwrap(fixture.expectedTopGlyphs.firstIndex(of: "/"))
 
-        XCTAssertEqual(clusters.count, fixture.expectedClusterCount)
-        XCTAssertEqual(clusters.count, fixture.expectedTopGlyphs.count)
-        XCTAssertEqual(clusters[1].strokes.count, 1)
-        XCTAssertGreaterThan(clusters[1].bounds.height, clusters[1].bounds.width)
-        XCTAssertTrue(clusters.areSortedLeftToRight)
+            XCTAssertEqual(clusters.count, fixture.expectedClusterCount, fixtureName)
+            XCTAssertEqual(clusters.count, fixture.expectedTopGlyphs.count, fixtureName)
+            XCTAssertEqual(clusters[slashIndex].strokes.count, 1, fixtureName)
+            XCTAssertGreaterThan(clusters[slashIndex].bounds.height, clusters[slashIndex].bounds.width, fixtureName)
+            XCTAssertTrue(clusters.areSortedLeftToRight, fixtureName)
+        }
     }
 
     func testRootStemAndBodyCanMergeWhenTheyTouchAtTheEdge() throws {
@@ -128,6 +138,14 @@ private extension InkFixture {
 
     var allowsCompactSharpElevenClusters: Bool {
         expectedDisplayText.contains("(#11)")
+    }
+
+    var allowsCompactAlteredAltClusters: Bool {
+        expectedDisplayText.contains("7alt")
+    }
+
+    var allowsCompactSemanticClusters: Bool {
+        allowsCompactSharpElevenClusters || allowsCompactAlteredAltClusters
     }
 }
 

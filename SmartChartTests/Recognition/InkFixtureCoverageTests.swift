@@ -479,6 +479,20 @@ final class InkFixtureCoverageTests: XCTestCase {
         }
     }
 
+    func testFixtureCoverageProtectsMinorMajorSeventhTriangleForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for minorMajorSeventhChord in ["C-△7", "Bb-△7", "F#-△7", "Db-△7", "G#-△7", "B#-△7"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[minorMajorSeventhChord, default: 0],
+                1,
+                "Expected at least one real-writing fixture for \(minorMajorSeventhChord)"
+            )
+        }
+    }
+
     func testCapturedFixtureCoverageProtectsMajorNinthTriangleForms() throws {
         let capturedFixtures = try InkFixtureLoader
             .loadAll(file: #filePath)
@@ -562,6 +576,20 @@ final class InkFixtureCoverageTests: XCTestCase {
                 glyphFamilies[family, default: 0],
                 minimumCount,
                 "Expected at least \(minimumCount) captured fixtures for \(family)"
+            )
+        }
+    }
+
+    func testFixtureCoverageProtectsMinorSixthForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for minorSixthChord in ["Cm6", "Bbm6", "F#m6", "Dbm6", "G#m6", "B#m6"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[minorSixthChord, default: 0],
+                2,
+                "Expected at least two real-writing fixtures for \(minorSixthChord)"
             )
         }
     }
@@ -670,6 +698,76 @@ final class InkFixtureCoverageTests: XCTestCase {
                 glyphFamilies[family, default: 0],
                 minimumCount,
                 "Expected at least \(minimumCount) captured fixtures for \(family)"
+            )
+        }
+    }
+
+    func testFixtureCoverageProtectsSlashBassForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for slashBassChord in ["F/A", "C/E", "G/B", "D/F#", "Bb/D", "F#/A#"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[slashBassChord, default: 0],
+                3,
+                "Expected at least three real-writing fixtures for \(slashBassChord)"
+            )
+        }
+    }
+
+    func testFixtureCoverageProtectsPlainSuspendedForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for suspendedChord in ["Csus", "Gsus", "Bbsus", "F#sus"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[suspendedChord, default: 0],
+                2,
+                "Expected at least two real-writing fixtures for \(suspendedChord)"
+            )
+        }
+    }
+
+    func testFixtureCoverageProtectsSuspendedFourthForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for suspendedFourthChord in ["Csus4", "Gsus4", "Bbsus4", "F#sus4"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[suspendedFourthChord, default: 0],
+                2,
+                "Expected at least two real-writing fixtures for \(suspendedFourthChord)"
+            )
+        }
+    }
+
+    func testFixtureCoverageProtectsDominantSuspendedForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for dominantSuspendedChord in ["C7sus", "Bb7sus", "F#7sus", "Db7sus", "G#7sus", "B#7sus"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[dominantSuspendedChord, default: 0],
+                2,
+                "Expected at least two real-writing fixtures for \(dominantSuspendedChord)"
+            )
+        }
+    }
+
+    func testFixtureCoverageProtectsDominantAlteredForms() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtureCounts = Dictionary(grouping: fixtures, by: \.expectedDisplayText)
+            .mapValues(\.count)
+
+        for dominantAlteredChord in ["C7alt", "Bb7alt", "F#7alt", "Db7alt", "G#7alt", "B#7alt"] {
+            XCTAssertGreaterThanOrEqual(
+                fixtureCounts[dominantAlteredChord, default: 0],
+                2,
+                "Expected at least two real-writing fixtures for \(dominantAlteredChord)"
             )
         }
     }

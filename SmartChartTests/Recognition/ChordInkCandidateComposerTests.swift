@@ -56,7 +56,17 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "C-7")
     }
 
-    func testComposesMinorNinthEleventhAndThirteenthToStandardDashMinorExtensions() throws {
+    func testComposesMinorSixthNinthEleventhAndThirteenthToStandardDashMinorExtensions() throws {
+        let mMinorSixthCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("m", confidence: 0.88)],
+            [glyph("6", confidence: 0.89)]
+        ])
+        let dashMinorSixthCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("-", confidence: 0.88)],
+            [glyph("6", confidence: 0.89)]
+        ])
         let dashMinorNinthCandidates = composer.compose(glyphCandidates: [
             [glyph("C", confidence: 0.95)],
             [glyph("-", confidence: 0.88)],
@@ -80,18 +90,34 @@ final class ChordInkCandidateComposerTests: XCTestCase {
             [glyph("1", confidence: 0.90)],
             [glyph("3", confidence: 0.90)]
         ])
+        let accidentalMinorSixthCandidates = composer.compose(glyphCandidates: [
+            [glyph("F", confidence: 0.96)],
+            [glyph("#", confidence: 0.92)],
+            [glyph("m", confidence: 0.88)],
+            [glyph("6", confidence: 0.90)]
+        ])
 
+        XCTAssertEqual(mMinorSixthCandidates.first?.text, "Cm6")
+        XCTAssertEqual(dashMinorSixthCandidates.first?.text, "Cm6")
         XCTAssertEqual(dashMinorNinthCandidates.first?.text, "C-9")
         XCTAssertEqual(mMinorNinthCandidates.first?.text, "C-9")
         XCTAssertEqual(mMinorEleventhCandidates.first?.text, "C-11")
         XCTAssertEqual(accidentalMinorThirteenthCandidates.first?.text, "Bb-13")
+        XCTAssertEqual(accidentalMinorSixthCandidates.first?.text, "F#m6")
+        XCTAssertEqual(try ChordSymbolParser.parse(mMinorSixthCandidates[0].text).displayText, "Cm6")
+        XCTAssertEqual(try ChordSymbolParser.parse(dashMinorSixthCandidates[0].text).displayText, "Cm6")
         XCTAssertEqual(try ChordSymbolParser.parse(dashMinorNinthCandidates[0].text).displayText, "C-9")
         XCTAssertEqual(try ChordSymbolParser.parse(mMinorNinthCandidates[0].text).displayText, "C-9")
         XCTAssertEqual(try ChordSymbolParser.parse(mMinorEleventhCandidates[0].text).displayText, "C-11")
         XCTAssertEqual(try ChordSymbolParser.parse(accidentalMinorThirteenthCandidates[0].text).displayText, "Bb-13")
+        XCTAssertEqual(try ChordSymbolParser.parse(accidentalMinorSixthCandidates[0].text).displayText, "F#m6")
         XCTAssertEqual(
             ChordRecognitionCompendium.match(candidates: accidentalMinorThirteenthCandidates.map(\.text))?.displayText,
             "Bb-13"
+        )
+        XCTAssertEqual(
+            ChordRecognitionCompendium.match(candidates: accidentalMinorSixthCandidates.map(\.text))?.displayText,
+            "F#m6"
         )
     }
 
@@ -347,6 +373,22 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "B#7(#11)")
     }
 
+    func testComposesCompactSharpElevenWhenWrapperAndTailAreBothNoisy() throws {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.96)],
+            [glyph("7", confidence: 0.89)],
+            [
+                glyph("7", confidence: 0.84),
+                glyph("1", confidence: 0.82)
+            ],
+            [glyph("#", confidence: 0.88)],
+            [glyph("1", confidence: 0.88)]
+        ])
+
+        XCTAssertEqual(candidates.first?.text, "C7#11")
+        XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "C7(#11)")
+    }
+
     func testComposesSharpElevenWhenSharpIsWeakButElevenIsExplicit() throws {
         let candidates = composer.compose(glyphCandidates: [
             [glyph("B", confidence: 0.95)],
@@ -391,6 +433,39 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(candidates.first?.text, "C△7")
         XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "C△7")
         XCTAssertFalse(candidates.map(\.text).contains("Cmaj7"))
+    }
+
+    func testComposesMinorMajorSeventhFromDashTriangleQuality() throws {
+        let naturalCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("-", confidence: 0.91)],
+            [glyph("△", confidence: 0.88)],
+            [glyph("7", confidence: 0.89)]
+        ])
+        let sharpCandidates = composer.compose(glyphCandidates: [
+            [glyph("F", confidence: 0.95)],
+            [glyph("#", confidence: 0.91)],
+            [glyph("-", confidence: 0.90)],
+            [glyph("△", confidence: 0.88)],
+            [glyph("7", confidence: 0.89)]
+        ])
+        let flatCandidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.95)],
+            [glyph("b", confidence: 0.91)],
+            [glyph("-", confidence: 0.90)],
+            [glyph("△", confidence: 0.88)],
+            [glyph("7", confidence: 0.89)]
+        ])
+
+        XCTAssertEqual(naturalCandidates.first?.text, "C-△7")
+        XCTAssertEqual(sharpCandidates.first?.text, "F#-△7")
+        XCTAssertEqual(flatCandidates.first?.text, "Bb-△7")
+        XCTAssertEqual(try ChordSymbolParser.parse(naturalCandidates[0].text).displayText, "C-△7")
+        XCTAssertEqual(try ChordSymbolParser.parse(sharpCandidates[0].text).displayText, "F#-△7")
+        XCTAssertEqual(try ChordSymbolParser.parse(flatCandidates[0].text).displayText, "Bb-△7")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: naturalCandidates.map(\.text))?.displayText, "C-△7")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: sharpCandidates.map(\.text))?.displayText, "F#-△7")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: flatCandidates.map(\.text))?.displayText, "Bb-△7")
     }
 
     func testComposesDiminishedAndHalfDiminishedSymbols() throws {
@@ -446,6 +521,154 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: naturalCandidates.map(\.text))?.displayText, "C+")
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: sharpCandidates.map(\.text))?.displayText, "F#+")
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: flatCandidates.map(\.text))?.displayText, "Bb+")
+    }
+
+    func testComposesPlainSuspendedSuffixAfterRootAndAccidental() throws {
+        let naturalCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)]
+        ])
+        let sharpCandidates = composer.compose(glyphCandidates: [
+            [glyph("F", confidence: 0.95)],
+            [glyph("#", confidence: 0.91)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)]
+        ])
+        let flatCandidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.95)],
+            [glyph("b", confidence: 0.91)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)]
+        ])
+
+        XCTAssertEqual(naturalCandidates.first?.text, "Csus")
+        XCTAssertEqual(sharpCandidates.first?.text, "F#sus")
+        XCTAssertEqual(flatCandidates.first?.text, "Bbsus")
+        XCTAssertEqual(try ChordSymbolParser.parse(naturalCandidates[0].text).displayText, "Csus")
+        XCTAssertEqual(try ChordSymbolParser.parse(sharpCandidates[0].text).displayText, "F#sus")
+        XCTAssertEqual(try ChordSymbolParser.parse(flatCandidates[0].text).displayText, "Bbsus")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: naturalCandidates.map(\.text))?.displayText, "Csus")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: sharpCandidates.map(\.text))?.displayText, "F#sus")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: flatCandidates.map(\.text))?.displayText, "Bbsus")
+    }
+
+    func testComposesPureAlteredSuffixAfterRootAndAccidental() throws {
+        let naturalCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("a", confidence: 0.89)],
+            [glyph("l", confidence: 0.88)],
+            [glyph("t", confidence: 0.87)]
+        ])
+        let sharpCandidates = composer.compose(glyphCandidates: [
+            [glyph("F", confidence: 0.95)],
+            [glyph("#", confidence: 0.91)],
+            [glyph("a", confidence: 0.89)],
+            [glyph("l", confidence: 0.88)],
+            [glyph("t", confidence: 0.87)]
+        ])
+        let flatCandidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.95)],
+            [glyph("b", confidence: 0.91)],
+            [glyph("a", confidence: 0.89)],
+            [glyph("l", confidence: 0.88)],
+            [glyph("t", confidence: 0.87)]
+        ])
+        let explicitDominantCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("7", confidence: 0.91)],
+            [glyph("a", confidence: 0.89)],
+            [glyph("l", confidence: 0.88)],
+            [glyph("t", confidence: 0.87)]
+        ])
+
+        XCTAssertEqual(naturalCandidates.first?.text, "Calt")
+        XCTAssertEqual(sharpCandidates.first?.text, "F#alt")
+        XCTAssertEqual(flatCandidates.first?.text, "Bbalt")
+        XCTAssertEqual(explicitDominantCandidates.first?.text, "C7alt")
+        XCTAssertEqual(try ChordSymbolParser.parse(naturalCandidates[0].text).displayText, "C7alt")
+        XCTAssertEqual(try ChordSymbolParser.parse(sharpCandidates[0].text).displayText, "F#7alt")
+        XCTAssertEqual(try ChordSymbolParser.parse(flatCandidates[0].text).displayText, "Bb7alt")
+        XCTAssertEqual(try ChordSymbolParser.parse(explicitDominantCandidates[0].text).displayText, "C7alt")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: naturalCandidates.map(\.text))?.displayText, "C7alt")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: sharpCandidates.map(\.text))?.displayText, "F#7alt")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: flatCandidates.map(\.text))?.displayText, "Bb7alt")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: explicitDominantCandidates.map(\.text))?.displayText, "C7alt")
+    }
+
+    func testComposesSuspendedFourthSuffixAfterRootAndAccidental() throws {
+        let naturalCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)],
+            [glyph("4", confidence: 0.86)]
+        ])
+        let sharpCandidates = composer.compose(glyphCandidates: [
+            [glyph("F", confidence: 0.95)],
+            [glyph("#", confidence: 0.91)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)],
+            [glyph("4", confidence: 0.86)]
+        ])
+        let flatCandidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.95)],
+            [glyph("b", confidence: 0.91)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)],
+            [glyph("4", confidence: 0.86)]
+        ])
+
+        XCTAssertEqual(naturalCandidates.first?.text, "Csus4")
+        XCTAssertEqual(sharpCandidates.first?.text, "F#sus4")
+        XCTAssertEqual(flatCandidates.first?.text, "Bbsus4")
+        XCTAssertEqual(try ChordSymbolParser.parse(naturalCandidates[0].text).displayText, "Csus4")
+        XCTAssertEqual(try ChordSymbolParser.parse(sharpCandidates[0].text).displayText, "F#sus4")
+        XCTAssertEqual(try ChordSymbolParser.parse(flatCandidates[0].text).displayText, "Bbsus4")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: naturalCandidates.map(\.text))?.displayText, "Csus4")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: sharpCandidates.map(\.text))?.displayText, "F#sus4")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: flatCandidates.map(\.text))?.displayText, "Bbsus4")
+    }
+
+    func testComposesDominantSuspendedSuffixAfterRootAndAccidental() throws {
+        let naturalCandidates = composer.compose(glyphCandidates: [
+            [glyph("C", confidence: 0.95)],
+            [glyph("7", confidence: 0.91)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)]
+        ])
+        let sharpCandidates = composer.compose(glyphCandidates: [
+            [glyph("F", confidence: 0.95)],
+            [glyph("#", confidence: 0.91)],
+            [glyph("7", confidence: 0.90)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)]
+        ])
+        let flatCandidates = composer.compose(glyphCandidates: [
+            [glyph("B", confidence: 0.95)],
+            [glyph("b", confidence: 0.91)],
+            [glyph("7", confidence: 0.90)],
+            [glyph("s", confidence: 0.89)],
+            [glyph("u", confidence: 0.88)],
+            [glyph("s", confidence: 0.87)]
+        ])
+
+        XCTAssertEqual(naturalCandidates.first?.text, "C7sus")
+        XCTAssertEqual(sharpCandidates.first?.text, "F#7sus")
+        XCTAssertEqual(flatCandidates.first?.text, "Bb7sus")
+        XCTAssertEqual(try ChordSymbolParser.parse(naturalCandidates[0].text).displayText, "C7sus")
+        XCTAssertEqual(try ChordSymbolParser.parse(sharpCandidates[0].text).displayText, "F#7sus")
+        XCTAssertEqual(try ChordSymbolParser.parse(flatCandidates[0].text).displayText, "Bb7sus")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: naturalCandidates.map(\.text))?.displayText, "C7sus")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: sharpCandidates.map(\.text))?.displayText, "F#7sus")
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: flatCandidates.map(\.text))?.displayText, "Bb7sus")
     }
 
     func testAugmentedSymbolBeatsPromotedSixWhenPlusEvidenceIsStronger() {

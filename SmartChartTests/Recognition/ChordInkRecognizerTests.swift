@@ -10,7 +10,7 @@ final class ChordInkRecognizerTests: XCTestCase {
 
             XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
             XCTAssertFalse(result.rawCandidates.isEmpty, fixture.name)
-            if !fixture.expectedDisplayText.contains("(#11)") {
+            if !fixture.allowsCompactSemanticRecognition {
                 XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
             }
             XCTAssertGreaterThan(result.confidence, 0, fixture.name)
@@ -91,6 +91,146 @@ final class ChordInkRecognizerTests: XCTestCase {
         }
     }
 
+    func testRecognizesDominantAlteredInkFixtures() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+            .filter { $0.expectedDisplayText.contains("7alt") }
+
+        XCTAssertFalse(fixtures.isEmpty)
+
+        for fixture in fixtures {
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
+    }
+
+    func testRecognizesPlainSuspendedInkFixtures() throws {
+        let fixtureNames = [
+            "Csus",
+            "CsusCaptured01",
+            "Gsus",
+            "GsusCaptured01",
+            "BFlatsus",
+            "BFlatsusCaptured01",
+            "FSharpsus",
+            "FSharpsusCaptured01"
+        ]
+
+        for fixtureName in fixtureNames {
+            let fixture = try InkFixtureLoader.load(fixtureName, file: #filePath)
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
+    }
+
+    func testRecognizesSuspendedFourthWithContextualFinalGlyph() throws {
+        let strokes = try shiftedTemplateStrokes("C", offsetX: 0)
+            + shiftedTemplateStrokes("s", offsetX: 52)
+            + shiftedTemplateStrokes("u", offsetX: 88)
+            + shiftedTemplateStrokes("s", offsetX: 128)
+            + [
+                InkStroke(points: [
+                    InkPoint(x: 252, y: 16, timeOffset: nil),
+                    InkPoint(x: 234, y: 42, timeOffset: nil),
+                    InkPoint(x: 261, y: 42, timeOffset: nil),
+                    InkPoint(x: 255, y: 42, timeOffset: nil),
+                    InkPoint(x: 255, y: 60, timeOffset: nil)
+                ])
+            ]
+
+        let result = recognizer.recognize(strokes: strokes)
+
+        let debugSummary = "raw: \(Array(result.rawCandidates.prefix(16))), glyphs: \(result.glyphCandidates.map { $0.prefix(8).map(\.text) })"
+
+        XCTAssertEqual(result.match?.displayText, "Csus4", debugSummary)
+        XCTAssertTrue(result.rawCandidates.contains("Csus4"), debugSummary)
+        XCTAssertEqual(result.glyphCandidates.count, 5)
+    }
+
+    func testRecognizesDominantSuspendedFromGlyphSequence() throws {
+        let strokes = try shiftedTemplateStrokes("C", offsetX: 0)
+            + shiftedTemplateStrokes("7", offsetX: 100)
+            + shiftedTemplateStrokes("s", offsetX: 200)
+            + shiftedTemplateStrokes("u", offsetX: 300)
+            + shiftedTemplateStrokes("s", offsetX: 400)
+
+        let result = recognizer.recognize(strokes: strokes)
+
+        let debugSummary = "raw: \(Array(result.rawCandidates.prefix(16))), glyphs: \(result.glyphCandidates.map { $0.prefix(8).map(\.text) })"
+
+        XCTAssertEqual(result.match?.displayText, "C7sus", debugSummary)
+        XCTAssertTrue(result.rawCandidates.contains("C7sus"), debugSummary)
+        XCTAssertEqual(result.glyphCandidates.count, 5)
+    }
+
+    func testRecognizesDominantSuspendedInkFixtures() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+            .filter { $0.expectedDisplayText.contains("7sus") }
+
+        XCTAssertFalse(fixtures.isEmpty)
+
+        for fixture in fixtures {
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
+    }
+
+    func testRecognizesMinorSixthInkFixtures() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+            .filter { $0.expectedDisplayText.hasSuffix("m6") }
+
+        XCTAssertFalse(fixtures.isEmpty)
+
+        for fixture in fixtures {
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
+    }
+
+    func testRecognizesMinorMajorSeventhInkFixtures() throws {
+        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+            .filter { $0.expectedDisplayText.contains("-△7") }
+
+        XCTAssertFalse(fixtures.isEmpty)
+
+        for fixture in fixtures {
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
+    }
+
+    func testMinorSixthDoesNotStealDashMinorOrSuspendedFixtures() throws {
+        let fixtureNames = [
+            "CMinor7Captured01",
+            "CMinor9Captured01",
+            "DFlatMinor9Captured01",
+            "DSharpm7Captured03",
+            "GSharpMinor9",
+            "GsusCaptured01"
+        ]
+
+        for fixtureName in fixtureNames {
+            let fixture = try InkFixtureLoader.load(fixtureName, file: #filePath)
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
+    }
+
     func testSuccessCriteriaFixturesArePresent() throws {
         let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
         let displayTexts = Set(fixtures.map(\.expectedDisplayText))
@@ -110,5 +250,27 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertFalse(result.glyphCandidates.isEmpty)
         XCTAssertFalse(result.rawCandidates.isEmpty)
         XCTAssertEqual(result.confidence, 0)
+    }
+
+    private func shiftedTemplateStrokes(_ text: String, offsetX: Double) throws -> [InkStroke] {
+        let template = try XCTUnwrap(ChordGlyphTemplateLibrary.initialTemplates.first { $0.text == text })
+        return template.strokes.map { stroke in
+            InkStroke(
+                points: stroke.points.map { point in
+                    InkPoint(
+                        x: point.x + offsetX,
+                        y: point.y,
+                        timeOffset: point.timeOffset
+                    )
+                }
+            )
+        }
+    }
+}
+
+private extension InkFixture {
+    var allowsCompactSemanticRecognition: Bool {
+        expectedDisplayText.contains("(#11)")
+            || expectedDisplayText.contains("7alt")
     }
 }

@@ -122,6 +122,52 @@ final class ChordSymbolParserTests: XCTestCase {
         }
     }
 
+    func testChordRecognitionCompendiumRecognizesMinorSixthAcrossChromaticSpellings() throws {
+        for spelling in chromaticSpellings {
+            let expectedDisplayText = "\(spelling)m6"
+
+            for qualityAlias in ["m6", "m 6", "min6", "min 6", "minor6", " minor6", " minor 6"] {
+                let input = "\(spelling)\(qualityAlias)"
+
+                XCTAssertEqual(
+                    ChordRecognitionCompendium.match(input)?.displayText,
+                    expectedDisplayText,
+                    input
+                )
+
+                let symbol = try ChordSymbolParser.parse(input)
+
+                XCTAssertEqual(symbol.quality, "-", input)
+                XCTAssertEqual(symbol.extensions, ["6"], input)
+                XCTAssertEqual(symbol.alterations, [], input)
+                XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
+            }
+        }
+    }
+
+    func testChordRecognitionCompendiumRecognizesMinorMajorSeventhAcrossChromaticSpellings() throws {
+        for spelling in chromaticSpellings {
+            let expectedDisplayText = "\(spelling)-△7"
+
+            for qualityAlias in ["-△7", "-Δ7", "-∆7", "m△7", "m △7", "min△7", "min △7", "minor△7", " minor△7", " minor △7"] {
+                let input = "\(spelling)\(qualityAlias)"
+
+                XCTAssertEqual(
+                    ChordRecognitionCompendium.match(input)?.displayText,
+                    expectedDisplayText,
+                    input
+                )
+
+                let symbol = try ChordSymbolParser.parse(input)
+
+                XCTAssertEqual(symbol.quality, "-△", input)
+                XCTAssertEqual(symbol.extensions, ["7"], input)
+                XCTAssertEqual(symbol.alterations, [], input)
+                XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
+            }
+        }
+    }
+
     func testChordRecognitionCompendiumRecognizesAugmentedAcrossChromaticSpellings() throws {
         for spelling in chromaticSpellings {
             let expectedDisplayText = "\(spelling)+"
@@ -139,6 +185,98 @@ final class ChordSymbolParserTests: XCTestCase {
 
                 XCTAssertEqual(symbol.quality, "+", input)
                 XCTAssertEqual(symbol.extensions, [], input)
+                XCTAssertEqual(symbol.alterations, [], input)
+                XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
+            }
+        }
+    }
+
+    func testChordRecognitionCompendiumRecognizesPureAlteredAcrossChromaticSpellings() throws {
+        for spelling in chromaticSpellings {
+            let expectedDisplayText = "\(spelling)7alt"
+
+            for qualityAlias in ["alt", " alt", "7alt", " 7alt", "7 alt", " 7 alt", "altered", " altered", "7altered", " 7altered"] {
+                let input = "\(spelling)\(qualityAlias)"
+
+                XCTAssertEqual(
+                    ChordRecognitionCompendium.match(input)?.displayText,
+                    expectedDisplayText,
+                    input
+                )
+
+                let symbol = try ChordSymbolParser.parse(input)
+
+                XCTAssertEqual(symbol.quality, "alt", input)
+                XCTAssertEqual(symbol.extensions, ["7"], input)
+                XCTAssertEqual(symbol.alterations, [], input)
+                XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
+            }
+        }
+    }
+
+    func testChordRecognitionCompendiumRecognizesPlainSuspendedAcrossChromaticSpellings() throws {
+        for spelling in chromaticSpellings {
+            let expectedDisplayText = "\(spelling)sus"
+
+            for qualityAlias in ["sus", " sus", "suspended", " suspended"] {
+                let input = "\(spelling)\(qualityAlias)"
+
+                XCTAssertEqual(
+                    ChordRecognitionCompendium.match(input)?.displayText,
+                    expectedDisplayText,
+                    input
+                )
+
+                let symbol = try ChordSymbolParser.parse(input)
+
+                XCTAssertEqual(symbol.quality, "sus", input)
+                XCTAssertEqual(symbol.extensions, [], input)
+                XCTAssertEqual(symbol.alterations, [], input)
+                XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
+            }
+        }
+    }
+
+    func testChordRecognitionCompendiumRecognizesSuspendedFourthAcrossChromaticSpellings() throws {
+        for spelling in chromaticSpellings {
+            let expectedDisplayText = "\(spelling)sus4"
+
+            for qualityAlias in ["sus4", " sus4", "sus 4", " sus 4", "suspended4", " suspended4", "suspended 4", " suspended 4"] {
+                let input = "\(spelling)\(qualityAlias)"
+
+                XCTAssertEqual(
+                    ChordRecognitionCompendium.match(input)?.displayText,
+                    expectedDisplayText,
+                    input
+                )
+
+                let symbol = try ChordSymbolParser.parse(input)
+
+                XCTAssertEqual(symbol.quality, "sus", input)
+                XCTAssertEqual(symbol.extensions, ["4"], input)
+                XCTAssertEqual(symbol.alterations, [], input)
+                XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
+            }
+        }
+    }
+
+    func testChordRecognitionCompendiumRecognizesDominantSuspendedAcrossChromaticSpellings() throws {
+        for spelling in chromaticSpellings {
+            let expectedDisplayText = "\(spelling)7sus"
+
+            for qualityAlias in ["7sus", " 7sus", "7 sus", " 7 sus", "7suspended", " 7suspended", "7 suspended", " 7 suspended"] {
+                let input = "\(spelling)\(qualityAlias)"
+
+                XCTAssertEqual(
+                    ChordRecognitionCompendium.match(input)?.displayText,
+                    expectedDisplayText,
+                    input
+                )
+
+                let symbol = try ChordSymbolParser.parse(input)
+
+                XCTAssertEqual(symbol.quality, "sus", input)
+                XCTAssertEqual(symbol.extensions, ["7"], input)
                 XCTAssertEqual(symbol.alterations, [], input)
                 XCTAssertEqual(symbol.displayText, expectedDisplayText, input)
             }
@@ -180,6 +318,8 @@ final class ChordSymbolParserTests: XCTestCase {
         XCTAssertEqual(ChordRecognitionCompendium.match("G/B")?.displayText, "G/B")
         XCTAssertEqual(ChordRecognitionCompendium.match("C△")?.displayText, "C△")
         XCTAssertEqual(ChordRecognitionCompendium.match("C△9")?.displayText, "C△9")
+        XCTAssertEqual(ChordRecognitionCompendium.match("Csus4")?.displayText, "Csus4")
+        XCTAssertEqual(ChordRecognitionCompendium.match("C7sus")?.displayText, "C7sus")
         XCTAssertNil(ChordRecognitionCompendium.match("CM7"))
         XCTAssertNil(ChordRecognitionCompendium.match("Cmaj7"))
     }
@@ -263,6 +403,15 @@ final class ChordSymbolParserTests: XCTestCase {
         XCTAssertEqual(symbol.displayText, "G/B")
     }
 
+    func testRejectsSlashBassWithTrailingNonPitchCharacters() {
+        XCTAssertThrowsError(try ChordSymbolParser.parse("D/F5")) { error in
+            XCTAssertEqual(error as? ChordSymbolParseError, .invalidSlashBass)
+        }
+        XCTAssertThrowsError(try ChordSymbolParser.parse("F#/A5")) { error in
+            XCTAssertEqual(error as? ChordSymbolParseError, .invalidSlashBass)
+        }
+    }
+
     func testParsesMinorChordAliasesToJazzMinorQuality() throws {
         for spelling in ["C-", "Cm", "Cmin", "Cminor", "C minor"] {
             let symbol = try ChordSymbolParser.parse(spelling)
@@ -275,10 +424,12 @@ final class ChordSymbolParserTests: XCTestCase {
         XCTAssertEqual(extendedMinor.displayText, "Db-7")
     }
 
-    func testParsesMinorNinthEleventhAndThirteenthAliasesToJazzMinorQuality() throws {
+    func testParsesMinorSixthNinthEleventhAndThirteenthAliasesToJazzMinorQuality() throws {
         for spelling in chromaticSpellings {
-            for extensionText in ["9", "11", "13"] {
-                let expectedDisplayText = "\(spelling)-\(extensionText)"
+            for extensionText in ["6", "9", "11", "13"] {
+                let expectedDisplayText = extensionText == "6"
+                    ? "\(spelling)m6"
+                    : "\(spelling)-\(extensionText)"
 
                 for qualityAlias in ["-", "m", "min", " minor"] {
                     let input = "\(spelling)\(qualityAlias)\(extensionText)"
@@ -374,6 +525,31 @@ final class ChordSymbolParserTests: XCTestCase {
         XCTAssertEqual(symbol.displayText, "Bb△7")
     }
 
+    func testParsesMinorMajorSeventhWithDashTriangleQuality() throws {
+        let expectations = [
+            "C-△7": "C-△7",
+            "C-Δ7": "C-△7",
+            "Cm△7": "C-△7",
+            "Cmin△7": "C-△7",
+            "C minor △7": "C-△7",
+            "Bb-△7": "Bb-△7",
+            "F#-△7": "F#-△7"
+        ]
+
+        for (spelling, expectedDisplayText) in expectations {
+            let symbol = try ChordSymbolParser.parse(spelling)
+
+            XCTAssertEqual(symbol.quality, "-△", spelling)
+            XCTAssertEqual(symbol.extensions, ["7"], spelling)
+            XCTAssertEqual(symbol.displayText, expectedDisplayText, spelling)
+            XCTAssertEqual(
+                ChordRecognitionCompendium.match(spelling)?.displayText,
+                expectedDisplayText,
+                spelling
+            )
+        }
+    }
+
     func testParserRejectsUnsupportedMajorSuffixAliases() {
         for spelling in ["CM", "CM7", "Cmaj", "Cmajor", "C major", "Bbmaj7"] {
             XCTAssertThrowsError(try ChordSymbolParser.parse(spelling), spelling)
@@ -381,7 +557,7 @@ final class ChordSymbolParserTests: XCTestCase {
     }
 
     func testParserRejectsUnsupportedGlyphNoiseDescriptors() {
-        for spelling in ["CC", "CG7", "C△C", "C-△", "C6△7", "C7△", "B6△7", "Bfoo", "E3", "E2", "E8", "C°9", "Cø9", "Cø7b5", "C+b9", "C+(b9)", "C7()", "C7(9)"] {
+        for spelling in ["CC", "CG7", "C△C", "C-△", "C-△9", "C6△7", "C7△", "B6△7", "Bfoo", "E3", "E2", "E8", "C°9", "Cø9", "Cø7b5", "C+b9", "C+(b9)", "Csus7", "C7()", "C7(9)"] {
             XCTAssertThrowsError(try ChordSymbolParser.parse(spelling), spelling)
             XCTAssertNil(ChordRecognitionCompendium.match(spelling), spelling)
         }

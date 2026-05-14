@@ -98,6 +98,32 @@ def safe_filename(name: str) -> str:
     return f"{sanitized}.json"
 
 
+def fixture_fingerprint(document: dict[str, Any]) -> str:
+    comparable = dict(document)
+    comparable.pop("name", None)
+    return json.dumps(comparable, sort_keys=True, separators=(",", ":"))
+
+
+def existing_duplicate_path(fixtures_dir: Path, document: dict[str, Any]) -> Path | None:
+    expected_display_text = require_string(document, "expectedDisplayText")
+    fingerprint = fixture_fingerprint(document)
+
+    for fixture_path in sorted(fixtures_dir.glob("*.json")):
+        try:
+            existing = json.loads(fixture_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        if not isinstance(existing, dict):
+            continue
+        if existing.get("expectedDisplayText") != expected_display_text:
+            continue
+        if fixture_fingerprint(existing) == fingerprint:
+            return fixture_path
+
+    return None
+
+
 def unique_fixture_path(fixtures_dir: Path, document: dict[str, Any], force: bool) -> Path:
     name = require_string(document, "name")
     fixture_path = fixtures_dir / safe_filename(name)
@@ -128,6 +154,17 @@ def main() -> int:
         name, expected_display_text = validate_fixture(document)
         fixtures_dir = Path(args.fixtures_dir).resolve()
         fixtures_dir.mkdir(parents=True, exist_ok=True)
+
+        if not args.force:
+            duplicate_path = existing_duplicate_path(fixtures_dir, document)
+            if duplicate_path is not None:
+                try:
+                    display_path = duplicate_path.relative_to(REPO_ROOT)
+                except ValueError:
+                    display_path = duplicate_path
+                print(f"Skipped duplicate fixture for {expected_display_text}; already imported at {display_path}")
+                return 0
+
         fixture_path = unique_fixture_path(fixtures_dir, document, args.force)
         name = require_string(document, "name")
 

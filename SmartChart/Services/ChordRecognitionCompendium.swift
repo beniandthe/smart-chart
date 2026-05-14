@@ -125,7 +125,13 @@ enum ChordRecognitionCompendium {
         [
             entry,
             entry.minorEntry,
+            entry.minorSixthEntry,
+            entry.minorMajorSeventhEntry,
+            entry.suspendedEntry,
+            entry.suspendedFourthEntry,
+            entry.dominantSuspendedEntry,
             entry.augmentedEntry,
+            entry.alteredEntry,
             entry.diminishedEntry,
             entry.diminishedSeventhEntry,
             entry.halfDiminishedSeventhEntry
@@ -204,6 +210,55 @@ private struct ChordRecognitionEntry: Hashable {
         )
     }
 
+    var suspendedEntry: ChordRecognitionEntry {
+        ChordRecognitionEntry(
+            root: root,
+            accidental: accidental,
+            quality: "sus",
+            aliases: suspendedAliases
+        )
+    }
+
+    var minorSixthEntry: ChordRecognitionEntry {
+        ChordRecognitionEntry(
+            root: root,
+            accidental: accidental,
+            quality: "-",
+            extensions: ["6"],
+            aliases: minorSixthAliases
+        )
+    }
+
+    var minorMajorSeventhEntry: ChordRecognitionEntry {
+        ChordRecognitionEntry(
+            root: root,
+            accidental: accidental,
+            quality: "-△",
+            extensions: ["7"],
+            aliases: minorMajorSeventhAliases
+        )
+    }
+
+    var suspendedFourthEntry: ChordRecognitionEntry {
+        ChordRecognitionEntry(
+            root: root,
+            accidental: accidental,
+            quality: "sus",
+            extensions: ["4"],
+            aliases: suspendedFourthAliases
+        )
+    }
+
+    var dominantSuspendedEntry: ChordRecognitionEntry {
+        ChordRecognitionEntry(
+            root: root,
+            accidental: accidental,
+            quality: "sus",
+            extensions: ["7"],
+            aliases: dominantSuspendedAliases
+        )
+    }
+
     var diminishedEntry: ChordRecognitionEntry {
         ChordRecognitionEntry(
             root: root,
@@ -219,6 +274,16 @@ private struct ChordRecognitionEntry: Hashable {
             accidental: accidental,
             quality: "+",
             aliases: augmentedAliases
+        )
+    }
+
+    var alteredEntry: ChordRecognitionEntry {
+        ChordRecognitionEntry(
+            root: root,
+            accidental: accidental,
+            quality: "alt",
+            extensions: ["7"],
+            aliases: alteredAliases
         )
     }
 
@@ -263,6 +328,128 @@ private struct ChordRecognitionEntry: Hashable {
         ]
     }
 
+    private var minorSixthAliases: [String] {
+        let base = displayText
+        return aliases.flatMap { alias in
+            [
+                "\(alias)-6",
+                "\(alias)m6",
+                "\(alias)m 6",
+                "\(alias)min6",
+                "\(alias)min 6",
+                "\(alias)minor6",
+                "\(alias) minor6",
+                "\(alias) minor 6"
+            ]
+        } + [
+            "\(base)-6",
+            "\(base)m6",
+            "\(base)m 6",
+            "\(base)min6",
+            "\(base)min 6",
+            "\(base)minor6",
+            "\(base) minor6",
+            "\(base) minor 6"
+        ]
+    }
+
+    private var minorMajorSeventhAliases: [String] {
+        let base = displayText
+        let triangleSpellings = ["△", "Δ", "∆"]
+        return aliases.flatMap { alias in
+            triangleSpellings.flatMap { triangle in
+                [
+                    "\(alias)-\(triangle)7",
+                    "\(alias)m\(triangle)7",
+                    "\(alias)m \(triangle)7",
+                    "\(alias)min\(triangle)7",
+                    "\(alias)min \(triangle)7",
+                    "\(alias)minor\(triangle)7",
+                    "\(alias) minor\(triangle)7",
+                    "\(alias) minor \(triangle)7"
+                ]
+            }
+        } + triangleSpellings.flatMap { triangle in
+            [
+                "\(base)-\(triangle)7",
+                "\(base)m\(triangle)7",
+                "\(base)m \(triangle)7",
+                "\(base)min\(triangle)7",
+                "\(base)min \(triangle)7",
+                "\(base)minor\(triangle)7",
+                "\(base) minor\(triangle)7",
+                "\(base) minor \(triangle)7"
+            ]
+        }
+    }
+
+    private var suspendedAliases: [String] {
+        let base = displayText
+        return aliases.flatMap { alias in
+            [
+                "\(alias)sus",
+                "\(alias) sus",
+                "\(alias)suspended",
+                "\(alias) suspended"
+            ]
+        } + [
+            "\(base)sus",
+            "\(base) sus",
+            "\(base)suspended",
+            "\(base) suspended"
+        ]
+    }
+
+    private var suspendedFourthAliases: [String] {
+        let base = displayText
+        return aliases.flatMap { alias in
+            [
+                "\(alias)sus4",
+                "\(alias) sus4",
+                "\(alias)sus 4",
+                "\(alias) sus 4",
+                "\(alias)suspended4",
+                "\(alias) suspended4",
+                "\(alias)suspended 4",
+                "\(alias) suspended 4"
+            ]
+        } + [
+            "\(base)sus4",
+            "\(base) sus4",
+            "\(base)sus 4",
+            "\(base) sus 4",
+            "\(base)suspended4",
+            "\(base) suspended4",
+            "\(base)suspended 4",
+            "\(base) suspended 4"
+        ]
+    }
+
+    private var dominantSuspendedAliases: [String] {
+        let base = displayText
+        return aliases.flatMap { alias in
+            [
+                "\(alias)7sus",
+                "\(alias) 7sus",
+                "\(alias)7 sus",
+                "\(alias) 7 sus",
+                "\(alias)7suspended",
+                "\(alias) 7suspended",
+                "\(alias)7 suspended",
+                "\(alias) 7 suspended"
+            ]
+        } + [
+            "\(base)7sus",
+            "\(base) 7sus",
+            "\(base)7 sus",
+            "\(base) 7 sus",
+            "\(base)7suspended",
+            "\(base) 7suspended",
+            "\(base)7 suspended",
+            "\(base) 7 suspended"
+        ]
+    }
+
     private var diminishedAliases: [String] {
         let base = displayText
         return aliases.flatMap { alias in
@@ -296,6 +483,39 @@ private struct ChordRecognitionEntry: Hashable {
             "\(base)aug",
             "\(base)augmented",
             "\(base) augmented"
+        ]
+    }
+
+    private var alteredAliases: [String] {
+        let base = displayText
+        return aliases.flatMap { alias in
+            [
+                "\(alias)alt",
+                "\(alias) alt",
+                "\(alias)7alt",
+                "\(alias) 7alt",
+                "\(alias)7 alt",
+                "\(alias) 7 alt",
+                "\(alias)altered",
+                "\(alias) altered",
+                "\(alias)7altered",
+                "\(alias) 7altered",
+                "\(alias)7 altered",
+                "\(alias) 7 altered"
+            ]
+        } + [
+            "\(base)alt",
+            "\(base) alt",
+            "\(base)7alt",
+            "\(base) 7alt",
+            "\(base)7 alt",
+            "\(base) 7 alt",
+            "\(base)altered",
+            "\(base) altered",
+            "\(base)7altered",
+            "\(base) 7altered",
+            "\(base)7 altered",
+            "\(base) 7 altered"
         ]
     }
 

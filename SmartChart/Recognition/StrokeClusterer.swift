@@ -67,8 +67,10 @@ struct StrokeClusterer {
         let finalClusters = semanticClusters.flatMap { cluster in
             splitMinorSeventhSuffix(in: cluster) ?? [cluster]
         }
+        let suspendedSuffixClusters = splitSuspendedSuffixFragments(in: finalClusters)
+        let slashSeparatedClusters = splitSlashBassSeparatorFragments(in: suspendedSuffixClusters)
 
-        return finalClusters
+        return slashSeparatedClusters
             .sorted { lhs, rhs in
                 if lhs.bounds.minX != rhs.bounds.minX {
                     return lhs.bounds.minX < rhs.bounds.minX
@@ -85,6 +87,308 @@ struct StrokeClusterer {
             }
     }
 
+    private func splitSlashBassSeparatorFragments(
+        in clusters: [MutableInkCluster]
+    ) -> [MutableInkCluster] {
+        let orderedClusters = clusters.sorted { lhs, rhs in
+            if lhs.bounds.minX != rhs.bounds.minX {
+                return lhs.bounds.minX < rhs.bounds.minX
+            }
+
+            return (lhs.originalIndexes.min() ?? 0) < (rhs.originalIndexes.min() ?? 0)
+        }
+
+        return orderedClusters.enumerated().flatMap { index, cluster in
+            let previousCluster = index > orderedClusters.startIndex ? orderedClusters[index - 1] : nil
+            let nextCluster = orderedClusters.indices.contains(index + 1) ? orderedClusters[index + 1] : nil
+            return splitSlashBassSeparatorFragment(
+                in: cluster,
+                previousCluster: previousCluster,
+                nextCluster: nextCluster
+            ) ?? [cluster]
+        }
+    }
+
+    private func splitSlashBassSeparatorFragment(
+        in cluster: MutableInkCluster,
+        previousCluster: MutableInkCluster?,
+        nextCluster: MutableInkCluster?
+    ) -> [MutableInkCluster]? {
+        guard cluster.strokes.count >= 2 else {
+            return nil
+        }
+
+        let orderedPairs = zip(cluster.originalIndexes, cluster.strokes)
+            .sorted { lhs, rhs in
+                if lhs.1.bounds.minX != rhs.1.bounds.minX {
+                    return lhs.1.bounds.minX < rhs.1.bounds.minX
+                }
+
+                return lhs.0 < rhs.0
+            }
+
+        for slashIndex in orderedPairs.indices.dropFirst() {
+            let slashStroke = orderedPairs[slashIndex].1
+            guard slashStroke.isLooseSlashBassSeparatorCandidate else {
+                continue
+            }
+
+            let leftPairs = Array(orderedPairs[..<slashIndex])
+            let rightPairs = Array(orderedPairs.dropFirst(slashIndex + 1))
+            let leftCluster = MutableInkCluster(
+                strokes: leftPairs.map(\.1),
+                originalIndexes: leftPairs.map(\.0)
+            )
+            let rightCluster = rightPairs.isEmpty
+                ? nil
+                : MutableInkCluster(
+                    strokes: rightPairs.map(\.1),
+                    originalIndexes: rightPairs.map(\.0)
+                )
+            let hasBassTarget = rightCluster?.isSlashBassFollowingGlyphCandidate == true
+                || nextCluster?.isSlashBassFollowingGlyphCandidate == true
+            let hasPrefixWithPreviousRoot = previousCluster
+                .map { previousCluster in
+                    previousCluster.isSlashBassLeadingRootContextCandidate
+                        && (leftCluster.isAccidentalModifierCandidate
+                            || leftCluster.isSharpGlyphCandidate
+                            || leftCluster.isSharpConstructionPart)
+                } ?? false
+
+            guard hasBassTarget,
+                  leftCluster.isSlashBassPrefixCandidate || hasPrefixWithPreviousRoot else {
+                continue
+            }
+
+            var splitClusters = [
+                leftCluster,
+                MutableInkCluster(strokes: [slashStroke], originalIndexes: [orderedPairs[slashIndex].0])
+            ]
+
+            if let rightCluster {
+                splitClusters.append(rightCluster)
+            }
+
+            return splitClusters
+        }
+
+        return nil
+    }
+
+    private func splitSuspendedSuffixFragments(
+        in clusters: [MutableInkCluster]
+    ) -> [MutableInkCluster] {
+        let orderedClusters = clusters.sorted { lhs, rhs in
+            if lhs.bounds.minX != rhs.bounds.minX {
+                return lhs.bounds.minX < rhs.bounds.minX
+            }
+
+            return (lhs.originalIndexes.min() ?? 0) < (rhs.originalIndexes.min() ?? 0)
+        }
+
+        return orderedClusters.enumerated().flatMap { index, cluster in
+            let previousCluster = index > orderedClusters.startIndex ? orderedClusters[index - 1] : nil
+            let previousPreviousCluster = index >= 2 ? orderedClusters[index - 2] : nil
+            let nextCluster = orderedClusters.indices.contains(index + 1) ? orderedClusters[index + 1] : nil
+
+            if let splitClusters = splitSuspendedPair(
+                in: cluster,
+                previousCluster: previousCluster,
+                nextCluster: nextCluster
+            ) {
+                return splitClusters
+            }
+
+            if let splitClusters = splitSuspendedFourthTail(
+                in: cluster,
+                previousCluster: previousCluster,
+                previousPreviousCluster: previousPreviousCluster,
+                hasDominantSevenInkBefore: hasDominantSevenInk(before: index, in: orderedClusters)
+            ) {
+                return splitClusters
+            }
+
+            if let splitClusters = splitSuspendedSFromSharp(
+                in: cluster,
+                hasDominantSevenBefore: hasDominantSevenCandidate(before: index, in: orderedClusters),
+                nextCluster: nextCluster
+            ) {
+                return splitClusters
+            }
+
+            if let splitClusters = splitMinorMFromSharp(
+                in: cluster,
+                previousCluster: previousCluster,
+                nextCluster: nextCluster
+            ) {
+                return splitClusters
+            }
+
+            return [cluster]
+        }
+    }
+
+    private func splitSuspendedPair(
+        in cluster: MutableInkCluster,
+        previousCluster: MutableInkCluster?,
+        nextCluster: MutableInkCluster?
+    ) -> [MutableInkCluster]? {
+        guard cluster.strokes.count == 2 else {
+            return nil
+        }
+
+        let singleStrokeClusters = zip(cluster.originalIndexes, cluster.strokes)
+            .map { index, stroke in
+                MutableInkCluster(strokes: [stroke], originalIndexes: [index])
+            }
+            .sorted { lhs, rhs in
+                if lhs.bounds.minX != rhs.bounds.minX {
+                    return lhs.bounds.minX < rhs.bounds.minX
+                }
+
+                return (lhs.originalIndexes.min() ?? 0) < (rhs.originalIndexes.min() ?? 0)
+            }
+
+        guard singleStrokeClusters.count == 2,
+              shouldKeepSeparateAsSuspendedSuffixLetters(singleStrokeClusters[0], singleStrokeClusters[1]) else {
+            return nil
+        }
+
+        let hasRootOrAccidentalBefore = previousCluster?.isPlainSuspendedPrefixCandidate == true
+        let hasSuspendedSAfter = nextCluster?.isSuspendedSLikeCandidate == true
+        let hasSuspendedSBefore = previousCluster?.isSuspendedSLikeCandidate == true
+
+        if singleStrokeClusters[0].isSuspendedSLikeCandidate,
+           singleStrokeClusters[1].isSuspendedULikeCandidate,
+           hasRootOrAccidentalBefore || hasSuspendedSAfter {
+            return singleStrokeClusters
+        }
+
+        if singleStrokeClusters[0].isSuspendedULikeCandidate,
+           singleStrokeClusters[1].isSuspendedSLikeCandidate,
+           hasSuspendedSBefore {
+            return singleStrokeClusters
+        }
+
+        return nil
+    }
+
+    private func splitSuspendedFourthTail(
+        in cluster: MutableInkCluster,
+        previousCluster: MutableInkCluster?,
+        previousPreviousCluster: MutableInkCluster?,
+        hasDominantSevenInkBefore: Bool
+    ) -> [MutableInkCluster]? {
+        guard cluster.strokes.count == 2,
+              !hasDominantSevenInkBefore,
+              previousCluster?.isSuspendedULikeContextCandidate == true,
+              previousPreviousCluster?.isSuspendedSLikeContextCandidate == true else {
+            return nil
+        }
+
+        let singleStrokeClusters = zip(cluster.originalIndexes, cluster.strokes)
+            .map { index, stroke in
+                MutableInkCluster(strokes: [stroke], originalIndexes: [index])
+            }
+            .sorted { lhs, rhs in
+                if lhs.bounds.minX != rhs.bounds.minX {
+                    return lhs.bounds.minX < rhs.bounds.minX
+                }
+
+                return (lhs.originalIndexes.min() ?? 0) < (rhs.originalIndexes.min() ?? 0)
+            }
+
+        guard singleStrokeClusters.count == 2 else {
+            return nil
+        }
+
+        let leadingS = singleStrokeClusters[0]
+        let trailingFour = singleStrokeClusters[1]
+        let horizontalGap = leadingS.bounds.horizontalGap(to: trailingFour.bounds)
+        let verticalMiss = leadingS.bounds.verticalMiss(to: trailingFour.bounds)
+
+        guard leadingS.isSuspendedSLikeContextCandidate,
+              trailingFour.isSuspendedFourthLikeCandidate,
+              horizontalGap <= 18,
+              verticalMiss <= 18 else {
+            return nil
+        }
+
+        return singleStrokeClusters
+    }
+
+    private func splitSuspendedSFromSharp(
+        in cluster: MutableInkCluster,
+        hasDominantSevenBefore: Bool,
+        nextCluster: MutableInkCluster?
+    ) -> [MutableInkCluster]? {
+        guard cluster.strokes.count >= 5,
+              nextCluster?.isSuspendedULikeCandidate == true,
+              !hasDominantSevenBefore else {
+            return nil
+        }
+
+        let orderedPairs = zip(cluster.originalIndexes, cluster.strokes)
+            .sorted { lhs, rhs in lhs.0 < rhs.0 }
+        let orderedIndexes = orderedPairs.map(\.0)
+        let orderedStrokes = orderedPairs.map(\.1)
+
+        let splitIndex = orderedStrokes.count - 1
+        let left = MutableInkCluster(
+            strokes: Array(orderedStrokes[..<splitIndex]),
+            originalIndexes: Array(orderedIndexes[..<splitIndex])
+        )
+        let right = MutableInkCluster(
+            strokes: [orderedStrokes[splitIndex]],
+            originalIndexes: [orderedIndexes[splitIndex]]
+        )
+
+        guard left.isSharpGlyphCandidate,
+              right.isSuspendedSLikeCandidate,
+              left.bounds.horizontalGap(to: right.bounds) <= 16,
+              left.bounds.verticalMiss(to: right.bounds) <= 16 else {
+            return nil
+        }
+
+        return [left, right]
+    }
+
+    private func splitMinorMFromSharp(
+        in cluster: MutableInkCluster,
+        previousCluster: MutableInkCluster?,
+        nextCluster: MutableInkCluster?
+    ) -> [MutableInkCluster]? {
+        guard cluster.strokes.count >= 5,
+              previousCluster?.isRootBodyCandidate == true,
+              previousCluster?.isDominantSevenInkAnchor != true,
+              nextCluster?.isMinorSixExtensionContextCandidate == true else {
+            return nil
+        }
+
+        let orderedPairs = zip(cluster.originalIndexes, cluster.strokes)
+            .sorted { lhs, rhs in lhs.0 < rhs.0 }
+        let orderedIndexes = orderedPairs.map(\.0)
+        let orderedStrokes = orderedPairs.map(\.1)
+        let splitIndex = orderedStrokes.count - 1
+        let left = MutableInkCluster(
+            strokes: Array(orderedStrokes[..<splitIndex]),
+            originalIndexes: Array(orderedIndexes[..<splitIndex])
+        )
+        let right = MutableInkCluster(
+            strokes: [orderedStrokes[splitIndex]],
+            originalIndexes: [orderedIndexes[splitIndex]]
+        )
+
+        guard left.isSharpGlyphCandidate,
+              right.isMinorSuffixCandidate,
+              left.bounds.horizontalGap(to: right.bounds) <= 10,
+              left.bounds.verticalMiss(to: right.bounds) <= 14 else {
+            return nil
+        }
+
+        return [left, right]
+    }
+
     private func mergeSharpConstructionFragments(
         in clusters: [MutableInkCluster]
     ) -> [MutableInkCluster] {
@@ -99,6 +403,8 @@ struct StrokeClusterer {
                     let rhs = workingClusters[rhsIndex]
                     guard lhs.canMergeAsSharpFragment,
                           rhs.canMergeAsSharpFragment,
+                          !lhs.isSlashLikeSeparator,
+                          !rhs.isSlashLikeSeparator,
                           !shouldKeepSeparateAsMinorSuffixAndExtension(lhs, rhs),
                           shouldMergeAsSharpConstruction(lhs, rhs) else {
                         continue
@@ -127,6 +433,11 @@ struct StrokeClusterer {
                 for rhsIndex in workingClusters.indices where rhsIndex > lhsIndex {
                     let lhs = workingClusters[lhsIndex]
                     let rhs = workingClusters[rhsIndex]
+                    guard !lhs.isSlashLikeSeparator,
+                          !rhs.isSlashLikeSeparator else {
+                        continue
+                    }
+
                     let hasVerticalRootConstruction = lhs.hasRootConstructionVerticalStem
                         || rhs.hasRootConstructionVerticalStem
                     let hasBarRootConstruction = (lhs.hasRootConstructionBar || rhs.hasRootConstructionBar)
@@ -220,6 +531,13 @@ struct StrokeClusterer {
         nineLoop: MutableInkCluster,
         nineTail: MutableInkCluster
     ) -> Bool {
+        if flatStem.isSuspendedSLikeContextCandidate,
+           flatBody.isSuspendedULikeContextCandidate,
+           nineLoop.isSuspendedSLikeContextCandidate,
+           hasLowerDominantSuspendedSuffix(after: seven, suffixClusters: [flatStem, flatBody, nineLoop]) {
+            return false
+        }
+
         guard seven.isDominantSevenSuffixAnchor,
               flatStem.isDominantFlatNineStemFragment,
               flatBody.isDominantFlatNineCurvedFragment,
@@ -261,6 +579,13 @@ struct StrokeClusterer {
         nineLoop: MutableInkCluster,
         nineTail: MutableInkCluster
     ) -> Bool {
+        if flat.isSuspendedSLikeContextCandidate,
+           nineLoop.isSuspendedULikeContextCandidate,
+           nineTail.isSuspendedSLikeContextCandidate,
+           hasLowerDominantSuspendedSuffix(after: seven, suffixClusters: [flat, nineLoop, nineTail]) {
+            return false
+        }
+
         guard seven.isDominantSevenSuffixAnchor,
               flat.isDominantFlatNineMergedFlatFragment,
               nineLoop.isDominantFlatNineCurvedFragment,
@@ -328,6 +653,13 @@ struct StrokeClusterer {
         flatBody: MutableInkCluster,
         nextSuffixFragment: MutableInkCluster
     ) -> Bool {
+        if flatStem.isSuspendedSLikeContextCandidate,
+           flatBody.isSuspendedULikeContextCandidate,
+           nextSuffixFragment.isSuspendedSLikeContextCandidate,
+           hasLowerDominantSuspendedSuffix(after: seven, suffixClusters: [flatStem, flatBody, nextSuffixFragment]) {
+            return false
+        }
+
         guard seven.isDominantSevenSuffixAnchor,
               flatStem.isDominantFlatNineStemFragment,
               flatBody.isDominantFlatNineCurvedFragment,
@@ -408,6 +740,14 @@ struct StrokeClusterer {
         alteration: MutableInkCluster,
         fragments: [MutableInkCluster]
     ) -> Bool {
+        if fragments.count >= 2,
+           alteration.isSuspendedSLikeContextCandidate,
+           fragments[0].isSuspendedULikeContextCandidate,
+           fragments[1].isSuspendedSLikeContextCandidate,
+           hasLowerDominantSuspendedSuffix(after: seven, suffixClusters: [alteration, fragments[0], fragments[1]]) {
+            return false
+        }
+
         guard seven.isDominantSevenSuffixAnchor,
               alteration.isWrittenAlterationAccidentalCandidate,
               fragments.count >= 2,
@@ -1006,6 +1346,18 @@ struct StrokeClusterer {
             return (lhs.originalIndexes.min() ?? 0) < (rhs.originalIndexes.min() ?? 0)
         }
         let removalIndices = orderedClusters.indices.filter { index in
+            guard !isDominantSuspendedClosingSuffixCandidate(at: index, in: orderedClusters) else {
+                return false
+            }
+
+            guard !isPotentialDominantSuspendedSuffixPart(at: index, in: orderedClusters) else {
+                return false
+            }
+
+            guard !isSuspendedFourthTail(at: index, in: orderedClusters) else {
+                return false
+            }
+
             return isOpeningDominantAlterationWrapper(at: index, in: orderedClusters)
                 || isClosingDominantAlterationWrapper(at: index, in: orderedClusters)
         }
@@ -1016,10 +1368,174 @@ struct StrokeClusterer {
         }
     }
 
+    private func isDominantSuspendedClosingSuffixCandidate(
+        at index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        guard index >= 3,
+              clusters[index].isSuspendedSLikeContextCandidate else {
+            return false
+        }
+
+        let sevenIndex = index - 3
+        let leadingSuspended = clusters[index - 2]
+        let middleSuspended = clusters[index - 1]
+
+        guard middleSuspended.isLooseDominantSuspendedMiddleCandidate,
+              leadingSuspended.isSuspendedSLikeContextCandidate,
+              clusters[sevenIndex].isDominantSevenInkAnchor,
+              hasLowerDominantSuspendedSuffix(after: sevenIndex, in: clusters) else {
+            return false
+        }
+
+        return clusters[sevenIndex].bounds.horizontalGap(to: clusters[index - 2].bounds) <= 44
+            && clusters[index - 2].bounds.horizontalGap(to: clusters[index - 1].bounds) <= 44
+            && clusters[index - 1].bounds.horizontalGap(to: clusters[index].bounds) <= 44
+    }
+
+    private func hasLowerDominantSuspendedSuffix(
+        after sevenIndex: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        guard sevenIndex + 3 < clusters.count else {
+            return false
+        }
+
+        let sevenBounds = clusters[sevenIndex].bounds
+        let suffixFloor = sevenBounds.minY + max(8, sevenBounds.height * 0.60)
+        return clusters[(sevenIndex + 1)...(sevenIndex + 3)].allSatisfy { suffixCluster in
+            suffixCluster.bounds.minY >= suffixFloor
+        }
+    }
+
+    private func hasLowerDominantSuspendedSuffix(
+        after seven: MutableInkCluster,
+        suffixClusters: [MutableInkCluster]
+    ) -> Bool {
+        guard suffixClusters.count >= 3 else {
+            return false
+        }
+
+        let suffixFloor = seven.bounds.minY + max(8, seven.bounds.height * 0.60)
+        return suffixClusters.prefix(3).allSatisfy { suffixCluster in
+            suffixCluster.bounds.minY >= suffixFloor
+        }
+    }
+
+    private func isDominantSuspendedSuffixPart(
+        at index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        let sevenIndex: Int?
+        if index >= 1,
+           clusters[index - 1].isDominantSevenInkAnchor {
+            sevenIndex = index - 1
+        } else if index >= 2,
+                  clusters[index - 2].isDominantSevenInkAnchor {
+            sevenIndex = index - 2
+        } else if index >= 3,
+                  clusters[index - 3].isDominantSevenInkAnchor {
+            sevenIndex = index - 3
+        } else {
+            sevenIndex = nil
+        }
+
+        guard let sevenIndex,
+              sevenIndex > 0,
+              sevenIndex + 3 < clusters.count else {
+            return false
+        }
+
+        let suspendedStart = sevenIndex + 1
+        guard index >= suspendedStart,
+              index <= sevenIndex + 3 else {
+            return false
+        }
+
+        return clusters[suspendedStart].isSuspendedSLikeContextCandidate
+            && clusters[suspendedStart + 1].isSuspendedULikeContextCandidate
+            && clusters[suspendedStart + 2].isSuspendedSLikeContextCandidate
+            && hasLowerDominantSuspendedSuffix(after: sevenIndex, in: clusters)
+            && clusters[sevenIndex].bounds.horizontalGap(to: clusters[suspendedStart].bounds) <= 40
+            && clusters[suspendedStart].bounds.horizontalGap(to: clusters[suspendedStart + 1].bounds) <= 40
+            && clusters[suspendedStart + 1].bounds.horizontalGap(to: clusters[suspendedStart + 2].bounds) <= 40
+    }
+
+    private func isPotentialDominantSuspendedSuffixPart(
+        at index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        if isDominantSuspendedSuffixPart(at: index, in: clusters) {
+            return true
+        }
+
+        guard index > 0 else {
+            return false
+        }
+
+        let nearbySevenIndex = clusters[..<index].indices.reversed().first { candidateIndex in
+            candidateIndex > 0
+                && index - candidateIndex <= 3
+                && clusters[candidateIndex].isDominantSevenInkAnchor
+        }
+
+        guard let sevenIndex = nearbySevenIndex else {
+            return false
+        }
+
+        guard hasLowerDominantSuspendedSuffix(after: sevenIndex, in: clusters) else {
+            return false
+        }
+
+        let offset = index - sevenIndex
+        let current = clusters[index]
+        let staysNearSeven = clusters[sevenIndex].bounds.horizontalGap(to: current.bounds) <= 78
+
+        guard staysNearSeven else {
+            return false
+        }
+
+        switch offset {
+        case 1:
+            return current.isSuspendedSLikeContextCandidate
+                && index + 1 < clusters.count
+                && clusters[index + 1].isSuspendedULikeContextCandidate
+        case 2:
+            return current.isSuspendedULikeContextCandidate
+                && clusters[index - 1].isSuspendedSLikeContextCandidate
+        case 3:
+            return current.isSuspendedSLikeContextCandidate
+                && clusters[index - 1].isSuspendedULikeContextCandidate
+                && clusters[index - 2].isSuspendedSLikeContextCandidate
+        default:
+            return false
+        }
+    }
+
+    private func isSuspendedFourthTail(
+        at index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        guard index >= 3,
+              clusters[index].isSuspendedFourthLikeCandidate,
+              !hasDominantSevenInk(before: index, in: clusters) else {
+            return false
+        }
+
+        return clusters[index - 1].isSuspendedSLikeContextCandidate
+            && clusters[index - 2].isSuspendedULikeContextCandidate
+            && clusters[index - 3].isSuspendedSLikeContextCandidate
+    }
+
     private func isOpeningDominantAlterationWrapper(
         at index: Int,
         in clusters: [MutableInkCluster]
     ) -> Bool {
+        guard !clusters[index].isSuspendedSLikeCandidate
+                || hasDominantSevenCandidate(before: index, in: clusters) else {
+            return false
+        }
+
         if index >= 1,
            index + 1 < clusters.count,
            clusters[index].isLooseOpeningParenthesizedAlterationWrapperCandidate,
@@ -1048,6 +1564,11 @@ struct StrokeClusterer {
         at index: Int,
         in clusters: [MutableInkCluster]
     ) -> Bool {
+        guard !clusters[index].isSuspendedSLikeCandidate
+                || hasDominantSevenCandidate(before: index, in: clusters) else {
+            return false
+        }
+
         if index > 0,
            clusters[index].isStandaloneThreeGlyphCandidate,
            clusters[index - 1].isLooseAlterationNumberCandidate {
@@ -1117,6 +1638,58 @@ struct StrokeClusterer {
         }
     }
 
+    private func hasDominantSevenContext(
+        before index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        clusters[..<index].indices.contains { candidateIndex in
+            candidateIndex > 0 && clusters[candidateIndex].isDominantSevenAlterationAnchor
+        }
+    }
+
+    private func hasDominantSevenCandidate(
+        before index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        clusters[..<index].indices.contains { candidateIndex in
+            let participatesInSuspendedSuffix = clusters[candidateIndex].isSuspendedSLikeCandidate
+                && candidateIndex + 1 < index
+                && clusters[candidateIndex + 1].isSuspendedULikeCandidate
+                || clusters[candidateIndex].isSuspendedULikeCandidate
+                && candidateIndex > 0
+                && clusters[candidateIndex - 1].isSuspendedSLikeCandidate
+
+            return candidateIndex > 0
+                && clusters[candidateIndex].isDominantSevenSuffixAnchor
+                && !participatesInSuspendedSuffix
+        }
+    }
+
+    private func hasDominantSevenInk(
+        before index: Int,
+        in clusters: [MutableInkCluster]
+    ) -> Bool {
+        clusters[..<index].indices.contains { candidateIndex in
+            guard candidateIndex > 0,
+                  clusters[candidateIndex].isDominantSevenAlterationAnchor else {
+                return false
+            }
+
+            let participatesInSuspendedSuffix = clusters[candidateIndex].isSuspendedSLikeCandidate
+                && candidateIndex + 1 < index
+                && clusters[candidateIndex + 1].isSuspendedULikeContextCandidate
+                || clusters[candidateIndex].isSuspendedSLikeCandidate
+                && candidateIndex > 0
+                && clusters[candidateIndex - 1].isSuspendedULikeContextCandidate
+                || clusters[candidateIndex].isSuspendedSLikeContextCandidate
+                && candidateIndex > 1
+                && clusters[candidateIndex - 1].isSuspendedULikeContextCandidate
+                && clusters[candidateIndex - 2].isSuspendedSLikeContextCandidate
+
+            return !participatesInSuspendedSuffix
+        }
+    }
+
     private func shouldKeepSeparateAsParenthesizedAlterationWrapper(
         _ lhs: MutableInkCluster,
         _ rhs: MutableInkCluster
@@ -1138,6 +1711,37 @@ struct StrokeClusterer {
             && ordered.right.isDominantSevenSuffixAnchor
             && ordered.left.bounds.horizontalGap(to: ordered.right.bounds) <= 14
             && ordered.left.bounds.verticalMiss(to: ordered.right.bounds) <= 14
+    }
+
+    private func shouldKeepSeparateAsSuspendedSuffixLetters(
+        _ lhs: MutableInkCluster,
+        _ rhs: MutableInkCluster
+    ) -> Bool {
+        let ordered = lhs.bounds.minX <= rhs.bounds.minX ? (left: lhs, right: rhs) : (left: rhs, right: lhs)
+        let horizontalGap = ordered.left.bounds.horizontalGap(to: ordered.right.bounds)
+        let verticalMiss = ordered.left.bounds.verticalMiss(to: ordered.right.bounds)
+
+        guard horizontalGap <= 16,
+              verticalMiss <= 16 else {
+            return false
+        }
+
+        if ordered.left.isSharpGlyphCandidate,
+           ordered.right.isSuspendedSLikeCandidate {
+            return true
+        }
+
+        if ordered.left.isSuspendedSLikeCandidate,
+           ordered.right.isSuspendedULikeCandidate {
+            return true
+        }
+
+        if ordered.left.isSuspendedULikeCandidate,
+           ordered.right.isSuspendedSLikeCandidate {
+            return true
+        }
+
+        return false
     }
 
     private func shouldKeepSeparateAsSequentialGlyphs(
@@ -1191,6 +1795,47 @@ private struct MutableInkCluster: Hashable {
             && bounds.recognitionArea >= 220
     }
 
+    var isPlainSuspendedPrefixCandidate: Bool {
+        isRootBodyCandidate
+            || isFlatGlyphCandidate
+            || isSharpGlyphCandidate
+            || isSharpConstructionPart
+    }
+
+    var isSlashBassPrefixCandidate: Bool {
+        guard !isSharpGlyphCandidate,
+              !isSharpConstructionPart else {
+            return false
+        }
+
+        return isSlashBassLeadingRootContextCandidate
+            || hasRootConstructionVerticalStem && hasRootConstructionBar
+    }
+
+    var isSlashBassLeadingRootContextCandidate: Bool {
+        guard !isSlashLikeSeparator else {
+            return false
+        }
+
+        return hasRootConstructionBody
+            || isRootBodyCandidate
+            || (strokes.count >= 2 && bounds.width >= 8 && bounds.height >= 12)
+    }
+
+    var isSlashBassFollowingGlyphCandidate: Bool {
+        guard !isSlashLikeSeparator,
+              !isQualityOrExtensionGlyphCandidate,
+              !isMinorSuffixCandidate,
+              !isAlterationNumberCandidate,
+              !isSharpConstructionPart else {
+            return false
+        }
+
+        return hasRootConstructionBody
+            || isRootBodyCandidate
+            || (strokes.count >= 2 && bounds.width >= 8 && bounds.height >= 12)
+    }
+
     var isAccidentalModifierCandidate: Bool {
         bounds.width >= 1
             && (bounds.height >= 4 || bounds.width >= 8)
@@ -1216,6 +1861,29 @@ private struct MutableInkCluster: Hashable {
         return stroke.isMinorMCandidate || stroke.isLooseMinorMSuffixCandidate || stroke.isDashMinorCandidate
     }
 
+    var isMinorSixExtensionContextCandidate: Bool {
+        guard strokes.count == 1,
+              let stroke = strokes.first else {
+            return false
+        }
+
+        let bounds = stroke.bounds
+        let width = max(bounds.width, 1)
+        let height = max(bounds.height, 1)
+        let aspectRatio = width / height
+        let canBeLooseSix = stroke.points.count >= 8
+            && bounds.width >= 4
+            && bounds.width <= 22
+            && bounds.height >= 10
+            && bounds.height <= 38
+            && aspectRatio >= 0.16
+            && aspectRatio <= 1.45
+
+        return canBeLooseSix
+            || stroke.isNineGlyphCandidate
+            || stroke.isFiveGlyphCandidate
+    }
+
     var isDominantSevenAlterationAnchor: Bool {
         guard strokes.count == 1,
               let stroke = strokes.first else {
@@ -1223,6 +1891,10 @@ private struct MutableInkCluster: Hashable {
         }
 
         return stroke.isSevenCandidate && stroke.hasEarlyTopHorizontalRun
+    }
+
+    var isDominantSevenInkAnchor: Bool {
+        isDominantSevenSuffixAnchor || isDominantSevenAlterationAnchor
     }
 
     var isDominantFlatNineStemFragment: Bool {
@@ -1395,18 +2067,24 @@ private struct MutableInkCluster: Hashable {
         let width = max(bounds.width, 1)
         let height = max(bounds.height, 1)
         let slopeMagnitude = height / width
+        let aspectRatio = width / height
         let dx = lastPoint.x - firstPoint.x
         let dy = lastPoint.y - firstPoint.y
-        let angleDegrees = abs(atan2(dy, dx) * 180 / .pi)
+        let diagonalAngleDegrees = strokes[0].diagonalAngleMagnitude
+        let hasCleanSlashPath = strokes[0].horizontalDirectionChangeCount == 0
+            || strokes[0].straightness >= 0.62
 
         return slopeMagnitude >= 0.65
             && slopeMagnitude <= 4.0
             && strokes[0].straightness >= 0.72
+            && aspectRatio <= 0.82
+            && hasCleanSlashPath
             && dx * dy < 0
-            && angleDegrees >= 42
-            && angleDegrees <= 78
+            && diagonalAngleDegrees >= 38
+            && diagonalAngleDegrees <= 82
             && width >= 4
             && height >= 8
+            && (!strokes[0].hasEarlyTopHorizontalRun || strokes[0].straightness >= 0.70)
     }
 
     var isFlatGlyphCandidate: Bool {
@@ -1448,6 +2126,85 @@ private struct MutableInkCluster: Hashable {
             || stroke.isMinorMCandidate
             || stroke.isDiminishedCircleConstructionCandidate
             || stroke.isSevenCandidate
+    }
+
+    var isSuspendedSLikeCandidate: Bool {
+        guard strokes.count == 1,
+              let stroke = strokes.first else {
+            return false
+        }
+
+        return stroke.isSuspendedSLikeCandidate
+    }
+
+    var isSuspendedSLikeContextCandidate: Bool {
+        isSuspendedSLikeCandidate
+            || strokes.count == 1
+            && bounds.width >= 4
+            && bounds.width <= 18
+            && bounds.height >= 12
+            && bounds.height <= 32
+            && bounds.recognitionArea >= 55
+    }
+
+    var isSuspendedULikeCandidate: Bool {
+        guard strokes.count == 1,
+              let stroke = strokes.first else {
+            return false
+        }
+
+        return stroke.isSuspendedULikeCandidate
+    }
+
+    var isSuspendedULikeContextCandidate: Bool {
+        isSuspendedULikeCandidate
+            || strokes.count == 1
+            && bounds.width >= 7
+            && bounds.width <= 24
+            && bounds.height >= 7
+            && bounds.height <= 24
+            && bounds.recognitionArea >= 60
+    }
+
+    var isLooseDominantSuspendedMiddleCandidate: Bool {
+        isSuspendedULikeContextCandidate
+            || strokes.count == 1
+            && bounds.width >= 6
+            && bounds.width <= 24
+            && bounds.height >= 6
+            && bounds.height <= 26
+            && bounds.recognitionArea >= 48
+    }
+
+    var isSuspendedFourthLikeCandidate: Bool {
+        if strokes.count == 1,
+           let stroke = strokes.first {
+            return stroke.isSuspendedFourthCandidate
+        }
+
+        guard strokes.count == 2 else {
+            return false
+        }
+
+        let hasDownStem = strokes.contains { stroke in
+            stroke.bounds.height >= 12
+                && stroke.bounds.width <= max(8, stroke.bounds.height * 0.45)
+                && stroke.straightness >= 0.45
+                && abs(abs(stroke.angleDegrees) - 90) <= 40
+        }
+        let hasUpperArm = strokes.contains { stroke in
+            stroke.bounds.minY <= bounds.minY + bounds.height * 0.45
+                && stroke.bounds.width >= 5
+                && stroke.bounds.height <= max(8, stroke.bounds.width * 0.95)
+                && stroke.straightness >= 0.35
+        }
+
+        return hasDownStem
+            && hasUpperArm
+            && bounds.width >= 4
+            && bounds.width <= 28
+            && bounds.height >= 14
+            && bounds.height <= 44
     }
 
     var isSharpGlyphCandidate: Bool {
@@ -1788,6 +2545,38 @@ private extension InkStroke {
             && (hasEarlyTopHorizontalRun || horizontalDirectionChangeCount >= 1 || straightness <= 0.72)
     }
 
+    var isSuspendedFourthCandidate: Bool {
+        guard let firstPoint = points.first,
+              let lastPoint = points.last else {
+            return false
+        }
+
+        let startX = normalizedXRatio(of: firstPoint)
+        let startY = normalizedYRatio(of: firstPoint)
+        let endY = normalizedYRatio(of: lastPoint)
+        let descendsIntoStem = endY >= 0.62
+            && lastPoint.y >= firstPoint.y + bounds.height * 0.40
+        let upperPoints = points.filter { point in
+            normalizedYRatio(of: point) <= 0.45
+        }
+        let upperMaxX = upperPoints.map(normalizedXRatio(of:)).max() ?? startX
+        let upperMinX = upperPoints.map(normalizedXRatio(of:)).min() ?? startX
+        let hasUpperArmOrCorner = hasEarlyTopHorizontalRun
+            || upperMaxX >= 0.70
+            || upperMinX <= 0.30
+
+        return points.count >= 5
+            && bounds.width >= 3
+            && bounds.width <= 24
+            && bounds.height >= 10
+            && bounds.height <= 42
+            && aspectRatio >= 0.10
+            && aspectRatio <= 1.15
+            && startY <= 0.48
+            && descendsIntoStem
+            && hasUpperArmOrCorner
+    }
+
     var isOpeningParenthesizedAlterationWrapperCandidate: Bool {
         isParenthesizedAlterationWrapperCandidate(curvingToward: .left)
     }
@@ -1935,6 +2724,91 @@ private extension InkStroke {
             && (!hasEarlyTopHorizontalRun || abs(angleDegrees) >= 100)
     }
 
+    var isLooseSlashBassSeparatorCandidate: Bool {
+        let aspectRatio = max(bounds.width, 1) / max(bounds.height, 1)
+
+        return bounds.width >= 4
+            && bounds.height >= 8
+            && aspectRatio >= 0.18
+            && aspectRatio <= 0.82
+            && straightness >= 0.38
+            && (points[points.count - 1].x - points[0].x) * (points[points.count - 1].y - points[0].y) < 0
+            && diagonalAngleMagnitude >= 38
+            && diagonalAngleMagnitude <= 82
+            && (!hasEarlyTopHorizontalRun || straightness >= 0.70 || abs(angleDegrees) >= 100)
+    }
+
+    var isSuspendedSLikeCandidate: Bool {
+        guard let firstPoint = points.first,
+              let lastPoint = points.last else {
+            return false
+        }
+
+        let startX = normalizedXRatio(of: firstPoint)
+        let startY = normalizedYRatio(of: firstPoint)
+        let endX = normalizedXRatio(of: lastPoint)
+        let endY = normalizedYRatio(of: lastPoint)
+        let descendsThroughBody = endY >= 0.58
+            && lastPoint.y >= firstPoint.y + bounds.height * 0.45
+        let curvesBackLeft = endX <= startX - 0.12
+            || normalizedMinX(belowYRatio: 0.45) <= startX - 0.16
+        let narrowTrailingS = aspectRatio <= 0.78
+            && straightness >= 0.42
+            && abs(abs(angleDegrees) - 90) <= 36
+        let rootSizedOpenC = startX >= 0.82
+            && endX >= 0.82
+            && hasLeftThenRightHook
+            && straightness <= 0.65
+
+        return points.count >= 8
+            && bounds.width >= 4
+            && bounds.width <= 22
+            && bounds.height >= 14
+            && bounds.height <= 30
+            && aspectRatio >= 0.18
+            && aspectRatio <= 1.05
+            && straightness >= 0.20
+            && straightness <= 0.86
+            && startY <= 0.35
+            && descendsThroughBody
+            && !hasEarlyTopHorizontalRun
+            && !rootSizedOpenC
+            && (curvesBackLeft || narrowTrailingS)
+    }
+
+    var isSuspendedULikeCandidate: Bool {
+        guard let firstPoint = points.first,
+              let lastPoint = points.last else {
+            return false
+        }
+
+        let startX = normalizedXRatio(of: firstPoint)
+        let startY = normalizedYRatio(of: firstPoint)
+        let endX = normalizedXRatio(of: lastPoint)
+        let endY = normalizedYRatio(of: lastPoint)
+        let reachesLowerBody = normalizedMaxY >= 0.82
+        let movesLeftToRight = endX >= startX + 0.42
+        let shallowCup = angleDegrees >= 12
+            && angleDegrees <= 58
+            && straightness <= 0.58
+
+        return points.count >= 12
+            && bounds.width >= 8
+            && bounds.width <= 22
+            && bounds.height >= 8
+            && bounds.height <= 22
+            && aspectRatio >= 0.55
+            && aspectRatio <= 1.75
+            && startX <= 0.35
+            && startY <= 0.60
+            && endX >= 0.62
+            && endY >= 0.55
+            && reachesLowerBody
+            && movesLeftToRight
+            && shallowCup
+            && !hasEarlyTopHorizontalRun
+    }
+
     var hasEarlyTopHorizontalRun: Bool {
         guard points.count >= 4 else {
             return false
@@ -2034,6 +2908,38 @@ private extension InkStroke {
 
     func normalizedYRatio(of point: InkPoint) -> Double {
         (point.y - bounds.minY) / max(bounds.height, 1)
+    }
+
+    func normalizedMinX(belowYRatio ratio: Double) -> Double {
+        let limit = bounds.minY + bounds.height * ratio
+        let normalizedValues = points
+            .filter { $0.y >= limit }
+            .map(normalizedXRatio(of:))
+
+        return normalizedValues.min() ?? points.last.map(normalizedXRatio(of:)) ?? 0
+    }
+
+    var normalizedMaxY: Double {
+        points
+            .map(normalizedYRatio(of:))
+            .max() ?? points.last.map(normalizedYRatio(of:)) ?? 0
+    }
+
+    var hasLeftThenRightHook: Bool {
+        guard points.count >= 5 else {
+            return false
+        }
+
+        let minX = points.map(\.x).min() ?? bounds.minX
+        guard let firstPoint = points.first,
+              let lastPoint = points.last else {
+            return false
+        }
+
+        let startAndEndMinX = min(firstPoint.x, lastPoint.x)
+
+        return minX <= startAndEndMinX - max(2, bounds.width * 0.25)
+            && lastPoint.x >= minX + bounds.width * 0.45
     }
 
     var hasLowerBodyThenUpperPeakReturn: Bool {

@@ -591,6 +591,9 @@ The first real handwriting fixture set is now committed and covered by
   candidate composer, and fixture exporter preserve written `m`/`min`/`-`
   aliases while rendering standardized jazz `-11` symbols, and ultra-compact
   two-point minor dashes are accepted as intentional dash-minor glyphs
+- minor-major-seventh prep: symbolic parsing, compendium matching, candidate
+  composition, and fixture export now support written dash-triangle forms such
+  as `C-△7` while preserving the canonical rendered chord as `C-△7`
 - diminished family prep: parser, compendium fallback, candidate composer,
   glyph templates, and fixture exporter now support diminished triads (`C°`),
   diminished sevenths (`C°7`), and half-diminished sevenths (`Cø7`) while
@@ -605,6 +608,12 @@ The first real handwriting fixture set is now committed and covered by
   `7(#9)` while keeping the semantic glyph target as `7#9`; parenthesis wrapper
   strokes are stripped before chord matching so tight handwritten `(#9)` groups
   do not depend on punctuation spacing
+- pure altered prep: symbolic parsing, compendium matching, candidate
+  composition, fixture export, and glyph templates now support written
+  root-plus-`alt` forms such as `Calt`, `C alt`, and `C7alt`, while
+  standardizing all accepted shorthand to dominant altered display text such as
+  `C7alt`; the lowercase `a/l/t` templates are geometry-gated so they do not
+  steal already stable `9`, `1`, `+`, or altered-dominant glyphs
 
 ## Milestones
 

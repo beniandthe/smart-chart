@@ -784,7 +784,7 @@ struct EditorView: View {
     ) -> ChordInkFixtureCopyResult {
         let trimmedCandidate = candidateText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let match = ChordRecognitionCompendium.match(trimmedCandidate) else {
-            return .failed("Unsupported chord. Use a supported target like C, Bb, F#, C-, C△7, Db7(b9), or G/B.")
+            return .failed("Unsupported chord. Use a supported target like C, Bb, F#, C-, C-△7, C△7, C7alt, Db7(b9), or G/B.")
         }
 
         do {
@@ -1070,7 +1070,7 @@ private struct ChordInkConfirmationSheetView: View {
             Text("Measure \(confirmation.displayMeasureNumber)")
                 .font(.title3.weight(.bold))
 
-            Text("Data pass: write one chord, set the exact intended chord, copy the sample, then clear for the next one.")
+            Text("Data pass: write one chord, set the exact form you wrote, copy the sample, then clear for the next one. Accepted aliases still store the canonical chart symbol.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1136,7 +1136,7 @@ private struct ChordInkConfirmationSheetView: View {
                 .font(.caption.weight(.semibold))
             }
 
-            TextField("Example: C, Bb, F#, C-, C△7, Db7(b9), G/B", text: $manualCandidateText)
+            TextField("Example: C, Bb, F#, C-, C-△7, C△7, Calt, C7alt, Db7(b9), G/B", text: $manualCandidateText)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .textFieldStyle(.roundedBorder)

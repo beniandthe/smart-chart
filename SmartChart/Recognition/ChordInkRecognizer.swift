@@ -17,7 +17,7 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         glyphRecognizer: GestureTemplateRecognizer = GestureTemplateRecognizer(),
         candidateComposer: ChordInkCandidateComposer = ChordInkCandidateComposer(),
         templates: [GestureTemplate] = ChordGlyphTemplateLibrary.initialTemplates,
-        maxGlyphCandidatesPerCluster: Int = 5,
+        maxGlyphCandidatesPerCluster: Int = 8,
         minimumAcceptedCandidateConfidence: Double = 3.70
     ) {
         self.clusterer = clusterer
@@ -37,20 +37,486 @@ struct ChordInkRecognizer: ChordInkRecognizing {
                 limit: maxGlyphCandidatesPerCluster
             )
         }
-        let chordCandidates = candidateComposer.compose(glyphCandidates: glyphCandidateGroups)
+        let contextualGlyphCandidateGroups = glyphCandidateGroupsWithSuspendedContext(
+            glyphCandidateGroups,
+            clusters: clusters
+        )
+        let chordCandidates = recognitionCandidates(
+            from: contextualGlyphCandidateGroups,
+            clusters: clusters
+        )
         let rawCandidates = chordCandidates.map(\.text)
-        let proposedMatch = ChordRecognitionCompendium.match(candidates: rawCandidates)
-        let confidence = proposedMatch.flatMap { match in
-            chordCandidates.first(where: { $0.text == match.rawInput })?.confidence
-        } ?? 0
-        let match = confidence >= minimumAcceptedCandidateConfidence ? proposedMatch : nil
-        let acceptedConfidence = match == nil ? 0 : confidence
+        let acceptedCandidate = chordCandidates.lazy.compactMap { candidate -> (ChordRecognitionMatch, Double)? in
+            guard let match = ChordRecognitionCompendium.match(candidate.text),
+                  candidate.confidence >= minimumAcceptedCandidateConfidence else {
+                return nil
+            }
+
+            return (match, candidate.confidence)
+        }.first
+        let match = acceptedCandidate?.0
+        let acceptedConfidence = acceptedCandidate?.1 ?? 0
 
         return ChordInkRecognitionResult(
             rawCandidates: rawCandidates,
-            glyphCandidates: glyphCandidateGroups,
+            glyphCandidates: contextualGlyphCandidateGroups,
             match: match,
             confidence: acceptedConfidence
         )
+    }
+
+    private func recognitionCandidates(
+        from glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> [ChordInkCandidate] {
+        let composedCandidates = candidateComposer.compose(glyphCandidates: glyphCandidateGroups)
+        guard let alteredCandidate = dominantAlteredCandidate(
+            from: glyphCandidateGroups,
+            clusters: clusters
+        ) else {
+            return composedCandidates
+        }
+
+        var bestCandidatesByText = Dictionary(
+            uniqueKeysWithValues: composedCandidates.map { ($0.text, $0) }
+        )
+        if let currentBest = bestCandidatesByText[alteredCandidate.text],
+           currentBest.confidence >= alteredCandidate.confidence {
+            return composedCandidates
+        }
+
+        bestCandidatesByText[alteredCandidate.text] = alteredCandidate
+        return Array(bestCandidatesByText.values).sorted { lhs, rhs in
+            if lhs.confidence != rhs.confidence {
+                return lhs.confidence > rhs.confidence
+            }
+
+            return lhs.text < rhs.text
+        }
+    }
+
+    private func dominantAlteredCandidate(
+        from glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> ChordInkCandidate? {
+        guard glyphCandidateGroups.count == clusters.count,
+              clusters.count >= 3,
+              let rootCandidate = rootCandidate(in: glyphCandidateGroups[0]) else {
+            return nil
+        }
+
+        var glyphs = [rootCandidate]
+        var index = 1
+        var symbolText = rootCandidate.text
+
+        if glyphCandidateGroups.indices.contains(index),
+           let accidentalCandidate = accidentalCandidate(in: glyphCandidateGroups[index]) {
+            glyphs.append(accidentalCandidate)
+            symbolText.append(accidentalCandidate.text)
+            index += 1
+        }
+
+        let sevenIndex: Int?
+        if glyphCandidateGroups.indices.contains(index),
+           let sevenCandidate = sevenCandidate(in: glyphCandidateGroups[index]) {
+            sevenIndex = index
+            glyphs.append(sevenCandidate)
+            index += 1
+        } else {
+            sevenIndex = nil
+            glyphs.append(GlyphCandidate(text: "7", confidence: 0.78, source: .composer))
+        }
+
+        guard index < glyphCandidateGroups.count,
+              isDominantAlteredSuffixContext(
+                  suffixStartIndex: index,
+                  sevenIndex: sevenIndex,
+                  glyphCandidateGroups: glyphCandidateGroups,
+                  clusters: clusters
+              ) else {
+            return nil
+        }
+
+        symbolText.append("7alt")
+        glyphs.append(GlyphCandidate(text: "alt", confidence: 0.92, source: .composer))
+
+        return ChordInkCandidate(
+            text: symbolText,
+            confidence: sevenIndex == nil ? 4.85 : 5.25,
+            glyphCandidates: glyphs
+        )
+    }
+
+    private func rootCandidate(in group: [GlyphCandidate]) -> GlyphCandidate? {
+        group
+            .filter { candidate in
+                candidate.confidence >= 0.75 && "ABCDEFG".contains(candidate.text)
+            }
+            .max { lhs, rhs in
+                lhs.confidence < rhs.confidence
+            }
+    }
+
+    private func accidentalCandidate(in group: [GlyphCandidate]) -> GlyphCandidate? {
+        group
+            .filter { candidate in
+                candidate.confidence >= 0.72 && (candidate.text == "#" || candidate.text == "b")
+            }
+            .max { lhs, rhs in
+                lhs.confidence < rhs.confidence
+            }
+    }
+
+    private func sevenCandidate(in group: [GlyphCandidate]) -> GlyphCandidate? {
+        if group.contains(where: { candidate in
+            candidate.text == "/" && candidate.confidence >= 0.65
+        }) {
+            return nil
+        }
+
+        guard let candidate = group
+            .filter({ candidate in
+                candidate.confidence >= 0.50 && candidate.text == "7"
+            })
+            .max(by: { lhs, rhs in lhs.confidence < rhs.confidence }) else {
+            return nil
+        }
+
+        let strongRootOrAccidental = group.contains { candidate in
+            candidate.confidence >= 0.85
+                && ["A", "B", "C", "D", "E", "F", "G", "#", "b"].contains(candidate.text)
+        }
+
+        return strongRootOrAccidental && candidate.confidence < 0.85 ? nil : candidate
+    }
+
+    private func isDominantAlteredSuffixContext(
+        suffixStartIndex: Int,
+        sevenIndex: Int?,
+        glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> Bool {
+        let suffixGroups = glyphCandidateGroups[suffixStartIndex...]
+        let suffixClusters = clusters[suffixStartIndex...]
+        guard suffixGroups.count <= 3,
+              let firstSuffixCluster = suffixClusters.first,
+              !suffixGroups.contains(where: { group in
+                  group.contains { candidate in
+                      candidate.text == "/" && candidate.confidence >= 0.65
+                  }
+              }) else {
+            return false
+        }
+
+        let referenceCluster = sevenIndex.map { clusters[$0] } ?? clusters[max(0, suffixStartIndex - 1)]
+        let firstSuffixSitsInLowercaseLane = firstSuffixCluster.bounds.minY >= referenceCluster.bounds.minY + 2
+        let hasExplicitSeven = sevenIndex != nil
+        let firstSuffixIsLooseAltLoop = suffixGroups.first?.contains { candidate in
+            ["b", "9", "°", "G"].contains(candidate.text) && candidate.confidence >= 0.50
+                || ["a", "A"].contains(candidate.text) && candidate.confidence >= 0.45
+        } == true
+        let suffixHasMiddleOrTailLetterEvidence = suffixGroups.dropFirst().contains { group in
+            group.contains { candidate in
+                (candidate.text == "l" || candidate.text == "t") && candidate.confidence >= 0.45
+            }
+        }
+        let suffixHasTallTail = suffixClusters.contains { cluster in
+            cluster.bounds.height >= 13
+                && cluster.bounds.width <= 24
+        }
+        let suffixHasTerminalTShape = suffixGroups.last?.contains { candidate in
+            candidate.text == "t" && candidate.confidence >= 0.45
+        } == true
+            || suffixGroups.last?.contains { candidate in
+                candidate.text == "l" && candidate.confidence >= 0.60
+            } == true
+            || suffixClusters.last.map { cluster in
+                cluster.strokes.count >= 2
+                    && cluster.bounds.height >= 14
+                    && cluster.bounds.width >= 6
+                    && cluster.bounds.width <= 28
+            } == true
+            || (hasExplicitSeven
+                && suffixGroups.count == 1
+                && firstSuffixCluster.bounds.height >= 12
+                && firstSuffixCluster.bounds.width <= 16)
+        let suffixLooksLikeLiteralAlteration = sevenIndex != nil
+            && !firstSuffixSitsInLowercaseLane
+            && suffixGroups.first?.contains(where: { candidate in
+                candidate.text == "b" || candidate.text == "#"
+            }) == true
+        let firstSuffixIsExplicitSharpAlteration = suffixGroups.first?.contains { candidate in
+            candidate.text == "#" && candidate.confidence >= 0.70
+        } == true
+        let implicitSevenHasEnoughLiteralAltEvidence = hasExplicitSeven
+            || (suffixGroups.count >= 3 && suffixHasMiddleOrTailLetterEvidence)
+
+        return firstSuffixSitsInLowercaseLane
+            && firstSuffixIsLooseAltLoop
+            && suffixHasTallTail
+            && suffixHasTerminalTShape
+            && implicitSevenHasEnoughLiteralAltEvidence
+            && !suffixLooksLikeLiteralAlteration
+            && !firstSuffixIsExplicitSharpAlteration
+    }
+
+    private func glyphCandidateGroupsWithSuspendedContext(
+        _ glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> [[GlyphCandidate]] {
+        guard clusters.count == glyphCandidateGroups.count,
+              clusters.count >= 4,
+              clusters.count <= 6,
+              glyphCandidateGroups.first?.contains(where: { candidate in
+                  candidate.confidence >= 0.50 && "ABCDEFG".contains(candidate.text)
+              }) == true else {
+            return glyphCandidateGroups
+        }
+
+        let prefixLength = hasHighAccidentalPrefix(in: glyphCandidateGroups, clusters: clusters) ? 2 : 1
+        let suffixLength = clusters.count - prefixLength
+        guard suffixLength == 3 || suffixLength == 4 else {
+            return glyphCandidateGroups
+        }
+
+        var contextualGroups = glyphCandidateGroups
+        let suffixGroups = Array(glyphCandidateGroups[prefixLength...])
+        let suffixClusters = Array(clusters[prefixLength...])
+
+        if suffixLength == 4,
+           canApplyDominantSuspendedContext(
+               to: suffixGroups,
+               suffixClusters: suffixClusters
+           ) {
+            contextualGroups[prefixLength + 1] = contextualGroups[prefixLength + 1].promotingContextualCandidate(
+                "s",
+                confidence: 0.78
+            )
+            contextualGroups[prefixLength + 2] = contextualGroups[prefixLength + 2].promotingContextualCandidate(
+                "u",
+                confidence: 0.78
+            )
+            contextualGroups[prefixLength + 3] = contextualGroups[prefixLength + 3].promotingContextualCandidate(
+                "s",
+                confidence: 0.78
+            )
+
+            return contextualGroups
+        }
+
+        guard canApplySuspendedContext(
+            to: suffixGroups,
+            suffixClusters: suffixClusters,
+            rootBounds: clusters[0].bounds
+        ) else {
+            return glyphCandidateGroups
+        }
+
+        contextualGroups[prefixLength] = contextualGroups[prefixLength].promotingContextualCandidate(
+            "s",
+            confidence: 0.78
+        )
+        contextualGroups[prefixLength + 1] = contextualGroups[prefixLength + 1].promotingContextualCandidate(
+            "u",
+            confidence: 0.78
+        )
+        contextualGroups[prefixLength + 2] = contextualGroups[prefixLength + 2].promotingContextualCandidate(
+            "s",
+            confidence: 0.78
+        )
+        if suffixLength == 4 {
+            contextualGroups[prefixLength + 3] = contextualGroups[prefixLength + 3].promotingContextualCandidate(
+                "4",
+                confidence: 0.76
+            )
+        }
+
+        return contextualGroups
+    }
+
+    private func canApplyDominantSuspendedContext(
+        to suffixGroups: [[GlyphCandidate]],
+        suffixClusters: [InkCluster]
+    ) -> Bool {
+        guard suffixGroups.count == 4,
+              suffixClusters.count == 4,
+              suffixGroups[0].contains(where: { candidate in
+                  candidate.text == "7" && candidate.confidence >= 0.85
+              }),
+              dominantSuspendedSuffixSitsBelowSeven(suffixClusters) else {
+            return false
+        }
+
+        let suspendedGroups = Array(suffixGroups.dropFirst())
+        let suspendedClusters = Array(suffixClusters.dropFirst())
+
+        return hasSuspendedSuffixSequenceEvidence(
+            in: suspendedGroups,
+            clusters: suspendedClusters
+        )
+            && !hasHardNonSuspendedDescriptorEvidence(in: suspendedGroups)
+    }
+
+    private func dominantSuspendedSuffixSitsBelowSeven(_ suffixClusters: [InkCluster]) -> Bool {
+        guard suffixClusters.count == 4 else {
+            return false
+        }
+
+        let sevenBounds = suffixClusters[0].bounds
+        let suffixFloor = sevenBounds.minY + max(8, sevenBounds.height * 0.60)
+        return suffixClusters.dropFirst().allSatisfy { suffixCluster in
+            suffixCluster.bounds.minY >= suffixFloor
+        }
+    }
+
+    private func hasHighAccidentalPrefix(
+        in glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> Bool {
+        guard glyphCandidateGroups.indices.contains(1),
+              clusters.indices.contains(1) else {
+            return false
+        }
+
+        let hasStrongFlat = glyphCandidateGroups[1].contains { candidate in
+            candidate.confidence >= 0.60 && candidate.text == "b"
+        }
+        let hasStrongSharp = glyphCandidateGroups[1].contains { candidate in
+            candidate.confidence >= 0.70 && candidate.text == "#"
+        }
+        let rootBounds = clusters[0].bounds
+        let highModifierBottom = rootBounds.maxY - rootBounds.height * 0.32
+
+        return hasStrongSharp || hasStrongFlat && clusters[1].bounds.maxY <= highModifierBottom
+    }
+
+    private func canApplySuspendedContext(
+        to suffixGroups: [[GlyphCandidate]],
+        suffixClusters: [InkCluster],
+        rootBounds: InkBounds
+    ) -> Bool {
+        guard (suffixGroups.count == 3 || suffixGroups.count == 4),
+              suffixGroups.count == suffixClusters.count else {
+            return false
+        }
+
+        let firstSuffixTopCandidate = suffixGroups[0].max { lhs, rhs in
+            lhs.confidence < rhs.confidence
+        }
+        let firstSuffixLooksSuspended = firstSuffixTopCandidate
+            .map { ["s", "u"].contains($0.text) } == true
+        let firstSuffixHasStrongExplicitQuality = !firstSuffixLooksSuspended
+            && suffixGroups[0].contains { candidate in
+                candidate.confidence >= 0.85
+                    && ["-", "m", "7", "°", "ø", "△", "+"].contains(candidate.text)
+            }
+        let firstSuffixIsExplicitSlash = firstSuffixTopCandidate?.text == "/"
+            && (firstSuffixTopCandidate?.confidence ?? 0) >= 0.65
+        let firstSuffixHasTallSlashSeparator = suffixGroups[0].contains { candidate in
+            candidate.text == "/" && candidate.confidence >= 0.65
+        } && suffixClusters[0].bounds.height >= rootBounds.height * 0.95
+
+        let firstThreeSuffixGroups = Array(suffixGroups.prefix(3))
+        let fourSuffixHasStrongNonSuspendedDescriptor = suffixGroups.count == 4
+            && hasHardNonSuspendedDescriptorEvidence(in: firstThreeSuffixGroups)
+        let firstThreeSuffixClusters = Array(suffixClusters.prefix(3))
+        let hasSuspendedSequenceEvidence = hasSuspendedSuffixSequenceEvidence(
+            in: firstThreeSuffixGroups,
+            clusters: firstThreeSuffixClusters
+        )
+        let finalFourthHasHardConflict = suffixGroups.count == 4
+            && suffixGroups[3].contains { candidate in
+                candidate.confidence >= 0.78
+                    && ["-", "m", "°", "ø", "△", "+"].contains(candidate.text)
+            }
+
+        return !firstSuffixHasStrongExplicitQuality
+            && hasSuspendedSequenceEvidence
+            && (!firstSuffixIsExplicitSlash || firstSuffixLooksSuspended)
+            && (!firstSuffixHasTallSlashSeparator || firstSuffixLooksSuspended)
+            && !fourSuffixHasStrongNonSuspendedDescriptor
+            && !finalFourthHasHardConflict
+    }
+
+    private func hasHardNonSuspendedDescriptorEvidence(in suffixGroups: [[GlyphCandidate]]) -> Bool {
+        suffixGroups.contains { group in
+            if group.max(by: { lhs, rhs in lhs.confidence < rhs.confidence })
+                .map({ ["s", "u"].contains($0.text) }) == true {
+                return false
+            }
+
+            return group.contains { candidate in
+                candidate.confidence >= 0.70
+                    && ["#", "°", "ø", "△", "+"].contains(candidate.text)
+            }
+        }
+    }
+
+    private func hasSuspendedSuffixSequenceEvidence(
+        in suffixGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> Bool {
+        guard suffixGroups.count == 3,
+              clusters.count == 3 else {
+            return false
+        }
+
+        return isSuspendedSContext(group: suffixGroups[0], cluster: clusters[0])
+            && isSuspendedUContext(group: suffixGroups[1], cluster: clusters[1])
+            && isSuspendedSContext(group: suffixGroups[2], cluster: clusters[2])
+    }
+
+    private func isSuspendedSContext(
+        group: [GlyphCandidate],
+        cluster: InkCluster
+    ) -> Bool {
+        if group.containsSuspendedCandidate("s", minimumConfidence: 0.45) {
+            return true
+        }
+
+        return cluster.strokes.count == 1
+            && cluster.bounds.width >= 4
+            && cluster.bounds.width <= 18
+            && cluster.bounds.height >= 12
+            && cluster.bounds.height <= 32
+            && cluster.bounds.width * cluster.bounds.height >= 55
+    }
+
+    private func isSuspendedUContext(
+        group: [GlyphCandidate],
+        cluster: InkCluster
+    ) -> Bool {
+        if group.containsSuspendedCandidate("u", minimumConfidence: 0.45) {
+            return true
+        }
+
+        return cluster.strokes.count == 1
+            && cluster.bounds.width >= 7
+            && cluster.bounds.width <= 24
+            && cluster.bounds.height >= 7
+            && cluster.bounds.height <= 24
+            && cluster.bounds.width * cluster.bounds.height >= 60
+    }
+}
+
+private extension Array where Element == GlyphCandidate {
+    func containsSuspendedCandidate(
+        _ text: String,
+        minimumConfidence: Double
+    ) -> Bool {
+        contains { candidate in
+            candidate.text == text && candidate.confidence >= minimumConfidence
+        }
+    }
+
+    func promotingContextualCandidate(_ text: String, confidence: Double) -> [GlyphCandidate] {
+        var candidates = self
+        if let index = candidates.firstIndex(where: { $0.text == text }) {
+            candidates[index].confidence = Swift.max(candidates[index].confidence, confidence)
+            return candidates
+        }
+
+        candidates.append(GlyphCandidate(text: text, confidence: confidence, source: .composer))
+        return candidates
     }
 }

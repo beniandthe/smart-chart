@@ -132,6 +132,14 @@ enum ChordSymbolParser {
                   firstCharacter.isDiminishedQuality {
             quality = "°"
             index = 1
+        } else if lowercasedDescriptor.hasPrefix("altered") {
+            quality = "alt"
+            extensions = ["7"]
+            index = 7
+        } else if lowercasedDescriptor.hasPrefix("alt") {
+            quality = "alt"
+            extensions = ["7"]
+            index = 3
         } else if let firstCharacter = characters.first,
                   firstCharacter.isAugmentedQuality {
             quality = "+"
@@ -146,6 +154,12 @@ enum ChordSymbolParser {
            firstCharacter.isMajorTriangleQuality {
             quality = "△"
             index = 1
+        } else if lowercasedDescriptor.hasPrefix("suspended") {
+            quality = "sus"
+            index = 9
+        } else if lowercasedDescriptor.hasPrefix("sus") {
+            quality = "sus"
+            index = 3
         } else if lowercasedDescriptor.hasPrefix("minor") {
             quality = "-"
             index = 5
@@ -186,11 +200,33 @@ enum ChordSymbolParser {
                     index += 1
                 }
 
-                guard isSupportedExtension(token) else {
+                guard isSupportedExtension(token, quality: quality) else {
                     throw ChordSymbolParseError.unsupportedExtension
                 }
 
                 extensions.append(token)
+
+                if token == "7",
+                   quality.isEmpty,
+                   let suspendedSuffixEndIndex = namedSuffixEndIndex(
+                       in: characters,
+                       startIndex: index,
+                       longForm: "suspended",
+                       shortForm: "sus"
+                   ) {
+                    quality = "sus"
+                    index = suspendedSuffixEndIndex
+                } else if token == "7",
+                   quality.isEmpty,
+                   let alteredSuffixEndIndex = namedSuffixEndIndex(
+                       in: characters,
+                       startIndex: index,
+                       longForm: "altered",
+                       shortForm: "alt"
+                   ) {
+                    quality = "alt"
+                    index = alteredSuffixEndIndex
+                }
             } else if character == "(" {
                 let parsedParenthetical = try parseParenthesizedAlterations(
                     in: characters,
@@ -201,6 +237,14 @@ enum ChordSymbolParser {
             } else if character == ")" {
                 throw ChordSymbolParseError.unsupportedQuality
             } else if character.isMajorTriangleQuality {
+                if quality == "-",
+                   extensions.isEmpty,
+                   alterations.isEmpty {
+                    quality = "-△"
+                    index += 1
+                    continue
+                }
+
                 if (!quality.isEmpty && quality != "△") || !extensions.isEmpty || !alterations.isEmpty {
                     throw ChordSymbolParseError.unsupportedQuality
                 }
@@ -226,6 +270,29 @@ enum ChordSymbolParser {
         )
 
         return (quality, extensions, alterations)
+    }
+
+    private static func namedSuffixEndIndex(
+        in characters: [Character],
+        startIndex: Int,
+        longForm: String,
+        shortForm: String
+    ) -> Int? {
+        var index = startIndex
+        while index < characters.count, characters[index].isWhitespace {
+            index += 1
+        }
+
+        let remainingText = String(characters[index...]).lowercased()
+        if remainingText.hasPrefix(longForm) {
+            return index + longForm.count
+        }
+
+        if remainingText.hasPrefix(shortForm) {
+            return index + shortForm.count
+        }
+
+        return nil
     }
 
     private static func parseParenthesizedAlterations(
@@ -332,10 +399,35 @@ enum ChordSymbolParser {
                 throw ChordSymbolParseError.unsupportedQuality
             }
         }
+
+        if quality == "alt" {
+            guard extensions == ["7"],
+                  alterations.isEmpty else {
+                throw ChordSymbolParseError.unsupportedQuality
+            }
+        }
+
+        if quality == "-△" {
+            guard extensions == ["7"],
+                  alterations.isEmpty else {
+                throw ChordSymbolParseError.unsupportedQuality
+            }
+        }
+
+        if quality == "sus" {
+            guard (extensions.isEmpty || extensions == ["4"] || extensions == ["7"]),
+                  alterations.isEmpty else {
+                throw ChordSymbolParseError.unsupportedQuality
+            }
+        }
     }
 
-    private static func isSupportedExtension(_ token: String) -> Bool {
-        ["6", "7", "9", "11", "13"].contains(token)
+    private static func isSupportedExtension(_ token: String, quality: String) -> Bool {
+        if quality == "sus" {
+            return token == "4"
+        }
+
+        return ["6", "7", "9", "11", "13"].contains(token)
     }
 
     private static func isSupportedAlteration(_ token: String) -> Bool {

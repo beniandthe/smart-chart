@@ -53,6 +53,33 @@ struct GestureTemplateRecognizer {
                 return
             }
 
+            if template.text == "s",
+               !isSuspendedSLike(inputFeatures),
+               !isHandwrittenSuspendedSLike(inputFeatures) {
+                return
+            }
+
+            if template.text == "u",
+               !isSuspendedULike(inputFeatures),
+               !isHandwrittenSuspendedULike(inputFeatures) {
+                return
+            }
+
+            if template.text == "a",
+               !isAlteredALike(inputFeatures) {
+                return
+            }
+
+            if template.text == "l",
+               !isAlteredLLike(inputFeatures) {
+                return
+            }
+
+            if template.text == "t",
+               !isAlteredTLike(inputFeatures) {
+                return
+            }
+
             guard let normalizedTemplate = NormalizedGesture(
                 strokes: template.strokes,
                 samplePointCount: configuration.samplePointCount
@@ -146,6 +173,98 @@ struct GestureTemplateRecognizer {
             && (direction == .left ? curvesLeft : curvesRight)
     }
 
+    private func isSuspendedSLike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        let startX = stroke.normalizedXRatio(of: stroke.startPoint)
+        let startY = stroke.normalizedYRatio(of: stroke.startPoint)
+        let endX = stroke.normalizedXRatio(of: stroke.endPoint)
+        let endY = stroke.normalizedYRatio(of: stroke.endPoint)
+
+        return stroke.pointCount >= 5
+            && features.aspectRatio >= 0.45
+            && features.aspectRatio <= 1.10
+            && stroke.straightness >= 0.25
+            && stroke.straightness <= 0.72
+            && stroke.horizontalDirectionChangeCount >= 2
+            && startX >= 0.62
+            && startY <= 0.35
+            && endX <= 0.38
+            && endY >= 0.55
+            && !stroke.hasLowerThenUpperReturn
+            && !stroke.hasVerticalTailAndLoopReturn
+    }
+
+    private func isSuspendedULike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        let startX = stroke.normalizedXRatio(of: stroke.startPoint)
+        let startY = stroke.normalizedYRatio(of: stroke.startPoint)
+        let endX = stroke.normalizedXRatio(of: stroke.endPoint)
+        let endY = stroke.normalizedYRatio(of: stroke.endPoint)
+        let hasLowBody = stroke.points.contains { point in
+            stroke.normalizedYRatio(of: point) >= 0.74
+                && stroke.normalizedXRatio(of: point) >= 0.18
+                && stroke.normalizedXRatio(of: point) <= 0.82
+        }
+
+        return stroke.pointCount >= 4
+            && features.aspectRatio >= 0.70
+            && features.aspectRatio <= 1.70
+            && stroke.horizontalDirectionChangeCount <= 1
+            && startX <= 0.35
+            && startY <= 0.35
+            && endX >= 0.65
+            && endY <= 0.40
+            && hasLowBody
+            && !stroke.hasVerticalTailAndLoopReturn
+    }
+
+    private func isAlteredALike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        return stroke.pointCount >= 6
+            && stroke.bounds.width >= 10
+            && stroke.bounds.height >= 14
+            && stroke.aspectRatio >= 0.45
+            && stroke.aspectRatio <= 1.60
+            && stroke.straightness <= 0.78
+    }
+
+    private func isAlteredLLike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        return stroke.bounds.height >= 18
+            && stroke.bounds.width <= max(5, stroke.bounds.height * 0.25)
+            && stroke.straightness >= 0.70
+            && abs(abs(stroke.angleDegrees) - 90) <= 24
+    }
+
+    private func isAlteredTLike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount >= 2 else {
+            return false
+        }
+
+        return features.hasLooseVerticalStroke
+            && features.looseHorizontalStrokeCount >= 1
+            && features.bounds.width >= 8
+            && features.bounds.height >= 12
+            && features.aspectRatio >= 0.25
+            && features.aspectRatio <= 1.25
+    }
+
     private func heuristicCandidates(for cluster: InkCluster) -> [GlyphCandidate] {
         let features = RootGlyphFeatures(cluster: cluster)
         var candidates = accidentalCandidates(features)
@@ -206,6 +325,18 @@ struct GestureTemplateRecognizer {
             candidates.append(heuristicCandidate("9", confidence: 0.997))
         } else if isCompactAlteredNineLike(features) {
             candidates.append(heuristicCandidate("9", confidence: 0.55))
+        }
+
+        if isHandwrittenSuspendedSLike(features) {
+            candidates.append(heuristicCandidate("s", confidence: 0.55))
+        }
+
+        if isHandwrittenSuspendedULike(features) {
+            candidates.append(heuristicCandidate("u", confidence: 0.55))
+        }
+
+        if isSlashSeparatorLike(features) {
+            candidates.append(heuristicCandidate("/", confidence: 0.72))
         }
 
         if isOneLike(features) {
@@ -576,6 +707,98 @@ struct GestureTemplateRecognizer {
         return standardOne || compactSuffixOne
     }
 
+    private func isSlashSeparatorLike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        let diagonalAngle = stroke.diagonalAngleMagnitude
+        let dx = stroke.endPoint.x - stroke.startPoint.x
+        let dy = stroke.endPoint.y - stroke.startPoint.y
+
+        return stroke.bounds.width >= 4
+            && stroke.bounds.height >= 8
+            && stroke.aspectRatio >= 0.18
+            && stroke.aspectRatio <= 0.82
+            && stroke.straightness >= 0.38
+            && dx * dy < 0
+            && diagonalAngle >= 30
+            && diagonalAngle <= 84
+            && (!stroke.hasEarlyTopHorizontalRun || stroke.straightness >= 0.70 || abs(stroke.angleDegrees) >= 100)
+    }
+
+    private func isHandwrittenSuspendedSLike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        let startX = stroke.normalizedXRatio(of: stroke.startPoint)
+        let startY = stroke.normalizedYRatio(of: stroke.startPoint)
+        let endX = stroke.normalizedXRatio(of: stroke.endPoint)
+        let endY = stroke.normalizedYRatio(of: stroke.endPoint)
+        let descendsThroughBody = endY >= 0.58
+            && stroke.endPoint.y >= stroke.startPoint.y + stroke.bounds.height * 0.45
+        let curvesBackLeft = endX <= startX - 0.12
+            || stroke.normalizedMinX(belowYRatio: 0.45) <= startX - 0.16
+        let narrowTrailingS = stroke.aspectRatio <= 0.78
+            && stroke.straightness >= 0.42
+            && abs(abs(stroke.angleDegrees) - 90) <= 36
+        let rootSizedOpenC = startX >= 0.82
+            && endX >= 0.82
+            && stroke.hasLeftThenRightHook
+            && stroke.straightness <= 0.65
+
+        return stroke.pointCount >= 8
+            && stroke.bounds.width >= 4
+            && stroke.bounds.width <= 22
+            && stroke.bounds.height >= 14
+            && stroke.bounds.height <= 30
+            && stroke.aspectRatio >= 0.18
+            && stroke.aspectRatio <= 1.05
+            && stroke.straightness >= 0.20
+            && stroke.straightness <= 0.86
+            && startY <= 0.35
+            && descendsThroughBody
+            && (!stroke.hasEarlyTopHorizontalRun || narrowTrailingS)
+            && !rootSizedOpenC
+            && (curvesBackLeft || narrowTrailingS)
+    }
+
+    private func isHandwrittenSuspendedULike(_ features: RootGlyphFeatures) -> Bool {
+        guard features.strokeCount == 1,
+              let stroke = features.strokes.first else {
+            return false
+        }
+
+        let startX = stroke.normalizedXRatio(of: stroke.startPoint)
+        let startY = stroke.normalizedYRatio(of: stroke.startPoint)
+        let endX = stroke.normalizedXRatio(of: stroke.endPoint)
+        let endY = stroke.normalizedYRatio(of: stroke.endPoint)
+        let reachesLowerBody = stroke.normalizedMaxY >= 0.82
+        let movesLeftToRight = endX >= startX + 0.42
+        let shallowCup = stroke.angleDegrees >= 12
+            && stroke.angleDegrees <= 58
+            && stroke.straightness <= 0.58
+
+        return stroke.pointCount >= 12
+            && stroke.bounds.width >= 8
+            && stroke.bounds.width <= 22
+            && stroke.bounds.height >= 8
+            && stroke.bounds.height <= 22
+            && stroke.aspectRatio >= 0.55
+            && stroke.aspectRatio <= 1.75
+            && startX <= 0.35
+            && startY <= 0.60
+            && endX >= 0.62
+            && endY >= 0.55
+            && reachesLowerBody
+            && movesLeftToRight
+            && shallowCup
+            && !stroke.hasEarlyTopHorizontalRun
+    }
+
     private func isThreeLike(_ features: RootGlyphFeatures) -> Bool {
         guard features.strokeCount == 1,
               let stroke = features.strokes.first else {
@@ -911,7 +1134,7 @@ struct GestureTemplateRecognizer {
 
     private func isDLikeBody(_ bodyStroke: RootStrokeFeatures, in features: RootGlyphFeatures) -> Bool {
         if bodyStroke.pointCount <= 17,
-           features.aspectRatio >= 0.55,
+           features.aspectRatio >= 0.50,
            features.aspectRatio <= 0.95,
            bodyStroke.horizontalDirectionChangeCount <= 1,
            bodyStroke.straightness < 0.55 {
@@ -928,7 +1151,7 @@ struct GestureTemplateRecognizer {
         }
 
         if bodyStroke.pointCount <= 14,
-           features.aspectRatio >= 0.55,
+           features.aspectRatio >= 0.50,
            bodyStroke.horizontalDirectionChangeCount <= 1,
            bodyStroke.straightness >= 0.38,
            bodyStroke.straightness < 0.82 {
@@ -1361,6 +1584,12 @@ private struct RootStrokeFeatures: Hashable {
             .map(normalizedXRatio(of:))
 
         return normalizedValues.max() ?? normalizedXRatio(of: endPoint)
+    }
+
+    var normalizedMaxY: Double {
+        points
+            .map(normalizedYRatio(of:))
+            .max() ?? normalizedYRatio(of: endPoint)
     }
 
 }

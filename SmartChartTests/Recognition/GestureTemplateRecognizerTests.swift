@@ -11,7 +11,7 @@ final class GestureTemplateRecognizerTests: XCTestCase {
         for fixture in try InkFixtureLoader.loadAll(file: #filePath) {
             let clusters = clusterer.cluster(fixture.strokes)
 
-            if fixture.allowsCompactSharpElevenClusters {
+            if fixture.allowsCompactSemanticRecognition {
                 continue
             }
 
@@ -96,6 +96,46 @@ final class GestureTemplateRecognizerTests: XCTestCase {
         XCTAssertEqual(parenthesisCandidates.first?.text, "(")
     }
 
+    func testSlashSeparatorIsRecognizedByShapeNotStrokeDirection() throws {
+        let templates = ChordGlyphTemplateLibrary.initialTemplates
+        let reverseDrawnSlash = InkCluster(strokes: [
+            InkStroke(points: [
+                InkPoint(x: 42, y: 12, timeOffset: nil),
+                InkPoint(x: 35, y: 24, timeOffset: nil),
+                InkPoint(x: 27, y: 39, timeOffset: nil),
+                InkPoint(x: 19, y: 55, timeOffset: nil)
+            ])
+        ])
+
+        let candidates = recognizer.rankedCandidates(for: reverseDrawnSlash, templates: templates, limit: 3)
+
+        XCTAssertEqual(candidates.first?.text, "/")
+    }
+
+    func testSuspendedGlyphTemplatesAreRecognized() throws {
+        let templates = ChordGlyphTemplateLibrary.initialTemplates
+
+        for text in ["s", "u"] {
+            let template = try XCTUnwrap(templates.first { $0.text == text })
+            let cluster = InkCluster(strokes: template.strokes)
+            let candidates = recognizer.rankedCandidates(for: cluster, templates: templates, limit: 3)
+
+            XCTAssertEqual(candidates.first?.text, text)
+        }
+    }
+
+    func testAlteredGlyphTemplatesAreRecognized() throws {
+        let templates = ChordGlyphTemplateLibrary.initialTemplates
+
+        for text in ["a", "l", "t"] {
+            let template = try XCTUnwrap(templates.first { $0.text == text })
+            let cluster = InkCluster(strokes: template.strokes)
+            let candidates = recognizer.rankedCandidates(for: cluster, templates: templates, limit: 3)
+
+            XCTAssertEqual(candidates.first?.text, text)
+        }
+    }
+
     func testRecognizerReturnsAmbiguousCandidatesInsteadOfForcingOneAnswer() throws {
         let fixture = try InkFixtureLoader.load("C", file: #filePath)
         let cluster = try XCTUnwrap(clusterer.cluster(fixture.strokes).first)
@@ -132,8 +172,19 @@ private extension InkFixture {
         expectedDisplayText.contains("(#11)")
     }
 
+    var allowsCompactAlteredAltClusters: Bool {
+        expectedDisplayText.contains("7alt")
+    }
+
+    var allowsCompactSemanticRecognition: Bool {
+        allowsCompactSharpElevenClusters || allowsCompactAlteredAltClusters
+    }
+
     func allowsComposerInjectedGlyph(_ expectedGlyph: String) -> Bool {
         expectedGlyph == "1" && expectedDisplayText.contains("(b13)")
+            || expectedGlyph == "s" && expectedDisplayText.contains("sus")
+            || expectedGlyph == "u" && expectedDisplayText.contains("sus")
+            || expectedGlyph == "4" && expectedDisplayText.hasSuffix("sus4")
     }
 }
 
@@ -157,7 +208,7 @@ private extension InkFixture {
         // then promoted only when it is the final non-dominant extension.
         if expectedGlyph == "6",
            expectedDisplayText.hasSuffix("6") {
-            return 5
+            return expectedDisplayText.hasSuffix("m6") ? 6 : 5
         }
 
         // Altered 13s are a contextual two-glyph suffix; the composer exposes

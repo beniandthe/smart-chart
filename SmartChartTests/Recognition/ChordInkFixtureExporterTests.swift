@@ -52,7 +52,15 @@ final class ChordInkFixtureExporterTests: XCTestCase {
         XCTAssertEqual(document.name, "Cm7")
     }
 
-    func testFixtureExportCanonicalizesMinorNinthEleventhAndThirteenthAliasesToDashMinorExtensions() throws {
+    func testFixtureExportCanonicalizesMinorSixthNinthEleventhAndThirteenthAliasesToDashMinorExtensions() throws {
+        let minorSixth = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "Cm6",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+        let dashMinorSixth = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "C-6",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
         let minorNinth = try ChordInkFixtureExporter.fixtureDocument(
             expectedDisplayText: "Cm9",
             strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
@@ -70,6 +78,12 @@ final class ChordInkFixtureExporterTests: XCTestCase {
             strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
         )
 
+        XCTAssertEqual(minorSixth.expectedDisplayText, "Cm6")
+        XCTAssertEqual(minorSixth.expectedTopGlyphs, ["C", "m", "6"])
+        XCTAssertEqual(minorSixth.name, "Cm6")
+        XCTAssertEqual(dashMinorSixth.expectedDisplayText, "Cm6")
+        XCTAssertEqual(dashMinorSixth.expectedTopGlyphs, ["C", "-", "6"])
+        XCTAssertEqual(dashMinorSixth.name, "CMinor6")
         XCTAssertEqual(minorNinth.expectedDisplayText, "C-9")
         XCTAssertEqual(minorNinth.expectedTopGlyphs, ["C", "m", "9"])
         XCTAssertEqual(minorNinth.name, "Cm9")
@@ -117,6 +131,24 @@ final class ChordInkFixtureExporterTests: XCTestCase {
         XCTAssertEqual(document.name, "CMinor7")
     }
 
+    func testFixtureExportSupportsMinorMajorSeventhGlyphs() throws {
+        let document = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "C-△7",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+        let minorAliasDocument = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "Cm△7",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+
+        XCTAssertEqual(document.expectedDisplayText, "C-△7")
+        XCTAssertEqual(document.expectedTopGlyphs, ["C", "-", "△", "7"])
+        XCTAssertEqual(document.name, "CMinorMajor7")
+        XCTAssertEqual(minorAliasDocument.expectedDisplayText, "C-△7")
+        XCTAssertEqual(minorAliasDocument.expectedTopGlyphs, ["C", "m", "△", "7"])
+        XCTAssertEqual(minorAliasDocument.name, "CmMajor7")
+    }
+
     func testFixtureExportSupportsSixthGlyphs() throws {
         let document = try ChordInkFixtureExporter.fixtureDocument(
             expectedDisplayText: "Bb6",
@@ -144,6 +176,64 @@ final class ChordInkFixtureExporterTests: XCTestCase {
         XCTAssertEqual(aliasDocument.expectedDisplayText, "C+")
         XCTAssertEqual(aliasDocument.expectedTopGlyphs, ["C", "+"])
         XCTAssertEqual(aliasDocument.name, "Caug")
+    }
+
+    func testFixtureExportSupportsPureAlteredGlyphs() throws {
+        let document = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "Bbalt",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+        let spacedDocument = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "F# alt",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+        let explicitDominantDocument = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "C7alt",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+
+        XCTAssertEqual(document.expectedDisplayText, "Bb7alt")
+        XCTAssertEqual(document.expectedTopGlyphs, ["B", "b", "a", "l", "t"])
+        XCTAssertEqual(document.name, "BFlatalt")
+        XCTAssertEqual(spacedDocument.expectedDisplayText, "F#7alt")
+        XCTAssertEqual(spacedDocument.expectedTopGlyphs, ["F", "#", "a", "l", "t"])
+        XCTAssertEqual(spacedDocument.name, "FSharpalt")
+        XCTAssertEqual(explicitDominantDocument.expectedDisplayText, "C7alt")
+        XCTAssertEqual(explicitDominantDocument.expectedTopGlyphs, ["C", "7", "a", "l", "t"])
+        XCTAssertEqual(explicitDominantDocument.name, "C7alt")
+    }
+
+    func testFixtureExportSupportsPlainSuspendedGlyphs() throws {
+        let document = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "Bbsus",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+
+        XCTAssertEqual(document.expectedDisplayText, "Bbsus")
+        XCTAssertEqual(document.expectedTopGlyphs, ["B", "b", "s", "u", "s"])
+        XCTAssertEqual(document.name, "BFlatsus")
+    }
+
+    func testFixtureExportSupportsSuspendedFourthGlyphs() throws {
+        let document = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "Bbsus4",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+
+        XCTAssertEqual(document.expectedDisplayText, "Bbsus4")
+        XCTAssertEqual(document.expectedTopGlyphs, ["B", "b", "s", "u", "s", "4"])
+        XCTAssertEqual(document.name, "BFlatsus4")
+    }
+
+    func testFixtureExportSupportsDominantSuspendedGlyphs() throws {
+        let document = try ChordInkFixtureExporter.fixtureDocument(
+            expectedDisplayText: "Bb7sus",
+            strokes: [InkStroke(points: [InkPoint(x: 0, y: 0, timeOffset: nil)])]
+        )
+
+        XCTAssertEqual(document.expectedDisplayText, "Bb7sus")
+        XCTAssertEqual(document.expectedTopGlyphs, ["B", "b", "7", "s", "u", "s"])
+        XCTAssertEqual(document.name, "BFlat7sus")
     }
 
     func testFixtureExportCanonicalizesAlterationsToParenthesizedDisplayText() throws {
@@ -238,12 +328,15 @@ final class ChordInkFixtureExporterTests: XCTestCase {
     func testFixtureExportNamesUseReadableChordVocabulary() {
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "F#"), "FSharp")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "C△7"), "CMajor7")
+        XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "C-△7"), "CMinorMajor7")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "C+"), "CAugmented")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "C°7"), "CDiminished7")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "Cø7"), "CHalfDiminished7")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "Db7(b9)"), "DFlat7Flat9")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "Db7(#9)"), "DFlat7Sharp9")
         XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "G/B"), "GSlashB")
+        XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "Bbsus4"), "BFlatsus4")
+        XCTAssertEqual(ChordInkFixtureExporter.fixtureName(for: "Bb7sus"), "BFlat7sus")
     }
 
     func testFixtureExportRejectsUnsupportedOrEmptyFixtures() {
