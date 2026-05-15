@@ -1,4 +1,5 @@
 #if canImport(UIKit)
+import Foundation
 import PencilKit
 import SwiftUI
 import UIKit
@@ -154,7 +155,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private let pageInkCanvasView = PKCanvasView()
     private let chordEditHitOverlayView = ChordEditHitOverlayView()
     private let chordInkRecognizer = ChordInkRecognizer()
-    private let chordInkRecognitionIdleDelay: TimeInterval = 1.3
+    private let chordInkSimpleIdleDelay: TimeInterval = 0.85
+    private let chordInkShortIdleDelay: TimeInterval = 1.0
+    private let chordInkStandardIdleDelay: TimeInterval = 1.15
+    private let chordInkComplexIdleDelay: TimeInterval = 1.3
     private let chordInkRecognitionQueue = DispatchQueue(
         label: "com.smartchart.chord-ink-recognition",
         qos: .userInitiated
@@ -190,6 +194,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private var isApplyingTapSelection = false
     private var notationRenderer: LeadSheetNotationRenderer {
         LeadSheetNotationRenderer(chart: chart)
+    }
+
+    private struct ChordInkRecognitionTiming {
+        var scheduledAt: Date
+        var requestedDelay: TimeInterval
+        var recognitionStartedAt: Date
+        var recognitionFinishedAt: Date
+        var strokeCount: Int
     }
 
     override init(frame: CGRect) {
@@ -938,13 +950,20 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         pendingInkPersistWorkItem?.cancel()
         pendingInkPersistWorkItem = nil
         pendingChordRecognitionWorkItem?.cancel()
-        activeChordRecognitionRequestID = nil
 
+        let requestID = UUID()
+        let requestedDelay = chordInkRecognitionIdleDelay(for: pageInkCanvasView.drawing)
+        let scheduledAt = Date()
+        activeChordRecognitionRequestID = requestID
         let workItem = DispatchWorkItem { [weak self] in
-            self?.recognizeChordInkIfNeeded()
+            self?.recognizeChordInkIfNeeded(
+                requestID: requestID,
+                scheduledAt: scheduledAt,
+                requestedDelay: requestedDelay
+            )
         }
         pendingChordRecognitionWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + chordInkRecognitionIdleDelay, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + requestedDelay, execute: workItem)
     }
 
     private func persistActiveInkIfNeeded() {
@@ -985,9 +1004,17 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         onChartChanged?(updatedChart)
     }
 
-    private func recognizeChordInkIfNeeded() {
+    private func recognizeChordInkIfNeeded(
+        requestID: UUID,
+        scheduledAt: Date,
+        requestedDelay: TimeInterval
+    ) {
         pendingChordRecognitionWorkItem?.cancel()
         pendingChordRecognitionWorkItem = nil
+
+        guard activeChordRecognitionRequestID == requestID else {
+            return
+        }
 
         guard interactionMode.allowsChordInkEditing,
               let activeInkScope = activeInkScope(),
@@ -998,6 +1025,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 for: pageInkCanvasView.drawing,
                 chordFrame: chordFrame
               ) else {
+            activeChordRecognitionRequestID = nil
             return
         }
         let strokes = PencilKitInkAdapter.inkStrokes(from: pageInkCanvasView.drawing)
@@ -1008,17 +1036,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             onChartChanged?(updatedChart)
         }
 
-        let requestID = UUID()
         let recognizer = chordInkRecognizer
-        activeChordRecognitionRequestID = requestID
         chordInkRecognitionQueue.async { [weak self] in
+            let recognitionStartedAt = Date()
             let result = recognizer.recognize(strokes: strokes)
+            let recognitionFinishedAt = Date()
             DispatchQueue.main.async { [weak self] in
                 self?.finishChordInkRecognition(
                     requestID: requestID,
                     result: result,
                     drawingData: drawingData,
-                    target: target
+                    target: target,
+                    timing: ChordInkRecognitionTiming(
+                        scheduledAt: scheduledAt,
+                        requestedDelay: requestedDelay,
+                        recognitionStartedAt: recognitionStartedAt,
+                        recognitionFinishedAt: recognitionFinishedAt,
+                        strokeCount: strokes.count
+                    )
                 )
             }
         }
@@ -1028,12 +1063,15 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         requestID: UUID,
         result: ChordInkRecognitionResult,
         drawingData: Data,
-        target: (measureID: UUID, fraction: Double)
+        target: (measureID: UUID, fraction: Double),
+        timing: ChordInkRecognitionTiming
     ) {
         guard activeChordRecognitionRequestID == requestID else {
             return
         }
         activeChordRecognitionRequestID = nil
+
+        logChordInkRecognitionTiming(timing, result: result)
 
         guard interactionMode.allowsChordInkEditing,
               !result.rawCandidates.isEmpty else {
@@ -1047,6 +1085,67 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             drawingData,
             target.fraction
         )
+    }
+
+    private func chordInkRecognitionIdleDelay(for drawing: PKDrawing) -> TimeInterval {
+        let strokeCount = drawing.strokes.count
+        guard strokeCount > 0 else {
+            return chordInkComplexIdleDelay
+        }
+
+        let bounds = inkRenderBounds(for: drawing)
+        guard !bounds.isNull else {
+            return chordInkComplexIdleDelay
+        }
+
+        if strokeCount == 1 {
+            return bounds.width <= 48 ? chordInkShortIdleDelay : chordInkStandardIdleDelay
+        }
+
+        if strokeCount <= 3, bounds.width <= 96 {
+            return chordInkSimpleIdleDelay
+        }
+
+        if strokeCount <= 5, bounds.width <= 150 {
+            return chordInkStandardIdleDelay
+        }
+
+        return chordInkComplexIdleDelay
+    }
+
+    private func inkRenderBounds(for drawing: PKDrawing) -> CGRect {
+        drawing.strokes.reduce(CGRect.null) { partialBounds, stroke in
+            let strokeBounds = stroke.renderBounds
+            guard !strokeBounds.isNull else {
+                return partialBounds
+            }
+
+            return partialBounds.isNull ? strokeBounds : partialBounds.union(strokeBounds)
+        }
+    }
+
+    private func logChordInkRecognitionTiming(
+        _ timing: ChordInkRecognitionTiming,
+        result: ChordInkRecognitionResult
+    ) {
+        #if DEBUG || targetEnvironment(simulator)
+        let idleMilliseconds = timing.recognitionStartedAt.timeIntervalSince(timing.scheduledAt) * 1_000
+        let recognitionMilliseconds = timing.recognitionFinishedAt.timeIntervalSince(timing.recognitionStartedAt) * 1_000
+        let totalMilliseconds = timing.recognitionFinishedAt.timeIntervalSince(timing.scheduledAt) * 1_000
+        let bestRead = result.match?.displayText ?? "none"
+        print(
+            String(
+                format: "SmartChart chord timing: delay=%.0fms idle=%.0fms recognition=%.0fms total=%.0fms strokes=%d candidates=%d best=%@",
+                timing.requestedDelay * 1_000,
+                idleMilliseconds,
+                recognitionMilliseconds,
+                totalMilliseconds,
+                timing.strokeCount,
+                result.rawCandidates.count,
+                bestRead
+            )
+        )
+        #endif
     }
 
     private func shouldFinalizeRhythmicNotation(from previousMeasureID: UUID?, to nextMeasureID: UUID?) -> Bool {
@@ -1150,14 +1249,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return nil
         }
 
-        let inkBounds = drawing.strokes.reduce(CGRect.null) { partialBounds, stroke in
-            let strokeBounds = stroke.renderBounds
-            guard !strokeBounds.isNull else {
-                return partialBounds
-            }
-
-            return partialBounds.isNull ? strokeBounds : partialBounds.union(strokeBounds)
-        }
+        let inkBounds = inkRenderBounds(for: drawing)
         guard !inkBounds.isNull,
               inkBounds.width >= 4 || inkBounds.height >= 4 else {
             return nil

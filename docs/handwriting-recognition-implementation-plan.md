@@ -567,6 +567,10 @@ auto-render, while compact suffix collisions such as minor sevenths, altered
 dominants, and suspended forms may still request confirmation if the candidate
 gap is genuinely tight. The next tuning target should be visible in the
 diagnostic detail output before recognition heuristics are changed.
+Chord-entry latency should be tuned separately from recognition confidence:
+simple settled ink can use a shorter idle delay, complex/wide multi-stroke
+symbols should keep the longer delay, and debug timing should show the idle,
+recognition, and total milliseconds before further responsiveness changes.
 
 - natural roots: at least 4 captured samples each for `A`, `B`, `C`, `D`, `E`,
   `F`, and `G`
