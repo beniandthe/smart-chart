@@ -6,15 +6,61 @@ struct ChordInkCandidate: Hashable {
     var glyphCandidates: [GlyphCandidate]
 }
 
+struct ChordInkCandidateCompositionResult: Hashable {
+    var candidates: [ChordInkCandidate]
+    var metrics: ChordInkCandidateCompositionMetrics
+}
+
+struct ChordInkCandidateComposerScoring: Hashable {
+    var startsWithRootBonus = 1.0
+    var missingRootPenalty = 1.0
+    var veryWeakRootConfidenceThreshold = 0.60
+    var veryWeakRootPenalty = 0.70
+    var weakRootConfidenceThreshold = 0.65
+    var weakRootPenalty = 0.35
+    var parsesAsChordBonus = 2.0
+    var invalidChordPenalty = 0.25
+    var accidentalDominantAlterationBonus = 0.35
+    var dominantSharpNineBonus = 0.08
+    var dominantFlatFiveBonus = 0.08
+    var dominantFlatThirteenBonus = 0.08
+    var explicitMinorSixthBonus = 0.12
+    var dashMinorNinthLookalikePenalty = 0.18
+    var suspendedMinorSixthPenalty = 0.65
+    var explicitMajorSixthBonus = 0.42
+    var likelyRootFlatCollisionPenalty = 0.35
+    var triangleQualityMinConfidence = 0.60
+    var triangleQualityBonus = 0.62
+    var accidentalRootNinthSharpFiveBonus = 0.20
+    var strongDominantSharpConfidence = 0.65
+    var explicitSharpElevenBonus = 0.78
+    var unreliableSharpElevenPenalty = 0.55
+    var dominantSharpFiveBonus = 0.06
+    var weakDominantSharpAlterationPenalty = 0.70
+    var slashBassMinConfidence = 0.65
+    var slashBassBonus = 0.85
+    var lowercaseSlashBassPenalty = 0.30
+    var suspendedSlashLookalikePenalty = 0.45
+    var invalidSlashPenalty = 0.75
+    var suspendedFourthBonus = 1.75
+    var dominantSuspendedBonus = 1.65
+    var plainSuspendedBonus = 0.25
+    var missingSuspendedEvidencePenalty = 0.35
+    var explainedGlyphBonus = 0.12
+    var unexplainedClusterPenalty = 2.00
+}
+
 struct ChordInkCandidateComposerConfiguration: Hashable {
     var maxAlternativesPerCluster: Int
     var maxCandidateCount: Int
     var maxGeneratedSequences: Int
+    var scoring: ChordInkCandidateComposerScoring
 
     static let chordSymbols = ChordInkCandidateComposerConfiguration(
         maxAlternativesPerCluster: 3,
         maxCandidateCount: 32,
-        maxGeneratedSequences: 4096
+        maxGeneratedSequences: 4096,
+        scoring: ChordInkCandidateComposerScoring()
     )
 }
 
@@ -26,6 +72,10 @@ struct ChordInkCandidateComposer {
     }
 
     func compose(glyphCandidates columns: [[GlyphCandidate]]) -> [ChordInkCandidate] {
+        composeDetailed(glyphCandidates: columns).candidates
+    }
+
+    func composeDetailed(glyphCandidates columns: [[GlyphCandidate]]) -> ChordInkCandidateCompositionResult {
         let sortedColumns = columns.map(\.sortedByConfidence)
         let candidateColumns = sortedColumns
             .enumerated()
@@ -35,16 +85,27 @@ struct ChordInkCandidateComposer {
             .filter { !$0.isEmpty }
 
         guard !candidateColumns.isEmpty else {
-            return []
+            return ChordInkCandidateCompositionResult(
+                candidates: [],
+                metrics: ChordInkCandidateCompositionMetrics(
+                    selectedColumnCount: 0,
+                    generatedSequenceCount: 0,
+                    returnedCandidateCount: 0,
+                    maxGeneratedSequences: configuration.maxGeneratedSequences,
+                    hitGeneratedSequenceLimit: false
+                )
+            )
         }
 
         var bestCandidatesByText: [String: ChordInkCandidate] = [:]
         var generatedSequenceCount = 0
+        var hitGeneratedSequenceLimit = false
 
         for prefixLength in 1...candidateColumns.count {
             let prefixColumns = Array(candidateColumns.prefix(prefixLength))
             for sequence in candidateSequences(from: prefixColumns) {
                 guard generatedSequenceCount < configuration.maxGeneratedSequences else {
+                    hitGeneratedSequenceLimit = true
                     break
                 }
 
@@ -73,10 +134,20 @@ struct ChordInkCandidateComposer {
             }
         }
 
-        return Array(bestCandidatesByText.values)
+        let candidates = Array(bestCandidatesByText.values)
             .sortedByConfidence
             .prefix(configuration.maxCandidateCount)
             .map { $0 }
+        return ChordInkCandidateCompositionResult(
+            candidates: candidates,
+            metrics: ChordInkCandidateCompositionMetrics(
+                selectedColumnCount: candidateColumns.count,
+                generatedSequenceCount: generatedSequenceCount,
+                returnedCandidateCount: candidates.count,
+                maxGeneratedSequences: configuration.maxGeneratedSequences,
+                hitGeneratedSequenceLimit: hitGeneratedSequenceLimit
+            )
+        )
     }
 
     private func candidateSequences(from columns: [[GlyphCandidate]]) -> [[GlyphCandidate]] {
@@ -640,46 +711,47 @@ struct ChordInkCandidateComposer {
         candidateColumns: [[GlyphCandidate]],
         totalClusterCount: Int
     ) -> Double {
+        let scoring = configuration.scoring
         let averageGlyphConfidence = glyphCandidates
             .map(\.confidence)
             .reduce(0, +) / Double(max(glyphCandidates.count, 1))
         var score = averageGlyphConfidence
 
         if startsWithRoot(text) {
-            score += 1.0
+            score += scoring.startsWithRootBonus
         } else {
-            score -= 1.0
+            score -= scoring.missingRootPenalty
         }
 
         if let rootConfidence = leadingRootConfidence(in: glyphCandidates) {
-            if rootConfidence < 0.60 {
-                score -= 0.70
-            } else if rootConfidence < 0.65 {
-                score -= 0.35
+            if rootConfidence < scoring.veryWeakRootConfidenceThreshold {
+                score -= scoring.veryWeakRootPenalty
+            } else if rootConfidence < scoring.weakRootConfidenceThreshold {
+                score -= scoring.weakRootPenalty
             }
         }
 
         if parsesAsChord(text) {
-            score += 2.0
+            score += scoring.parsesAsChordBonus
         } else {
-            score -= 0.25
+            score -= scoring.invalidChordPenalty
         }
 
         if hasAccidentalImmediatelyAfterRoot(text),
            hasDominantAlteration(text) {
-            score += 0.35
+            score += scoring.accidentalDominantAlterationBonus
         }
 
         if text.contains("7#9") || text.contains("7(#9)") {
-            score += 0.08
+            score += scoring.dominantSharpNineBonus
         }
 
         if text.contains("7b5") || text.contains("7(b5)") {
-            score += 0.08
+            score += scoring.dominantFlatFiveBonus
         }
 
         if text.contains("7b13") || text.contains("7(b13)") {
-            score += 0.08
+            score += scoring.dominantFlatThirteenBonus
         }
 
         if isMinorSixthText(text) {
@@ -687,18 +759,18 @@ struct ChordInkCandidateComposer {
                 in: glyphCandidates,
                 candidateColumns: candidateColumns
             ) {
-                score += 0.12
+                score += scoring.explicitMinorSixthBonus
             }
 
             if hasDashMinorNinthLookalikeEvidence(
                 in: glyphCandidates,
                 candidateColumns: candidateColumns
             ) {
-                score -= 0.18
+                score -= scoring.dashMinorNinthLookalikePenalty
             }
 
             if hasSuspendedColumnSuffixEvidence(in: candidateColumns) {
-                score -= 0.65
+                score -= scoring.suspendedMinorSixthPenalty
             }
         }
 
@@ -707,80 +779,85 @@ struct ChordInkCandidateComposer {
                 in: glyphCandidates,
                 candidateColumns: candidateColumns
             ) {
-                score += 0.42
+                score += scoring.explicitMajorSixthBonus
             } else if hasLikelyRootFlatCollision(
                 in: glyphCandidates,
                 candidateColumns: candidateColumns,
                 totalClusterCount: totalClusterCount
             ) {
-                score -= 0.35
+                score -= scoring.likelyRootFlatCollisionPenalty
             }
         }
 
         if hasTriangleQuality(text),
-           glyphCandidates.contains(where: { $0.text == "△" && $0.confidence >= 0.60 }) {
-            score += 0.62
+           glyphCandidates.contains(where: { $0.text == "△" && $0.confidence >= scoring.triangleQualityMinConfidence }) {
+            score += scoring.triangleQualityBonus
         }
 
         if hasAccidentalImmediatelyAfterRoot(text),
            text.contains("9#5") || text.contains("9(#5)") {
-            score += 0.20
+            score += scoring.accidentalRootNinthSharpFiveBonus
         }
 
         if text.contains("7#11") || text.contains("7(#11)") {
-            let hasStrongSharp = (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= 0.65
-            if hasExplicitSharpElevenNumberTail(in: glyphCandidates)
+            let hasStrongSharp = (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= scoring.strongDominantSharpConfidence
+            if hasDominantSharpFiveTailCollision(
+                in: glyphCandidates,
+                candidateColumns: candidateColumns
+            ) {
+                score -= scoring.unreliableSharpElevenPenalty
+            } else if hasExplicitSharpElevenNumberTail(in: glyphCandidates)
                 || (hasStrongSharp && hasReliableCompactSharpElevenTail(in: glyphCandidates)) {
-                score += 0.78
+                score += scoring.explicitSharpElevenBonus
             } else {
-                score -= 0.55
+                score -= scoring.unreliableSharpElevenPenalty
             }
         }
 
         if (text.contains("7#5") || text.contains("7(#5)")),
-           (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= 0.65 {
-            score += 0.06
+           (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= scoring.strongDominantSharpConfidence {
+            score += scoring.dominantSharpFiveBonus
         }
 
         if hasDominantSharpAlteration(text),
-           (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 1.0) < 0.65 {
-            score -= 0.70
+           (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 1.0) < scoring.strongDominantSharpConfidence {
+            score -= scoring.weakDominantSharpAlterationPenalty
         }
 
         if hasValidSlashBass(text),
-           slashGlyphConfidence(in: glyphCandidates) >= 0.65 {
-            score += 0.85
+           slashGlyphConfidence(in: glyphCandidates) >= scoring.slashBassMinConfidence {
+            score += scoring.slashBassBonus
             if hasLowercaseSlashBassRoot(text) {
-                score -= 0.30
+                score -= scoring.lowercaseSlashBassPenalty
             }
             if hasSuspendedLookalikeAtSlash(
                 in: glyphCandidates,
                 candidateColumns: candidateColumns
             ) {
-                score -= 0.45
+                score -= scoring.suspendedSlashLookalikePenalty
             }
         } else if text.contains("/") {
-            score -= 0.75
+            score -= scoring.invalidSlashPenalty
         }
 
         if text.hasSuffix("sus") || text.hasSuffix("sus4") {
             if hasSuspendedSuffixEvidence(for: text, in: glyphCandidates) {
                 if text.hasSuffix("sus4") {
-                    score += 1.75
+                    score += scoring.suspendedFourthBonus
                 } else if text.hasSuffix("7sus") {
-                    score += 1.65
+                    score += scoring.dominantSuspendedBonus
                 } else {
-                    score += 0.25
+                    score += scoring.plainSuspendedBonus
                 }
             } else {
-                score -= 0.35
+                score -= scoring.missingSuspendedEvidencePenalty
             }
         }
 
         // Prefer candidates that explain more of the written glyphs, so C-7 wins
         // over the C- prefix when the written extension is still present.
-        score += Double(max(0, glyphCandidates.count - 1)) * 0.12
-        score -= Double(max(0, totalClusterCount - glyphCandidates.count)) * 2.00
+        score += Double(max(0, glyphCandidates.count - 1)) * scoring.explainedGlyphBonus
+        score -= Double(max(0, totalClusterCount - glyphCandidates.count)) * scoring.unexplainedClusterPenalty
 
         return score
     }
@@ -1056,6 +1133,25 @@ struct ChordInkCandidateComposer {
         }
 
         return false
+    }
+
+    private func hasDominantSharpFiveTailCollision(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard !hasExplicitSharpElevenNumberTail(in: glyphCandidates),
+              let finalColumn = candidateColumns.last else {
+            return false
+        }
+
+        let hardFinalFive = finalColumn.contains { candidate in
+            candidate.text == "5" && candidate.confidence >= 0.85
+        }
+        let finalColumnHasStrongOne = finalColumn.contains { candidate in
+            candidate.text == "1" && candidate.confidence >= 0.90
+        }
+
+        return hardFinalFive && !finalColumnHasStrongOne
     }
 
     private func hasValidSlashBass(_ text: String) -> Bool {

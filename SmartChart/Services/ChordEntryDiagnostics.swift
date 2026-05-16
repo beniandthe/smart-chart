@@ -38,6 +38,7 @@ struct ChordEntryDiagnosticEvent: Codable, Equatable {
     var primaryRecognitionReason: String? = nil
     var primaryWasCloseRace: Bool? = nil
     var primaryConfidenceGap: Double? = nil
+    var recognitionMetrics: ChordInkRecognitionMetrics? = nil
 }
 
 struct ChordEntryDiagnosticsRecorder {
@@ -140,7 +141,8 @@ struct ChordEntryDiagnosticsRecorder {
                     primaryAcceptedText: nil,
                     primaryRecognitionReason: nil,
                     primaryWasCloseRace: nil,
-                    primaryConfidenceGap: nil
+                    primaryConfidenceGap: nil,
+                    recognitionMetrics: nil
                 )
             }
         }

@@ -2,10 +2,14 @@ import XCTest
 @testable import SmartChart
 
 final class ChordInkRecognizerTests: XCTestCase {
+    private static let fixtureCorpus: Result<[InkFixture], Error> = Result {
+        try InkFixtureLoader.loadAll(file: #filePath)
+    }
+
     private let recognizer = ChordInkRecognizer()
 
     func testRecognizesEveryInkFixtureThroughPureSwiftPipeline() throws {
-        for fixture in try InkFixtureLoader.loadAll(file: #filePath) {
+        for fixture in try allFixtures() {
             let result = recognizer.recognize(strokes: fixture.strokes)
 
             XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
@@ -18,7 +22,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantFlatFiveInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("(b5)") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -33,7 +37,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantSharpFiveInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("(#5)") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -48,7 +52,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantSharpNineInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("(#9)") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -63,7 +67,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantFlatThirteenInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("(b13)") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -78,7 +82,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantSharpElevenInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("(#11)") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -92,7 +96,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantAlteredInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("7alt") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -168,7 +172,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantSuspendedInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("7sus") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -204,7 +208,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesMinorSixthInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.hasSuffix("m6") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -219,7 +223,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesMajorSixthInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.hasSuffix("6") && !$0.expectedDisplayText.hasSuffix("m6") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -261,7 +265,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesDominantNinthInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { fixture in
                 fixture.expectedDisplayText.hasSuffix("9")
                     && !fixture.expectedDisplayText.contains("△")
@@ -281,7 +285,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testRecognizesMinorMajorSeventhInkFixtures() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
             .filter { $0.expectedDisplayText.contains("-△7") }
 
         XCTAssertFalse(fixtures.isEmpty)
@@ -321,6 +325,20 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertFalse(result.candidateScores.isEmpty)
         XCTAssertEqual(result.candidateScores.first?.displayText, "C")
         XCTAssertGreaterThan(result.candidateScores.first?.confidence ?? 0, 0)
+    }
+
+    func testRecognizerReportsPhaseMetricsForDiagnostics() throws {
+        let strokes = try shiftedTemplateStrokes("C", offsetX: 0)
+        let result = recognizer.recognize(strokes: strokes)
+        let metrics = result.metrics
+
+        XCTAssertEqual(metrics.strokeCount, strokes.count)
+        XCTAssertGreaterThan(metrics.clusterCount, 0)
+        XCTAssertEqual(metrics.glyphCandidateColumnCount, result.glyphCandidates.count)
+        XCTAssertEqual(metrics.rawCandidateCount, result.rawCandidates.count)
+        XCTAssertGreaterThan(metrics.compositionMetrics.generatedSequenceCount, 0)
+        XCTAssertGreaterThan(metrics.compositionMetrics.maxGeneratedSequences, 0)
+        XCTAssertGreaterThanOrEqual(metrics.totalMilliseconds, 0)
     }
 
     func testResolutionPolicyAutoRendersDecisiveMatches() throws {
@@ -496,7 +514,7 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     func testSuccessCriteriaFixturesArePresent() throws {
-        let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
+        let fixtures = try allFixtures()
         let displayTexts = Set(fixtures.map(\.expectedDisplayText))
 
         XCTAssertTrue(displayTexts.isSuperset(of: ["C", "Bb", "F#", "C-", "C-7", "Db7(b9)", "G/B"]))
@@ -572,6 +590,10 @@ final class ChordInkRecognizerTests: XCTestCase {
             displayText: match?.displayText,
             confidence: confidence
         )
+    }
+
+    private func allFixtures() throws -> [InkFixture] {
+        try Self.fixtureCorpus.get()
     }
 }
 

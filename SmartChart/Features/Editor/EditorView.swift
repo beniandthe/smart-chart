@@ -946,7 +946,8 @@ struct EditorView: View {
             primaryAcceptedText: confirmation.primaryDecision.acceptedText,
             primaryRecognitionReason: confirmation.primaryDecision.reason,
             primaryWasCloseRace: confirmation.primaryDecision.isCloseRace,
-            primaryConfidenceGap: confirmation.primaryDecision.confidenceGap
+            primaryConfidenceGap: confirmation.primaryDecision.confidenceGap,
+            recognitionMetrics: confirmation.result.metrics
         )
 
         do {

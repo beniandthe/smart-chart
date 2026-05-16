@@ -124,6 +124,31 @@ struct ChordInkCandidateScore: Codable, Hashable {
     }
 }
 
+struct ChordInkCandidateCompositionMetrics: Codable, Hashable {
+    var selectedColumnCount: Int = 0
+    var generatedSequenceCount: Int = 0
+    var returnedCandidateCount: Int = 0
+    var maxGeneratedSequences: Int = 0
+    var hitGeneratedSequenceLimit: Bool = false
+}
+
+struct ChordInkRecognitionMetrics: Codable, Hashable {
+    var clusterMilliseconds: Double = 0
+    var glyphMilliseconds: Double = 0
+    var contextualGlyphMilliseconds: Double = 0
+    var composeMilliseconds: Double = 0
+    var semanticMilliseconds: Double = 0
+    var matchMilliseconds: Double = 0
+    var totalMilliseconds: Double = 0
+    var ocrMilliseconds: Double? = nil
+    var strokeCount: Int = 0
+    var clusterCount: Int = 0
+    var glyphCandidateColumnCount: Int = 0
+    var semanticCandidateCount: Int = 0
+    var rawCandidateCount: Int = 0
+    var compositionMetrics: ChordInkCandidateCompositionMetrics = ChordInkCandidateCompositionMetrics()
+}
+
 enum ChordOCRCandidateSource: String, Codable, Hashable {
     case appleVision
     case testDouble
@@ -213,6 +238,7 @@ struct ChordInkRecognitionResult: Hashable {
     var confidence: Double
     var candidateScores: [ChordInkCandidateScore] = []
     var ocrCandidates: [ChordOCRCandidate]? = nil
+    var metrics: ChordInkRecognitionMetrics = ChordInkRecognitionMetrics()
 }
 
 enum ChordInkRecognitionAction: String, Codable, Hashable {

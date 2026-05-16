@@ -29,7 +29,12 @@ struct ChordInkRecognizer: ChordInkRecognizing {
     }
 
     func recognize(strokes: [InkStroke]) -> ChordInkRecognitionResult {
+        let recognitionStart = Date()
+        let clusterStart = Date()
         let clusters = clusterer.cluster(strokes)
+        let clusterMilliseconds = Self.elapsedMilliseconds(since: clusterStart)
+
+        let glyphStart = Date()
         let glyphCandidateGroups = clusters.map { cluster in
             glyphRecognizer.rankedCandidates(
                 for: cluster,
@@ -37,15 +42,23 @@ struct ChordInkRecognizer: ChordInkRecognizing {
                 limit: maxGlyphCandidatesPerCluster
             )
         }
+        let glyphMilliseconds = Self.elapsedMilliseconds(since: glyphStart)
+
+        let contextStart = Date()
         let contextualGlyphCandidateGroups = glyphCandidateGroupsWithSuspendedContext(
             glyphCandidateGroups,
             clusters: clusters
         )
-        let chordCandidates = recognitionCandidates(
+        let contextualGlyphMilliseconds = Self.elapsedMilliseconds(since: contextStart)
+
+        let candidateResult = recognitionCandidateResult(
             from: contextualGlyphCandidateGroups,
             clusters: clusters
         )
+        let chordCandidates = candidateResult.candidates
         let rawCandidates = chordCandidates.map(\.text)
+
+        let matchStart = Date()
         let minimumScoredCandidateConfidence = minimumAcceptedCandidateConfidence
             - ChordInkRecognitionPolicy.closeRaceConfidenceGap
         let candidateScores = chordCandidates.prefix(8)
@@ -68,32 +81,63 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         }.first
         let match = acceptedCandidate?.0
         let acceptedConfidence = acceptedCandidate?.1 ?? 0
+        let matchMilliseconds = Self.elapsedMilliseconds(since: matchStart)
 
         return ChordInkRecognitionResult(
             rawCandidates: rawCandidates,
             glyphCandidates: contextualGlyphCandidateGroups,
             match: match,
             confidence: acceptedConfidence,
-            candidateScores: candidateScores
+            candidateScores: candidateScores,
+            metrics: ChordInkRecognitionMetrics(
+                clusterMilliseconds: clusterMilliseconds,
+                glyphMilliseconds: glyphMilliseconds,
+                contextualGlyphMilliseconds: contextualGlyphMilliseconds,
+                composeMilliseconds: candidateResult.composeMilliseconds,
+                semanticMilliseconds: candidateResult.semanticMilliseconds,
+                matchMilliseconds: matchMilliseconds,
+                totalMilliseconds: Self.elapsedMilliseconds(since: recognitionStart),
+                strokeCount: strokes.count,
+                clusterCount: clusters.count,
+                glyphCandidateColumnCount: contextualGlyphCandidateGroups.count,
+                semanticCandidateCount: candidateResult.semanticCandidateCount,
+                rawCandidateCount: rawCandidates.count,
+                compositionMetrics: candidateResult.compositionMetrics
+            )
         )
     }
 
-    private func recognitionCandidates(
+    private struct RecognitionCandidateResult {
+        var candidates: [ChordInkCandidate]
+        var compositionMetrics: ChordInkCandidateCompositionMetrics
+        var composeMilliseconds: Double
+        var semanticMilliseconds: Double
+        var semanticCandidateCount: Int
+    }
+
+    private func recognitionCandidateResult(
         from glyphCandidateGroups: [[GlyphCandidate]],
         clusters: [InkCluster]
-    ) -> [ChordInkCandidate] {
-        let composedCandidates = candidateComposer.compose(glyphCandidates: glyphCandidateGroups)
+    ) -> RecognitionCandidateResult {
+        let composeStart = Date()
+        let compositionResult = candidateComposer.composeDetailed(glyphCandidates: glyphCandidateGroups)
+        let composeMilliseconds = Self.elapsedMilliseconds(since: composeStart)
+        let composedCandidates = compositionResult.candidates
         var bestCandidatesByText = Dictionary(
             uniqueKeysWithValues: composedCandidates.map { ($0.text, $0) }
         )
 
-        for semanticCandidate in [
+        let semanticStart = Date()
+        let semanticCandidates = [
             dominantAlteredCandidate(from: glyphCandidateGroups, clusters: clusters),
+            dominantSharpElevenCandidate(from: glyphCandidateGroups, clusters: clusters),
             majorSharpElevenCandidate(from: glyphCandidateGroups, clusters: clusters),
             minorEleventhCandidate(from: glyphCandidateGroups, clusters: clusters),
             majorSixthCandidate(from: glyphCandidateGroups, clusters: clusters),
             suspendedSuffixCandidate(from: glyphCandidateGroups, clusters: clusters)
-        ].compactMap({ $0 }) {
+        ].compactMap { $0 }
+
+        for semanticCandidate in semanticCandidates {
             if let currentBest = bestCandidatesByText[semanticCandidate.text],
                currentBest.confidence >= semanticCandidate.confidence {
                 continue
@@ -101,14 +145,26 @@ struct ChordInkRecognizer: ChordInkRecognizing {
 
             bestCandidatesByText[semanticCandidate.text] = semanticCandidate
         }
+        let semanticMilliseconds = Self.elapsedMilliseconds(since: semanticStart)
 
-        return Array(bestCandidatesByText.values).sorted { lhs, rhs in
+        let candidates = Array(bestCandidatesByText.values).sorted { lhs, rhs in
             if lhs.confidence != rhs.confidence {
                 return lhs.confidence > rhs.confidence
             }
 
             return lhs.text < rhs.text
         }
+        return RecognitionCandidateResult(
+            candidates: candidates,
+            compositionMetrics: compositionResult.metrics,
+            composeMilliseconds: composeMilliseconds,
+            semanticMilliseconds: semanticMilliseconds,
+            semanticCandidateCount: semanticCandidates.count
+        )
+    }
+
+    private static func elapsedMilliseconds(since start: Date) -> Double {
+        Date().timeIntervalSince(start) * 1_000
     }
 
     private func minorEleventhCandidate(
@@ -416,7 +472,7 @@ struct ChordInkRecognizer: ChordInkRecognizing {
 
         let tailGroups = Array(glyphCandidateGroups.dropFirst(sharpIndex + 1))
         let tailClusters = Array(clusters.dropFirst(sharpIndex + 1))
-        guard hasSharpElevenTailEvidence(groups: tailGroups, clusters: tailClusters) else {
+        guard hasExplicitSharpElevenTailEvidence(groups: tailGroups, clusters: tailClusters) else {
             return nil
         }
 
@@ -427,6 +483,66 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         return ChordInkCandidate(
             text: symbolText,
             confidence: 5.05,
+            glyphCandidates: glyphs
+        )
+    }
+
+    private func dominantSharpElevenCandidate(
+        from glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> ChordInkCandidate? {
+        guard glyphCandidateGroups.count == clusters.count,
+              clusters.count >= 5,
+              let rootCandidate = rootCandidate(in: glyphCandidateGroups[0]) else {
+            return nil
+        }
+
+        var glyphs = [rootCandidate]
+        var index = 1
+        var symbolText = rootCandidate.text
+
+        if glyphCandidateGroups.indices.contains(index),
+           let accidentalCandidate = accidentalCandidate(in: glyphCandidateGroups[index]) {
+            glyphs.append(accidentalCandidate)
+            symbolText.append(accidentalCandidate.text)
+            index += 1
+        }
+
+        guard glyphCandidateGroups.indices.contains(index),
+              let sevenCandidate = sevenCandidate(in: glyphCandidateGroups[index]) else {
+            return nil
+        }
+        glyphs.append(sevenCandidate)
+        symbolText.append("7")
+        index += 1
+
+        guard let sharpIndex = glyphCandidateGroups[index...].firstIndex(where: { group in
+            group.contains { candidate in
+                candidate.text == "#" && candidate.confidence >= 0.50
+            }
+        }) else {
+            return nil
+        }
+
+        let sharpGroup = glyphCandidateGroups[sharpIndex]
+        let sharpConfidence = sharpGroup
+            .filter { $0.text == "#" }
+            .map(\.confidence)
+            .max() ?? 0
+        let tailGroups = Array(glyphCandidateGroups.dropFirst(sharpIndex + 1))
+        let tailClusters = Array(clusters.dropFirst(sharpIndex + 1))
+        guard hasExplicitSharpElevenTailEvidence(groups: tailGroups, clusters: tailClusters) else {
+            return nil
+        }
+
+        glyphs.append(GlyphCandidate(text: "#", confidence: sharpConfidence, source: .heuristic))
+        glyphs.append(GlyphCandidate(text: "1", confidence: 0.82, source: .composer))
+        glyphs.append(GlyphCandidate(text: "1", confidence: 0.82, source: .composer))
+        symbolText.append("#11")
+
+        return ChordInkCandidate(
+            text: symbolText,
+            confidence: 4.95,
             glyphCandidates: glyphs
         )
     }
@@ -712,6 +828,32 @@ struct ChordInkRecognizer: ChordInkRecognizing {
             && (topCandidateTexts.contains("1")
                 || topCandidateTexts.contains("5")
                 || topCandidateTexts.contains("#"))
+    }
+
+    private func hasExplicitSharpElevenTailEvidence(
+        groups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> Bool {
+        guard groups.count == clusters.count,
+              groups.count >= 2 else {
+            return false
+        }
+
+        let hasHardFiveEvidence = groups.contains { group in
+            group.contains { candidate in
+                candidate.text == "5" && candidate.confidence >= 0.70
+            }
+        }
+        guard !hasHardFiveEvidence else {
+            return false
+        }
+
+        let explicitOneCount = groups.reduce(0) { count, group in
+            count + (group.contains { candidate in
+                candidate.text == "1" && candidate.confidence >= 0.90
+            } ? 1 : 0)
+        }
+        return explicitOneCount >= 2
     }
 
     private func glyphCandidateGroupsWithSuspendedContext(

@@ -204,6 +204,38 @@ def format_scores(candidate_scores: list[dict[str, Any]], limit: int) -> str:
     return " scores=[" + ", ".join(pairs) + "]"
 
 
+def format_metrics(metrics: dict[str, Any] | None) -> str:
+    if not metrics:
+        return ""
+
+    composition = metrics.get("compositionMetrics") or {}
+
+    def ms(key: str) -> str:
+        value = metrics.get(key)
+        return "?" if value is None else f"{value:.0f}ms"
+
+    generated = composition.get("generatedSequenceCount")
+    max_generated = composition.get("maxGeneratedSequences")
+    if generated is None or max_generated is None:
+        sequence_summary = "seq=?"
+    else:
+        limit = " limit" if composition.get("hitGeneratedSequenceLimit") else ""
+        sequence_summary = f"seq={generated}/{max_generated}{limit}"
+
+    return (
+        " metrics=["
+        f"cluster={ms('clusterMilliseconds')}, "
+        f"glyph={ms('glyphMilliseconds')}, "
+        f"context={ms('contextualGlyphMilliseconds')}, "
+        f"compose={ms('composeMilliseconds')}, "
+        f"semantic={ms('semanticMilliseconds')}, "
+        f"match={ms('matchMilliseconds')}, "
+        f"ocr={ms('ocrMilliseconds')}, "
+        f"{sequence_summary}"
+        "]"
+    )
+
+
 def print_diagnostic_details(chart_diagnostics: list[dict[str, Any]], score_limit: int) -> None:
     if not chart_diagnostics:
         print("\nDiagnostic detail: none")
@@ -226,12 +258,13 @@ def print_diagnostic_details(chart_diagnostics: list[dict[str, Any]], score_limi
         primary_action = short_text(event.get("primaryRecognitionAction"), fallback="-")
         primary_accepted = short_text(event.get("primaryAcceptedText"), fallback="-")
         score_suffix = format_scores(event.get("candidateScores") or [], score_limit)
+        metrics_suffix = format_metrics(event.get("recognitionMetrics"))
         print(
             f"  {index:02d}. m{measure_label} {resolution}{close_marker}: "
             f"accepted={accepted} rendered={rendered} best={best} "
             f"confidence={confidence} gap={gap} trust={trust} "
             f"agreement={agreement} ocr={ocr} "
-            f"primary={primary_action}:{primary_accepted}{score_suffix}"
+            f"primary={primary_action}:{primary_accepted}{score_suffix}{metrics_suffix}"
         )
 
 
@@ -278,6 +311,7 @@ def fallback_diagnostic_event(
         "primaryRecognitionReason": None,
         "primaryWasCloseRace": None,
         "primaryConfidenceGap": None,
+        "recognitionMetrics": None,
     }
 
 
