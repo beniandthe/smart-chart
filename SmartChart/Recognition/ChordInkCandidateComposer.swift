@@ -36,6 +36,7 @@ struct ChordInkCandidateComposerScoring: Hashable {
     var explicitSharpElevenBonus = 0.78
     var unreliableSharpElevenPenalty = 0.55
     var dominantSharpFiveBonus = 0.06
+    var dominantSharpFiveTailEvidenceBonus = 0.24
     var weakDominantSharpAlterationPenalty = 0.70
     var slashBassMinConfidence = 0.65
     var slashBassBonus = 0.85
@@ -817,6 +818,12 @@ struct ChordInkCandidateComposer {
         if (text.contains("7#5") || text.contains("7(#5)")),
            (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= scoring.strongDominantSharpConfidence {
             score += scoring.dominantSharpFiveBonus
+            if hasDominantSharpFiveNumberEvidence(
+                in: glyphCandidates,
+                candidateColumns: candidateColumns
+            ) {
+                score += scoring.dominantSharpFiveTailEvidenceBonus
+            }
         }
 
         if hasDominantSharpAlteration(text),
@@ -1152,6 +1159,73 @@ struct ChordInkCandidateComposer {
         }
 
         return hardFinalFive && !finalColumnHasStrongOne
+    }
+
+    private func hasDominantSharpFiveNumberEvidence(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard dominantAlterationAccidentalConfidence("#", in: glyphCandidates) != nil else {
+            return false
+        }
+
+        var hasPassedDominantSeven = false
+        var hasPassedAlterationSharp = false
+        var numberIndex: Int?
+
+        for (index, candidate) in glyphCandidates.enumerated() {
+            if candidate.text == "7" {
+                hasPassedDominantSeven = true
+                continue
+            }
+
+            guard hasPassedDominantSeven else {
+                continue
+            }
+
+            if !hasPassedAlterationSharp {
+                if candidate.text == "#" {
+                    hasPassedAlterationSharp = true
+                }
+                continue
+            }
+
+            if candidate.text == "(" || candidate.text == ")" {
+                continue
+            }
+
+            if candidate.text == "5" {
+                numberIndex = index
+                break
+            }
+
+            if ["1", "3", "7", "9"].contains(candidate.text) {
+                return false
+            }
+        }
+
+        guard let numberIndex,
+              candidateColumns.indices.contains(numberIndex) else {
+            return false
+        }
+
+        let numberColumn = candidateColumns[numberIndex]
+        let fiveConfidence = numberColumn
+            .filter { $0.text == "5" }
+            .map(\.confidence)
+            .max() ?? 0
+        let nineConfidence = numberColumn
+            .filter { $0.text == "9" }
+            .map(\.confidence)
+            .max() ?? 0
+        let threeConfidence = numberColumn
+            .filter { $0.text == "3" }
+            .map(\.confidence)
+            .max() ?? 0
+
+        return fiveConfidence >= 0.58
+            && threeConfidence >= 0.90
+            && fiveConfidence + 0.04 >= nineConfidence
     }
 
     private func hasValidSlashBass(_ text: String) -> Bool {

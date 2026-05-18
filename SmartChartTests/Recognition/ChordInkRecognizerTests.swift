@@ -264,6 +264,33 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertGreaterThan(flatScore, sixthScore, debugSummary)
     }
 
+    func testRecognizesFlatDiminishedWhenFlatLooksLikeSixthOrDegree() throws {
+        let strokes = try transformedTemplateStrokes("E", offsetX: 0, offsetY: 0, scale: 1)
+            + transformedTemplateStrokes("b", offsetX: 24, offsetY: 4, scale: 0.46)
+            + transformedTemplateStrokes("°", offsetX: 35, offsetY: -4, scale: 0.55)
+
+        let result = recognizer.recognize(strokes: strokes)
+        let debugSummary = "raw: \(Array(result.rawCandidates.prefix(16))), glyphs: \(result.glyphCandidates.map { $0.prefix(8).map(\.text) }), scores: \(result.candidateScores.prefix(8))"
+
+        XCTAssertEqual(result.match?.displayText, "Eb°", debugSummary)
+        XCTAssertTrue(result.rawCandidates.contains("Eb°"), debugSummary)
+    }
+
+    func testRecognizesMajorAlteredExtensionWithoutCandidateExplosion() throws {
+        let strokes = try shiftedTemplateStrokes("E", offsetX: 0)
+            + shiftedTemplateStrokes("b", offsetX: 0)
+            + shiftedTemplateStrokes("△", offsetX: 36)
+            + shiftedTemplateStrokes("9", offsetX: -25)
+            + shiftedTemplateStrokes("b", offsetX: 108)
+            + shiftedTemplateStrokes("5", offsetX: 185)
+
+        let result = recognizer.recognize(strokes: strokes)
+        let debugSummary = "raw: \(Array(result.rawCandidates.prefix(16))), glyphs: \(result.glyphCandidates.map { $0.prefix(8).map(\.text) }), scores: \(result.candidateScores.prefix(8))"
+
+        XCTAssertEqual(result.match?.displayText, "Eb△9(b5)", debugSummary)
+        XCTAssertTrue(result.rawCandidates.contains("Eb△9(b5)"), debugSummary)
+    }
+
     func testRecognizesDominantNinthInkFixtures() throws {
         let fixtures = try allFixtures()
             .filter { fixture in

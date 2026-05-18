@@ -558,6 +558,25 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "Bb7(#9)")
     }
 
+    func testSharpFiveTailEvidenceBeatsSharpNineLookalike() throws {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("E", confidence: 0.96)],
+            [glyph("b", confidence: 0.88)],
+            [glyph("7", confidence: 0.90)],
+            [glyph("#", confidence: 0.90)],
+            [
+                glyph("3", confidence: 0.997),
+                glyph("7", confidence: 0.985),
+                glyph("G", confidence: 0.970),
+                glyph("5", confidence: 0.620),
+                glyph("9", confidence: 0.579)
+            ]
+        ])
+
+        XCTAssertEqual(candidates.first?.text, "Eb7#5")
+        XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "Eb7(#5)")
+    }
+
     func testComposesTriangleMajorExtensionInsteadOfMajText() throws {
         let candidates = composer.compose(glyphCandidates: [
             [glyph("C", confidence: 0.95)],
