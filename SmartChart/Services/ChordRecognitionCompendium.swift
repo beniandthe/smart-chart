@@ -28,9 +28,7 @@ enum ChordRecognitionCompendium {
         }
 
         let normalizedInput = normalized(text)
-        if let entry = entries.first(where: { entry in
-            entry.normalizedAliases.contains(normalizedInput)
-        }) {
+        if let entry = entryByNormalizedAlias[normalizedInput] {
             return ChordRecognitionMatch(rawInput: text, symbol: entry.symbol)
         }
 
@@ -100,10 +98,7 @@ enum ChordRecognitionCompendium {
 
     private static func usesUnsupportedMajorSuffix(_ text: String) -> Bool {
         let normalizedInput = normalized(text)
-        let rootSpellings = baseEntries
-            .map { normalized($0.displayText) }
-            .sorted { $0.count > $1.count }
-        guard let rootSpelling = rootSpellings.first(where: { normalizedInput.hasPrefix($0) }) else {
+        guard let rootSpelling = normalizedRootSpellings.first(where: { normalizedInput.hasPrefix($0) }) else {
             return false
         }
 
@@ -137,6 +132,24 @@ enum ChordRecognitionCompendium {
             entry.halfDiminishedSeventhEntry
         ]
     }
+
+    private static let entryByNormalizedAlias: [String: ChordRecognitionEntry] = {
+        var index: [String: ChordRecognitionEntry] = [:]
+        for entry in entries {
+            for alias in entry.aliases {
+                let normalizedAlias = normalized(alias)
+                if index[normalizedAlias] == nil {
+                    index[normalizedAlias] = entry
+                }
+            }
+        }
+
+        return index
+    }()
+
+    private static let normalizedRootSpellings: [String] = baseEntries
+        .map { normalized($0.displayText) }
+        .sorted { $0.count > $1.count }
 
     private static let baseEntries: [ChordRecognitionEntry] = [
         ChordRecognitionEntry(root: .c, accidental: .natural, aliases: ["C"]),
@@ -305,10 +318,6 @@ private struct ChordRecognitionEntry: Hashable {
             extensions: ["7"],
             aliases: halfDiminishedSeventhAliases
         )
-    }
-
-    var normalizedAliases: Set<String> {
-        Set(aliases.map(ChordRecognitionCompendium.normalized))
     }
 
     private var minorAliases: [String] {
