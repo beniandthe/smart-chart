@@ -22,6 +22,7 @@ struct ChordInkCandidateComposerScoring: Hashable {
     var invalidChordPenalty = 0.25
     var accidentalDominantAlterationBonus = 0.35
     var dominantSharpNineBonus = 0.08
+    var dominantSharpNineTrailingWrapperBonus = 0.36
     var dominantFlatFiveBonus = 0.08
     var dominantFlatThirteenBonus = 0.08
     var explicitMinorSixthBonus = 0.12
@@ -32,11 +33,13 @@ struct ChordInkCandidateComposerScoring: Hashable {
     var triangleQualityMinConfidence = 0.60
     var triangleQualityBonus = 0.62
     var ninthSharpFiveBonus = 0.20
+    var ninthSharpFiveWeakRootStructureBonus = 0.24
     var strongDominantSharpConfidence = 0.65
     var explicitSharpElevenBonus = 0.78
     var unreliableSharpElevenPenalty = 0.55
     var dominantSharpFiveBonus = 0.06
     var dominantSharpFiveTailEvidenceBonus = 0.24
+    var dominantSharpFiveStrongNinthExtensionPenalty = 0.38
     var weakDominantSharpAlterationPenalty = 0.70
     var slashBassMinConfidence = 0.65
     var slashBassBonus = 0.85
@@ -605,6 +608,7 @@ struct ChordInkCandidateComposer {
             if let compactSharpElevenVariant = expandedCompactSharpElevenVariant(for: variant) {
                 expansions.append(compactSharpElevenVariant)
             }
+            expansions.append(contentsOf: expandedAlteredExtensionTrailingWrapperVariants(for: variant))
             expansions.append(contentsOf: expandedSharpElevenWrapperVariants(for: variant))
             if let trailingWrapperVariant = expandedSharpElevenTrailingWrapperVariant(for: variant) {
                 expansions.append(trailingWrapperVariant)
@@ -687,6 +691,23 @@ struct ChordInkCandidateComposer {
         return String(text[..<range.upperBound])
     }
 
+    private func expandedAlteredExtensionTrailingWrapperVariants(for text: String) -> [String] {
+        ["7#9"].compactMap { alterationPattern in
+            guard let range = text.range(of: alterationPattern) else {
+                return nil
+            }
+
+            let suffix = text[range.upperBound...]
+            guard suffix.count == 1,
+                  let wrapper = suffix.first,
+                  "13579C)".contains(wrapper) else {
+                return nil
+            }
+
+            return String(text[..<range.upperBound])
+        }
+    }
+
     private func glyphTextVariants(for text: String) -> [String] {
         switch text {
         case "Δ", "∆":
@@ -746,6 +767,18 @@ struct ChordInkCandidateComposer {
 
         if text.contains("7#9") || text.contains("7(#9)") {
             score += scoring.dominantSharpNineBonus
+            if hasAlteredExtensionTrailingWrapperEvidence(
+                in: glyphCandidates,
+                accidental: "#"
+            ) {
+                score += scoring.dominantSharpNineTrailingWrapperBonus
+            }
+            if hasStrongNinthExtensionEvidence(
+                in: glyphCandidates,
+                candidateColumns: candidateColumns
+            ) {
+                score -= scoring.dominantSharpFiveStrongNinthExtensionPenalty
+            }
         }
 
         if text.contains("7b5") || text.contains("7(b5)") {
@@ -802,11 +835,20 @@ struct ChordInkCandidateComposer {
                candidateColumns: candidateColumns
            ) {
             score += scoring.ninthSharpFiveBonus
+            if isNinthSharpFiveSymbol(parsedSymbol),
+               let rootConfidence = leadingRootConfidence(in: glyphCandidates),
+               rootConfidence >= 0.50,
+               rootConfidence < scoring.veryWeakRootConfidenceThreshold {
+                score += scoring.ninthSharpFiveWeakRootStructureBonus
+            }
         }
 
         if text.contains("7#11") || text.contains("7(#11)") {
             let hasStrongSharp = (dominantAlterationAccidentalConfidence("#", in: glyphCandidates) ?? 0) >= scoring.strongDominantSharpConfidence
             if hasDominantSharpFiveTailCollision(
+                in: glyphCandidates,
+                candidateColumns: candidateColumns
+            ) || hasDominantSharpNineTailCollision(
                 in: glyphCandidates,
                 candidateColumns: candidateColumns
             ) {
@@ -827,6 +869,12 @@ struct ChordInkCandidateComposer {
                 candidateColumns: candidateColumns
             ) {
                 score += scoring.dominantSharpFiveTailEvidenceBonus
+            }
+            if hasStrongNinthExtensionEvidence(
+                in: glyphCandidates,
+                candidateColumns: candidateColumns
+            ) {
+                score -= scoring.dominantSharpFiveStrongNinthExtensionPenalty
             }
         }
 
@@ -985,6 +1033,17 @@ struct ChordInkCandidateComposer {
             && symbol.alterations.contains("#11")
     }
 
+    private func isNinthSharpFiveSymbol(_ symbol: ChordSymbol?) -> Bool {
+        guard let symbol else {
+            return false
+        }
+
+        return symbol.quality.isEmpty
+            && symbol.extensions == ["9"]
+            && symbol.alterations == ["#5"]
+            && symbol.slashBass == nil
+    }
+
     private func hasDominantSevenLookalikeForNinthSharpFive(
         in glyphCandidates: [GlyphCandidate],
         candidateColumns: [[GlyphCandidate]]
@@ -1002,8 +1061,34 @@ struct ChordInkCandidateComposer {
             .map(\.confidence)
             .max() ?? 0
 
+        if writtenNineConfidence >= 0.95,
+           writtenNineConfidence > competingSevenConfidence {
+            return false
+        }
+
         return competingSevenConfidence >= 0.65
             && competingSevenConfidence + 0.12 >= writtenNineConfidence
+    }
+
+    private func hasStrongNinthExtensionEvidence(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard let extensionIndex = firstExtensionIndex(in: glyphCandidates),
+              glyphCandidates.indices.contains(extensionIndex),
+              glyphCandidates[extensionIndex].text == "7",
+              candidateColumns.indices.contains(extensionIndex) else {
+            return false
+        }
+
+        let writtenSevenConfidence = glyphCandidates[extensionIndex].confidence
+        let competingNineConfidence = candidateColumns[extensionIndex]
+            .filter { $0.text == "9" }
+            .map(\.confidence)
+            .max() ?? 0
+
+        return competingNineConfidence >= 0.95
+            && competingNineConfidence > writtenSevenConfidence
     }
 
     private func firstExtensionIndex(in glyphCandidates: [GlyphCandidate]) -> Int? {
@@ -1194,6 +1279,77 @@ struct ChordInkCandidateComposer {
         }
 
         return hardFinalFive && !finalColumnHasStrongOne
+    }
+
+    private func hasDominantSharpNineTailCollision(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard hasExplicitSharpElevenNumberTail(in: glyphCandidates),
+              let firstAlteredNumberIndex = firstAlteredNumberIndex(
+                  in: glyphCandidates,
+                  accidental: "#"
+              ),
+              candidateColumns.indices.contains(firstAlteredNumberIndex) else {
+            return false
+        }
+
+        let firstNumberGlyph = glyphCandidates[firstAlteredNumberIndex]
+        let nineConfidence = candidateColumns[firstAlteredNumberIndex]
+            .filter { $0.text == "9" }
+            .map(\.confidence)
+            .max() ?? 0
+
+        return firstNumberGlyph.text == "1"
+            && nineConfidence >= 0.55
+            && nineConfidence + 0.30 >= firstNumberGlyph.confidence
+    }
+
+    private func firstAlteredNumberIndex(
+        in glyphCandidates: [GlyphCandidate],
+        accidental: String
+    ) -> Int? {
+        var hasPassedDominantSeven = false
+        var hasPassedAlterationAccidental = false
+
+        for (index, candidate) in glyphCandidates.enumerated() {
+            if candidate.text == "7" {
+                hasPassedDominantSeven = true
+                hasPassedAlterationAccidental = false
+                continue
+            }
+
+            guard hasPassedDominantSeven else {
+                continue
+            }
+
+            if !hasPassedAlterationAccidental {
+                if candidate.text == accidental {
+                    hasPassedAlterationAccidental = true
+                }
+                continue
+            }
+
+            if candidate.text != "(" && candidate.text != ")" {
+                return index
+            }
+        }
+
+        return nil
+    }
+
+    private func hasAlteredExtensionTrailingWrapperEvidence(
+        in glyphCandidates: [GlyphCandidate],
+        accidental: String
+    ) -> Bool {
+        guard let firstAlteredNumberIndex = firstAlteredNumberIndex(
+            in: glyphCandidates,
+            accidental: accidental
+        ) else {
+            return false
+        }
+
+        return glyphCandidates.indices.contains(firstAlteredNumberIndex + 1)
     }
 
     private func hasDominantSharpFiveNumberEvidence(

@@ -1537,7 +1537,20 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         }
 
         var contextualGroups = glyphCandidateGroups
-        let suffixGroups = Array(glyphCandidateGroups[prefixLength...])
+        var didPromoteDominantAlteredContext = false
+        if let sevenIndex = dominantAlteredSevenLookalikeIndex(
+            in: glyphCandidateGroups,
+            clusters: clusters,
+            startingAt: prefixLength
+        ) {
+            contextualGroups[sevenIndex] = contextualGroups[sevenIndex].promotingContextualCandidate(
+                "7",
+                confidence: 0.82
+            )
+            didPromoteDominantAlteredContext = true
+        }
+
+        let suffixGroups = Array(contextualGroups[prefixLength...])
         let suffixClusters = Array(clusters[prefixLength...])
 
         if suffixLength == 4,
@@ -1566,7 +1579,7 @@ struct ChordInkRecognizer: ChordInkRecognizing {
             suffixClusters: suffixClusters,
             rootBounds: clusters[0].bounds
         ) else {
-            return glyphCandidateGroups
+            return didPromoteDominantAlteredContext ? contextualGroups : glyphCandidateGroups
         }
 
         contextualGroups[prefixLength] = contextualGroups[prefixLength].promotingContextualCandidate(
@@ -1589,6 +1602,68 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         }
 
         return contextualGroups
+    }
+
+    private func dominantAlteredSevenLookalikeIndex(
+        in glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster],
+        startingAt index: Int
+    ) -> Int? {
+        guard glyphCandidateGroups.indices.contains(index),
+              clusters.indices.contains(index),
+              glyphCandidateGroups.indices.contains(index + 2),
+              sevenCandidate(in: glyphCandidateGroups[index]) == nil,
+              hasAlteredExtensionContext(after: index, in: glyphCandidateGroups) else {
+            return nil
+        }
+
+        let group = glyphCandidateGroups[index]
+        guard candidateConfidence("9", in: group) < 0.85 else {
+            return nil
+        }
+
+        let lookalikeConfidence = ["B", "D", "E", "F", "+", "5", "6"]
+            .map { candidateConfidence($0, in: group) }
+            .max() ?? 0
+        let hardConflict = group.contains { candidate in
+            candidate.confidence >= 0.75
+                && ["#", "b", "-", "m", "△", "°", "ø", "/", "s", "u"].contains(candidate.text)
+        }
+        let bounds = clusters[index].bounds
+
+        guard lookalikeConfidence >= 0.48,
+              bounds.width >= 8,
+              bounds.height >= 12,
+              !hardConflict else {
+            return nil
+        }
+
+        return index
+    }
+
+    private func hasAlteredExtensionContext(
+        after index: Int,
+        in glyphCandidateGroups: [[GlyphCandidate]]
+    ) -> Bool {
+        guard index + 2 < glyphCandidateGroups.count else {
+            return false
+        }
+
+        let suffixRange = glyphCandidateGroups.indices.suffix(from: index + 1)
+        guard let accidentalIndex = suffixRange.first(where: { groupIndex in
+            candidateConfidence("#", in: glyphCandidateGroups[groupIndex]) >= 0.50
+                || candidateConfidence("b", in: glyphCandidateGroups[groupIndex]) >= 0.50
+        }) else {
+            return false
+        }
+
+        let tailGroups = glyphCandidateGroups.suffix(from: accidentalIndex + 1)
+        return tailGroups.contains { group in
+            candidateConfidence("5", in: group) >= 0.38
+                || candidateConfidence("9", in: group) >= 0.38
+                || candidateConfidence("1", in: group) >= 0.48
+                || candidateConfidence("3", in: group) >= 0.40
+        }
     }
 
     private func canApplyDominantSuspendedContext(

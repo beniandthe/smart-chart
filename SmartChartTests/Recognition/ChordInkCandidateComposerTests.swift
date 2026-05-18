@@ -445,7 +445,10 @@ final class ChordInkCandidateComposerTests: XCTestCase {
     func testComposesNinthSharpFiveWithoutRootAccidental() {
         let candidates = composer.compose(glyphCandidates: [
             [glyph("A", confidence: 0.98)],
-            [glyph("9", confidence: 0.99)],
+            [
+                glyph("9", confidence: 0.999),
+                glyph("7", confidence: 0.985)
+            ],
             [glyph("#", confidence: 0.99)],
             [
                 glyph("9", confidence: 0.66),
@@ -453,6 +456,89 @@ final class ChordInkCandidateComposerTests: XCTestCase {
             ]
         ])
 
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "A9(#5)")
+    }
+
+    func testComposesNinthSharpFiveAheadOfSevenSharpFiveAcrossChromaticRoots() {
+        let roots: [(display: String, glyphs: [String])] = [
+            ("C", ["C"]),
+            ("Db", ["D", "b"]),
+            ("D", ["D"]),
+            ("Eb", ["E", "b"]),
+            ("E", ["E"]),
+            ("F", ["F"]),
+            ("Gb", ["G", "b"]),
+            ("G", ["G"]),
+            ("Ab", ["A", "b"]),
+            ("A", ["A"]),
+            ("Bb", ["B", "b"]),
+            ("B", ["B"])
+        ]
+
+        for root in roots {
+            let rootColumns = root.glyphs.map { [glyph($0, confidence: 0.98)] }
+            let candidates = composer.compose(glyphCandidates: rootColumns + [
+                [
+                    glyph("9", confidence: 0.999),
+                    glyph("7", confidence: 0.985)
+                ],
+                [glyph("#", confidence: 0.99)],
+                [
+                    glyph("9", confidence: 0.66),
+                    glyph("5", confidence: 0.57)
+                ]
+            ])
+
+            XCTAssertEqual(
+                ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText,
+                "\(root.display)9(#5)",
+                "Expected \(root.display)9(#5) to beat \(root.display)7(#5)"
+            )
+        }
+    }
+
+    func testComposesDominantSharpFiveWhenSevenEvidenceBeatsNinth() {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("A", confidence: 0.98)],
+            [
+                glyph("7", confidence: 0.99),
+                glyph("9", confidence: 0.88)
+            ],
+            [glyph("#", confidence: 0.99)],
+            [
+                glyph("5", confidence: 0.72),
+                glyph("9", confidence: 0.48)
+            ]
+        ])
+
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "A7(#5)")
+    }
+
+    func testComposesNinthSharpFiveWhenRootLooksLikeFiveButStructureIsClear() {
+        let candidates = composer.compose(glyphCandidates: [
+            [
+                glyph("5", confidence: 0.620),
+                glyph("A", confidence: 0.535),
+                glyph("b", confidence: 0.503)
+            ],
+            [
+                glyph("9", confidence: 0.999),
+                glyph("7", confidence: 0.985)
+            ],
+            [
+                glyph("5", confidence: 0.992),
+                glyph("#", confidence: 0.990)
+            ],
+            [
+                glyph("3", confidence: 0.997),
+                glyph("7", confidence: 0.985),
+                glyph("G", confidence: 0.970),
+                glyph("5", confidence: 0.659)
+            ]
+        ])
+
+        XCTAssertEqual(candidates.first?.text, "A9#5")
+        XCTAssertGreaterThanOrEqual(candidates.first?.confidence ?? 0, 3.70)
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "A9(#5)")
     }
 
@@ -570,6 +656,32 @@ final class ChordInkCandidateComposerTests: XCTestCase {
 
         XCTAssertEqual(candidates.first?.text, "Bb7#9")
         XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "Bb7(#9)")
+    }
+
+    func testComposesSharpNineWhenClosingWrapperLooksLikeOne() throws {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("D", confidence: 0.985)],
+            [glyph("#", confidence: 0.990)],
+            [glyph("7", confidence: 0.820)],
+            [glyph("#", confidence: 0.990)],
+            [
+                glyph("3", confidence: 0.997),
+                glyph("7", confidence: 0.985),
+                glyph("G", confidence: 0.970),
+                glyph("5", confidence: 0.620),
+                glyph("9", confidence: 0.595),
+                glyph("1", confidence: 0.517)
+            ],
+            [
+                glyph("1", confidence: 0.996),
+                glyph("b", confidence: 0.980),
+                glyph(")", confidence: 0.741),
+                glyph("9", confidence: 0.680)
+            ]
+        ])
+
+        XCTAssertEqual(candidates.first?.text, "D#7#9")
+        XCTAssertEqual(try ChordSymbolParser.parse(candidates[0].text).displayText, "D#7(#9)")
     }
 
     func testSharpFiveTailEvidenceBeatsSharpNineLookalike() throws {

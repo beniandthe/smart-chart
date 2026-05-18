@@ -246,6 +246,23 @@ enum ChordInkRecognitionAction: String, Codable, Hashable {
     case confirm
 }
 
+enum ChordInkContinuationGracePolicy {
+    static func shouldWaitForPossibleContinuation(
+        result: ChordInkRecognitionResult,
+        strokeCount: Int
+    ) -> Bool {
+        guard strokeCount <= 8,
+              let symbol = result.match?.symbol,
+              symbol.alterations.isEmpty,
+              symbol.slashBass == nil,
+              symbol.extensions.count <= 1 else {
+            return false
+        }
+
+        return true
+    }
+}
+
 struct ChordInkRecognitionDecision: Hashable {
     var action: ChordInkRecognitionAction
     var acceptedText: String?

@@ -156,8 +156,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private let chordEditHitOverlayView = ChordEditHitOverlayView()
     private let chordInkRecognizer = ChordInkRecognizer()
     private let chordOCRCandidateProvider = ChordOCRCandidateProviderFactory.liveProvider()
-    private let chordInkIdleDelay: TimeInterval = 0.65
-    private let chordInkContinuationGraceDelay: TimeInterval = 0.35
+    private let chordInkIdleDelay: TimeInterval = 1.2
+    private let chordInkContinuationGraceDelay: TimeInterval = 1.2
     private let chordInkRecognitionQueue = DispatchQueue(
         label: "com.smartchart.chord-ink-recognition",
         qos: .userInitiated
@@ -1118,12 +1118,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     ) -> Bool {
         guard chordInkContinuationGraceDrawingData != drawingData,
               timing.requestedDelay <= chordInkIdleDelay + 0.01,
-              timing.strokeCount <= 3,
-              let symbol = result.match?.symbol,
-              symbol.quality.isEmpty,
-              symbol.extensions.isEmpty,
-              symbol.alterations.isEmpty,
-              symbol.slashBass == nil else {
+              ChordInkContinuationGracePolicy.shouldWaitForPossibleContinuation(
+                  result: result,
+                  strokeCount: timing.strokeCount
+              ) else {
             return false
         }
 

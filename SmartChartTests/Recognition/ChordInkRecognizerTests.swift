@@ -297,6 +297,33 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertTrue(result.rawCandidates.contains("Gb°7"), debugSummary)
     }
 
+    func testRecognizesAlteredDominantWhenSevenIsRoundedLookalike() throws {
+        let roundedSevenLookalike = [
+            InkStroke(points: [
+                InkPoint(x: 120, y: 3, timeOffset: nil),
+                InkPoint(x: 136, y: 4, timeOffset: nil),
+                InkPoint(x: 134, y: 18, timeOffset: nil),
+                InkPoint(x: 124, y: 28, timeOffset: nil)
+            ]),
+            InkStroke(points: [
+                InkPoint(x: 123, y: 4, timeOffset: nil),
+                InkPoint(x: 134, y: 17, timeOffset: nil),
+                InkPoint(x: 139, y: 29, timeOffset: nil)
+            ])
+        ]
+        let strokes = try transformedTemplateStrokes("D", offsetX: 0, offsetY: 0, scale: 1)
+            + transformedTemplateStrokes("#", offsetX: 38, offsetY: -8, scale: 0.72)
+            + roundedSevenLookalike
+            + transformedTemplateStrokes("#", offsetX: 180, offsetY: -7, scale: 0.72)
+            + transformedTemplateStrokes("9", offsetX: 220, offsetY: 0, scale: 0.78)
+
+        let result = recognizer.recognize(strokes: strokes)
+        let debugSummary = "raw: \(Array(result.rawCandidates.prefix(16))), glyphs: \(result.glyphCandidates.map { $0.prefix(8).map(\.text) }), scores: \(result.candidateScores.prefix(8))"
+
+        XCTAssertEqual(result.match?.displayText, "D#7(#9)", debugSummary)
+        XCTAssertTrue(result.rawCandidates.contains("D#7#9"), debugSummary)
+    }
+
     func testRecognizesMajorAlteredExtensionWithoutCandidateExplosion() throws {
         let strokes = try shiftedTemplateStrokes("E", offsetX: 0)
             + shiftedTemplateStrokes("b", offsetX: 0)
@@ -559,6 +586,43 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertEqual(decision.action, .confirm)
         XCTAssertNil(decision.acceptedText)
         XCTAssertFalse(decision.isCloseRace)
+    }
+
+    func testChordInkContinuationGraceWaitsForRootAndExtensionPrefixes() {
+        XCTAssertTrue(
+            ChordInkContinuationGracePolicy.shouldWaitForPossibleContinuation(
+                result: recognitionResult(
+                    matchText: "A",
+                    confidence: 4.2,
+                    scores: [candidateScore("A", confidence: 4.2)]
+                ),
+                strokeCount: 2
+            )
+        )
+
+        XCTAssertTrue(
+            ChordInkContinuationGracePolicy.shouldWaitForPossibleContinuation(
+                result: recognitionResult(
+                    matchText: "A9",
+                    confidence: 4.2,
+                    scores: [candidateScore("A9", confidence: 4.2)]
+                ),
+                strokeCount: 4
+            )
+        )
+    }
+
+    func testChordInkContinuationGraceDoesNotWaitOnceAlterationIsPresent() {
+        XCTAssertFalse(
+            ChordInkContinuationGracePolicy.shouldWaitForPossibleContinuation(
+                result: recognitionResult(
+                    matchText: "A9(#5)",
+                    confidence: 4.2,
+                    scores: [candidateScore("A9(#5)", confidence: 4.2)]
+                ),
+                strokeCount: 7
+            )
+        )
     }
 
     func testSuccessCriteriaFixturesArePresent() throws {
