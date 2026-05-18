@@ -149,6 +149,7 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         let semanticStart = Date()
         let semanticCandidates = [
             diminishedQualityCandidate(from: glyphCandidateGroups, clusters: clusters),
+            plainNinthAlteredExtensionCandidate(from: glyphCandidateGroups, clusters: clusters),
             majorAlteredExtensionCandidate(from: glyphCandidateGroups, clusters: clusters),
             dominantAlteredCandidate(from: glyphCandidateGroups, clusters: clusters),
             dominantSharpElevenCandidate(from: glyphCandidateGroups, clusters: clusters),
@@ -425,6 +426,13 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         guard glyphCandidateGroups.indices.contains(index),
               let diminishedCandidate = diminishedQualityCandidate(
                   in: glyphCandidateGroups[index]
+              ) ?? contextualDiminishedQualityCandidate(
+                  in: glyphCandidateGroups[index],
+                  cluster: clusters[index],
+                  rootBounds: clusters[0].bounds,
+                  nextGroup: glyphCandidateGroups.indices.contains(index + 1)
+                      ? glyphCandidateGroups[index + 1]
+                      : nil
               ) else {
             return nil
         }
@@ -519,6 +527,112 @@ struct ChordInkRecognizer: ChordInkRecognizing {
             confidence: 5.30,
             glyphCandidates: glyphs
         )
+    }
+
+    private func plainNinthAlteredExtensionCandidate(
+        from glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> ChordInkCandidate? {
+        guard glyphCandidateGroups.count == clusters.count,
+              clusters.count >= 4,
+              let rootCandidate = rootCandidate(in: glyphCandidateGroups[0]) else {
+            return nil
+        }
+
+        var glyphs = [rootCandidate]
+        var index = 1
+        var symbolText = rootCandidate.text
+        var consumedRootAccidental = false
+
+        if glyphCandidateGroups.indices.contains(index),
+           let accidentalCandidate = accidentalCandidate(
+               in: glyphCandidateGroups[index],
+               minimumConfidence: 0.50
+           ),
+           isHighAccidentalCluster(clusters[index], rootBounds: clusters[0].bounds) {
+            glyphs.append(accidentalCandidate)
+            symbolText.append(accidentalCandidate.text)
+            index += 1
+            consumedRootAccidental = true
+        }
+
+        guard consumedRootAccidental else {
+            return nil
+        }
+
+        guard glyphCandidateGroups.indices.contains(index),
+              shouldAttemptPlainNinthAlteredExtension(
+                  at: index,
+                  in: glyphCandidateGroups,
+                  clusters: clusters
+              ),
+              let extensionCandidate = majorExtensionCandidate(
+                  in: glyphCandidateGroups,
+                  startingAt: index
+              ),
+              extensionCandidate.text == "9" else {
+            return nil
+        }
+
+        glyphs.append(contentsOf: extensionCandidate.glyphs)
+        symbolText.append(extensionCandidate.text)
+        index = extensionCandidate.nextIndex
+
+        guard let alterationCandidate = ninthAlterationCandidate(
+            in: glyphCandidateGroups,
+            clusters: clusters,
+            startingAt: index
+        ) else {
+            return nil
+        }
+
+        glyphs.append(contentsOf: alterationCandidate.glyphs)
+        symbolText.append("(\(alterationCandidate.accidental)\(alterationCandidate.number))")
+
+        guard ChordRecognitionCompendium.match(symbolText) != nil else {
+            return nil
+        }
+
+        return ChordInkCandidate(
+            text: symbolText,
+            confidence: 4.88,
+            glyphCandidates: glyphs
+        )
+    }
+
+    private func shouldAttemptPlainNinthAlteredExtension(
+        at index: Int,
+        in glyphCandidateGroups: [[GlyphCandidate]],
+        clusters: [InkCluster]
+    ) -> Bool {
+        guard glyphCandidateGroups.indices.contains(index),
+              clusters.indices.contains(index) else {
+            return false
+        }
+
+        if triangleMajorCandidate(
+            in: glyphCandidateGroups[index],
+            cluster: clusters[index]
+        ) != nil {
+            return false
+        }
+
+        if let seven = sevenCandidate(in: glyphCandidateGroups[index]),
+           seven.confidence >= 0.65 {
+            return false
+        }
+
+        let nineConfidence = candidateConfidence("9", in: glyphCandidateGroups[index])
+        guard nineConfidence >= 0.85 else {
+            return false
+        }
+
+        let accidentalConfidence = max(
+            candidateConfidence("b", in: glyphCandidateGroups[index]),
+            candidateConfidence("#", in: glyphCandidateGroups[index])
+        )
+        return accidentalConfidence < 0.85
+            || (nineConfidence >= 0.95 && nineConfidence >= accidentalConfidence)
     }
 
     private func dominantAlteredCandidate(
@@ -792,6 +906,42 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         )
     }
 
+    private func contextualDiminishedQualityCandidate(
+        in group: [GlyphCandidate],
+        cluster: InkCluster,
+        rootBounds: InkBounds,
+        nextGroup: [GlyphCandidate]?
+    ) -> GlyphCandidate? {
+        guard nextGroup.map({ sevenCandidate(in: $0) != nil }) == true else {
+            return nil
+        }
+
+        let bounds = cluster.bounds
+        let isCompactUpperQualityMark = bounds.width <= max(12, rootBounds.width * 0.70)
+            && bounds.height <= max(14, rootBounds.height * 0.45)
+            && bounds.maxY <= rootBounds.minY + rootBounds.height * 0.50
+        guard isCompactUpperQualityMark else {
+            return nil
+        }
+
+        let hardConflict = group.contains { candidate in
+            candidate.confidence >= 0.82
+                && ["#", "-", "m", "ø", "△", "+", "/", "1", "7"].contains(candidate.text)
+        }
+        guard !hardConflict else {
+            return nil
+        }
+
+        let roundLookalikeConfidence = ["b", "G", "C", "6", "9"]
+            .map { candidateConfidence($0, in: group) }
+            .max() ?? 0
+        guard roundLookalikeConfidence >= 0.50 else {
+            return nil
+        }
+
+        return GlyphCandidate(text: "°", confidence: 0.86, source: .composer)
+    }
+
     private func isDiminishedAccidentalCluster(
         _ group: [GlyphCandidate],
         cluster: InkCluster,
@@ -957,6 +1107,91 @@ struct ChordInkRecognizer: ChordInkRecognizing {
         }
 
         return nil
+    }
+
+    private func ninthAlterationCandidate(
+        in groups: [[GlyphCandidate]],
+        clusters: [InkCluster],
+        startingAt index: Int
+    ) -> AlteredExtensionCandidate? {
+        guard index < groups.count else {
+            return nil
+        }
+
+        let possibleAccidentals = groups.indices.suffix(from: index).dropLast().compactMap { groupIndex -> (Int, GlyphCandidate)? in
+            let sharp = bestCandidate(in: groups[groupIndex], text: "#", minimumConfidence: 0.42)
+            let flat = bestCandidate(in: groups[groupIndex], text: "b", minimumConfidence: 0.42)
+            guard let accidental = [sharp, flat].compactMap({ $0 }).max(by: { lhs, rhs in
+                lhs.confidence < rhs.confidence
+            }) else {
+                return nil
+            }
+
+            return (groupIndex, accidental)
+        }
+
+        guard let (accidentalIndex, accidentalGlyph) = possibleAccidentals.max(by: { lhs, rhs in
+            lhs.1.confidence < rhs.1.confidence
+        }) else {
+            return nil
+        }
+        guard accidentalGlyph.text == "b" else {
+            return nil
+        }
+
+        let numberRange = groups.indices.suffix(from: accidentalIndex + 1)
+        if let fiveCandidate = numberRange
+            .compactMap({ bestCandidate(in: groups[$0], text: "5", minimumConfidence: 0.38) })
+            .max(by: { lhs, rhs in lhs.confidence < rhs.confidence }) {
+            return AlteredExtensionCandidate(
+                accidental: accidentalGlyph.text,
+                number: "5",
+                glyphs: [accidentalGlyph, fiveCandidate]
+            )
+        }
+
+        for groupIndex in numberRange where clusters.indices.contains(groupIndex) {
+            if let noisyFive = noisyAlteredFiveCandidate(
+                in: groups[groupIndex],
+                cluster: clusters[groupIndex]
+            ) {
+                return AlteredExtensionCandidate(
+                    accidental: accidentalGlyph.text,
+                    number: "5",
+                    glyphs: [accidentalGlyph, noisyFive]
+                )
+            }
+        }
+
+        if let nineCandidate = numberRange
+            .compactMap({ bestCandidate(in: groups[$0], text: "9", minimumConfidence: 0.38) })
+            .max(by: { lhs, rhs in lhs.confidence < rhs.confidence }) {
+            return AlteredExtensionCandidate(
+                accidental: accidentalGlyph.text,
+                number: "9",
+                glyphs: [accidentalGlyph, nineCandidate]
+            )
+        }
+
+        return nil
+    }
+
+    private func noisyAlteredFiveCandidate(
+        in group: [GlyphCandidate],
+        cluster: InkCluster
+    ) -> GlyphCandidate? {
+        let nineConfidence = candidateConfidence("9", in: group)
+        let roundedTopConfidence = ["B", "D", "F", "+"]
+            .map { candidateConfidence($0, in: group) }
+            .max() ?? 0
+        guard nineConfidence >= 0.80,
+              roundedTopConfidence >= 0.50,
+              cluster.bounds.width >= 16,
+              cluster.bounds.height >= 18 else {
+            return nil
+        }
+
+        return GlyphCandidate(text: "5", confidence: 0.72, source: .composer)
     }
 
     private func bestCandidate(

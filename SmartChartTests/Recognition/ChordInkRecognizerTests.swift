@@ -276,6 +276,27 @@ final class ChordInkRecognizerTests: XCTestCase {
         XCTAssertTrue(result.rawCandidates.contains("Eb°"), debugSummary)
     }
 
+    func testRecognizesTinyUpperDegreeLookalikeBeforeSevenAsDiminishedSeventh() throws {
+        let degreeLookalike = InkStroke(points: [
+            InkPoint(x: 78, y: 5, timeOffset: nil),
+            InkPoint(x: 83, y: 3, timeOffset: nil),
+            InkPoint(x: 87, y: 8, timeOffset: nil),
+            InkPoint(x: 85, y: 14, timeOffset: nil),
+            InkPoint(x: 79, y: 13, timeOffset: nil),
+            InkPoint(x: 77, y: 8, timeOffset: nil)
+        ])
+        let strokes = try transformedTemplateStrokes("G", offsetX: 0, offsetY: 0, scale: 1)
+            + transformedTemplateStrokes("b", offsetX: 33, offsetY: -8, scale: 0.46)
+            + [degreeLookalike]
+            + transformedTemplateStrokes("7", offsetX: 106, offsetY: -4, scale: 0.72)
+
+        let result = recognizer.recognize(strokes: strokes)
+        let debugSummary = "raw: \(Array(result.rawCandidates.prefix(16))), glyphs: \(result.glyphCandidates.map { $0.prefix(8).map(\.text) }), scores: \(result.candidateScores.prefix(8))"
+
+        XCTAssertEqual(result.match?.displayText, "Gb°7", debugSummary)
+        XCTAssertTrue(result.rawCandidates.contains("Gb°7"), debugSummary)
+    }
+
     func testRecognizesMajorAlteredExtensionWithoutCandidateExplosion() throws {
         let strokes = try shiftedTemplateStrokes("E", offsetX: 0)
             + shiftedTemplateStrokes("b", offsetX: 0)

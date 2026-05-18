@@ -31,7 +31,7 @@ struct ChordInkCandidateComposerScoring: Hashable {
     var likelyRootFlatCollisionPenalty = 0.35
     var triangleQualityMinConfidence = 0.60
     var triangleQualityBonus = 0.62
-    var accidentalRootNinthSharpFiveBonus = 0.20
+    var ninthSharpFiveBonus = 0.20
     var strongDominantSharpConfidence = 0.65
     var explicitSharpElevenBonus = 0.78
     var unreliableSharpElevenPenalty = 0.55
@@ -796,9 +796,12 @@ struct ChordInkCandidateComposer {
             score += scoring.triangleQualityBonus
         }
 
-        if hasAccidentalImmediatelyAfterRoot(text),
-           text.contains("9#5") || text.contains("9(#5)") {
-            score += scoring.accidentalRootNinthSharpFiveBonus
+        if (text.contains("9#5") || text.contains("9(#5)")),
+           !hasDominantSevenLookalikeForNinthSharpFive(
+               in: glyphCandidates,
+               candidateColumns: candidateColumns
+           ) {
+            score += scoring.ninthSharpFiveBonus
         }
 
         if text.contains("7#11") || text.contains("7(#11)") {
@@ -980,6 +983,41 @@ struct ChordInkCandidateComposer {
 
         return symbol.quality.contains("△")
             && symbol.alterations.contains("#11")
+    }
+
+    private func hasDominantSevenLookalikeForNinthSharpFive(
+        in glyphCandidates: [GlyphCandidate],
+        candidateColumns: [[GlyphCandidate]]
+    ) -> Bool {
+        guard let ninthIndex = firstExtensionIndex(in: glyphCandidates),
+              glyphCandidates.indices.contains(ninthIndex),
+              glyphCandidates[ninthIndex].text == "9",
+              candidateColumns.indices.contains(ninthIndex) else {
+            return false
+        }
+
+        let writtenNineConfidence = glyphCandidates[ninthIndex].confidence
+        let competingSevenConfidence = candidateColumns[ninthIndex]
+            .filter { $0.text == "7" }
+            .map(\.confidence)
+            .max() ?? 0
+
+        return competingSevenConfidence >= 0.65
+            && competingSevenConfidence + 0.12 >= writtenNineConfidence
+    }
+
+    private func firstExtensionIndex(in glyphCandidates: [GlyphCandidate]) -> Int? {
+        guard !glyphCandidates.isEmpty else {
+            return nil
+        }
+
+        var index = 1
+        if glyphCandidates.indices.contains(index),
+           glyphCandidates[index].text == "b" || glyphCandidates[index].text == "#" {
+            index += 1
+        }
+
+        return glyphCandidates.indices.contains(index) ? index : nil
     }
 
     private func hasExplicitMinorSixthEvidence(

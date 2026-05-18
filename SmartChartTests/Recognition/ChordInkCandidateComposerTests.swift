@@ -442,6 +442,20 @@ final class ChordInkCandidateComposerTests: XCTestCase {
         XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "Gb9(#5)")
     }
 
+    func testComposesNinthSharpFiveWithoutRootAccidental() {
+        let candidates = composer.compose(glyphCandidates: [
+            [glyph("A", confidence: 0.98)],
+            [glyph("9", confidence: 0.99)],
+            [glyph("#", confidence: 0.99)],
+            [
+                glyph("9", confidence: 0.66),
+                glyph("5", confidence: 0.57)
+            ]
+        ])
+
+        XCTAssertEqual(ChordRecognitionCompendium.match(candidates: candidates.map(\.text))?.displayText, "A9(#5)")
+    }
+
     func testPenalizesLowercaseSlashBassRootLookalike() {
         let candidates = composer.compose(glyphCandidates: [
             [glyph("A", confidence: 0.95)],
