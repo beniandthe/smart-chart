@@ -24,6 +24,14 @@ All `.json` files in this directory are automatically loaded by the recognition,
 cluster, and glyph tests, so adding a captured fixture is enough to put it under
 the full pure Swift regression harness.
 
+## Runtime Policy
+
+Keep the full fixture corpus in the default SwiftPM and CI test path until the
+living sprint source of truth explicitly changes that policy. Sprint 3 caches
+the decoded corpus inside the test loader so repeated coverage tests do not
+re-read every fixture file, but it does not hide fixtures behind a smaller smoke
+set.
+
 ## Live Capture Protocol
 
 Use this exact loop when collecting data:
