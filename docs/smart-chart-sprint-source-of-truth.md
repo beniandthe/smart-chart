@@ -147,6 +147,8 @@ Implementation tasks:
 Progress notes:
 
 - 2026-05-21: Sprint 2 opened after Sprint 1 commit `e040332`.
+- 2026-05-21: Tasks 1-3 completed. `docs/handwriting-recognition-implementation-plan.md` and `docs/current-architecture-audit.md` now carry historical-status notices that defer to this living source of truth, and README separates active authority from historical context.
+- 2026-05-21: Local verification for Sprint 2 docs cleanup passed: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` completed with `310` tests, `1` skipped, `0` failures; `python3 -m py_compile` passed for the three diagnostic/import/watch scripts; `git diff --check` passed.
 
 Acceptance criteria:
 

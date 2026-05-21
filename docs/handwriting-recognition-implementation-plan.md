@@ -1,8 +1,16 @@
 # Handwriting Recognition Implementation Plan
 
-Status: Implementation plan
+Status: historical architecture context, not active sprint authority
 Date: 2026-05-06
 Target repo: `beniandthe/smart-chart`
+
+## Historical Notice
+
+This document preserves the original handwriting-recognition architecture, pass notes, and recovery context. It is not the active sprint plan.
+
+For current execution, start with `docs/smart-chart-sprint-source-of-truth.md`. For the May 2026 repo, GitHub, and recognition audit evidence, use `docs/repo-github-recognition-audit-2026-05-20.md`.
+
+When this document conflicts with the living sprint source of truth, the living sprint source of truth wins.
 
 ## Purpose
 
@@ -10,7 +18,7 @@ Smart Chart should convert Apple Pencil input into clean, editable chord-chart o
 
 The goal is not full OCR. The goal is a constrained, testable recognition pipeline for common chord-chart tokens: chord roots, accidentals, minor marks, extensions, alterations, slash bass, and a small set of notation marks.
 
-This plan assumes the GitHub `main` branch is the source of truth.
+Historically, this plan assumed the GitHub `main` branch was the source of truth. That assumption is stale for the Sprint 2 recovery work; the active recovery baseline is recorded in `docs/smart-chart-sprint-source-of-truth.md`.
 
 ## Current Repo Starting Point
 
