@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: `e040332 Document and clean up recognition sprint one`
+Active baseline commit: `4ff784e Clarify sprint two doc authority` plus the Sprint 2 closeout entry in this file
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -17,24 +17,24 @@ If this document conflicts with older recognition or architecture planning docs,
 
 ## Current Baseline
 
-The active app implementation state is the latest code checkpoint:
+The active app implementation state is the latest Sprint 2 checkpoint:
 
 - branch: `codex/symbol-ledger-recognition`
-- commit: `e040332 Document and clean up recognition sprint one`
+- implementation commit: `4ff784e Clarify sprint two doc authority`
+- closeout state: this document records Sprint 2 completion and PR [#4](https://github.com/beniandthe/smart-chart/pull/4) status
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - latest local verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` passed on 2026-05-21 with `310` tests, `1` skipped, `0` failures
-- latest GitHub CI noted in the audit: success for `9479a94`
+- latest GitHub verification: draft PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is open; Dependency Review, SwiftPM, and iOS simulator checks passed before the Sprint 2 closeout push; CodeQL was still pending at closeout
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
-Known drift after Sprint 1:
+Known drift after Sprint 2:
 
 - `ChordInkRecognizer` is back to a narrower orchestration role, but the composer-owned semantic candidate layer is still large.
 - `ChordInkSymbolLedger` is diagnostics-only by policy and is gated off by default on the live recognition path.
 - `StrokeClusterer.swift`, `StrokeClustererSupport.swift`, `ChordInkCandidateComposer.swift`, and `ChordInkSemanticCandidateComposer.swift` contain the largest remaining recognition maintenance and performance risk.
-- The old handwriting plan mixes original design, historical pass notes, checkpoint evidence, and current backlog.
-- `docs/current-architecture-audit.md` is stale because it says chord interpretation is outside the live path.
-- `codex/symbol-ledger-recognition` has not yet been pushed after Sprint 1, and no PR exists for CodeQL coverage of the recovery branch.
+- The old handwriting plan and current-architecture audit are explicitly marked historical/stale when they conflict with this file.
+- PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is the active GitHub review surface; recheck CodeQL and any rerun checks before choosing Sprint 3.
 - No tracked cache/raster/direct-ink detour files remain in the current tree; remaining bloat is inside the current recognition path.
 
 ## Product North Star
@@ -96,93 +96,13 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 2: Documentation Authority Cleanup And PR Hardening
+### Next Sprint: Pending Selection
 
-Status: active.
+Status: waiting for post-PR decision.
 
-Goal:
+Sprint 2 is complete enough for review: stale docs now defer to this living source of truth, the branch is pushed, and draft PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is open for CI and CodeQL coverage.
 
-Make the living source-of-truth unquestionably authoritative, retire stale/conflicting docs from active planning, and prepare the recovered branch for GitHub review and CodeQL coverage.
-
-Starting point:
-
-- branch: `codex/symbol-ledger-recognition`
-- baseline: `e040332`
-- trusted checkpoint reference: `c60bb46`
-
-Non-goals:
-
-- Do not retune recognition scores.
-- Do not add raster/classifier authority.
-- Do not touch recognition runtime code unless a docs-only rename/reference requires it.
-- Do not rewrite the entire historical plan into a new architecture spec in one sweep.
-- Do not prune fixtures or split fixture tiers yet.
-- Do not start editor/product polish until the authority cleanup is committed and the branch is ready for PR checks.
-
-Implementation tasks:
-
-1. Retire stale recognition-plan authority.
-   - Add a top-of-file historical-status notice to `docs/handwriting-recognition-implementation-plan.md`.
-   - Point readers to this living doc for current sprint authority and to `docs/repo-github-recognition-audit-2026-05-20.md` for the evidence snapshot.
-   - Preserve useful historical architecture context rather than deleting the file.
-
-2. Resolve stale architecture-audit conflict.
-   - Mark `docs/current-architecture-audit.md` stale or replace its live-recognition claims with current status.
-   - Ensure it cannot be mistaken for the active architecture plan.
-
-3. Tighten README source-of-truth order.
-   - Keep `docs/smart-chart-sprint-source-of-truth.md` first.
-   - Make historical docs clearly subordinate where listed.
-
-4. Prepare branch for GitHub review.
-   - Run final local checks.
-   - Push `codex/symbol-ledger-recognition`.
-   - Open a PR to `main` so CodeQL and CI run against the recovered branch.
-
-5. Update this living doc after PR creation.
-   - Record the Sprint 2 commit or commit range.
-   - Record PR URL and check status.
-   - Move Sprint 2 to the completed log only after local verification and PR creation are done.
-
-Progress notes:
-
-- 2026-05-21: Sprint 2 opened after Sprint 1 commit `e040332`.
-- 2026-05-21: Tasks 1-3 completed. `docs/handwriting-recognition-implementation-plan.md` and `docs/current-architecture-audit.md` now carry historical-status notices that defer to this living source of truth, and README separates active authority from historical context.
-- 2026-05-21: Local verification for Sprint 2 docs cleanup passed: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` completed with `310` tests, `1` skipped, `0` failures; `python3 -m py_compile` passed for the three diagnostic/import/watch scripts; `git diff --check` passed.
-
-Acceptance criteria:
-
-- Stale docs clearly defer to this living source-of-truth for current sprint authority.
-- `docs/handwriting-recognition-implementation-plan.md` remains available as historical context.
-- `docs/current-architecture-audit.md` no longer contradicts the live recognition pipeline without a stale warning.
-- README points readers to the living doc first and labels historical docs appropriately.
-- Branch is pushed and a PR exists for GitHub CI/CodeQL coverage.
-- No runtime recognition files change during Sprint 2 unless explicitly approved.
-
-Required verification:
-
-```bash
-swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1
-python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py
-git diff --check
-```
-
-Additional verification if editor/PencilKit code changes:
-
-```bash
-xcodegen generate
-xcodebuild test -scheme SmartChart -destination "$SIMULATOR_DESTINATION" OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs
-```
-
-Do not use `CODE_SIGNING_ALLOWED=NO` for simulator test verification on this branch; it can build but fail app preflight launch.
-
-For live simulator confidence after code cleanup:
-
-```bash
-scripts/audit_chord_entry_diagnostics.py --strict --details --scores 3
-```
-
-Use the disposable `Chord Writing Test Chart` only if Sprint 2 unexpectedly changes recognition or editor behavior.
+Do not start Sprint 3 from memory alone. First review this file, PR #4 status, and the current branch state.
 
 ## Completed Sprints Log
 
@@ -203,6 +123,15 @@ Append one entry here after each sprint completes. Each entry must include:
 - tests and evidence: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` passed with `310` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `350` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`; `git diff --check` passed.
 - unresolved follow-up: `docs/handwriting-recognition-implementation-plan.md` and `docs/current-architecture-audit.md` remain historical/stale when they conflict with this file; no fresh user-facing `Chord Writing Test Chart` pass was run after cleanup because Sprint 1 was behavior-preserving and covered by existing recognition fixtures; branch still needs push/PR for GitHub checks.
 - next sprint candidate: Sprint 2 is documentation authority cleanup plus PR/CodeQL hardening.
+
+### Sprint 2: Documentation Authority And PR Hardening
+
+- status: complete
+- commit range: `2eedd48 Open sprint two authority cleanup` through `4ff784e Clarify sprint two doc authority`, plus the Sprint 2 closeout entry in this file
+- summary: Marked stale planning docs as historical, split `README.md` authority links into active and historical groups, pushed `codex/symbol-ledger-recognition`, and opened draft PR [#4](https://github.com/beniandthe/smart-chart/pull/4) as the GitHub review surface for the recovery branch.
+- tests and evidence: `git diff --check` passed; trailing whitespace scan found no hits; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` passed with `310` tests, `1` skipped, `0` failures. PR [#4](https://github.com/beniandthe/smart-chart/pull/4) showed Dependency Review, SwiftPM, and iOS simulator checks passing before this closeout push; CodeQL was still pending at closeout.
+- unresolved follow-up: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is draft and CodeQL/rerun checks need one final review before merge readiness. Sprint 3 is intentionally not selected yet.
+- next sprint candidate: Review PR [#4](https://github.com/beniandthe/smart-chart/pull/4) status first, then choose between fixture tiering, composer scoring extraction, or product/editor polish.
 
 ## Next Sprint Backlog
 
