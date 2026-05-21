@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: Sprint 5 closeout commit containing this entry; previous checkpoint was `236f55d Close sprint four composer scoring extraction`
+Active baseline commit: Sprint 6 closeout commit containing this entry; previous checkpoint was `267cfaf Close sprint five semantic sidecar boundary`
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -17,28 +17,29 @@ If this document conflicts with older recognition or architecture planning docs,
 
 ## Current Baseline
 
-The active app implementation state is the latest Sprint 5 checkpoint:
+The active app implementation state is the latest Sprint 6 checkpoint:
 
 - branch: `codex/symbol-ledger-recognition`
-- previous checkpoint: `236f55d Close sprint four composer scoring extraction`
-- implementation state: Sprint 5 semantic sidecar boundary cleanup plus this closeout entry
+- previous checkpoint: `267cfaf Close sprint five semantic sidecar boundary`
+- implementation state: Sprint 6 composer glyph-selection extraction plus this closeout entry
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - latest local verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` passed on 2026-05-21 with `310` tests, `1` skipped, `0` failures
-- latest GitHub verification before the Sprint 5 work: draft PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `236f55d`
+- latest GitHub verification before the Sprint 6 work: draft PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `267cfaf`
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
-Known drift after Sprint 5:
+Known drift after Sprint 6:
 
 - `ChordInkRecognizer` is back to a narrower orchestration role and now calls an explicit recognition-candidate coordinator plus semantic sidecar instead of semantic merge methods on the base composer.
 - `ChordInkSymbolLedger` is diagnostics-only by policy and is gated off by default on the live recognition path.
-- `StrokeClusterer.swift`, `StrokeClustererSupport.swift`, `ChordInkCandidateComposer.swift`, `ChordInkCandidateScoringPolicy.swift`, and `ChordInkSemanticCandidateComposer.swift` contain the largest remaining recognition maintenance risk.
-- `ChordInkCandidateComposer.swift` delegates scoring to `ChordInkCandidateScoringPolicy` and no longer owns recognition-level semantic candidate merging, but glyph selection and text variants still need further separation before the composer is fully streamlined.
+- `StrokeClusterer.swift`, `StrokeClustererSupport.swift`, `ChordInkCandidateScoringPolicy.swift`, `ChordInkCandidateSelectionPolicy.swift`, and `ChordInkSemanticCandidateComposer.swift` contain the largest remaining recognition maintenance risk.
+- `ChordInkCandidateComposer.swift` delegates scoring to `ChordInkCandidateScoringPolicy`, glyph selection to `ChordInkCandidateSelectionPolicy`, and no longer owns recognition-level semantic candidate merging, but text variant expansion still needs separation before the composer is fully streamlined.
+- `ChordInkCandidateSelectionPolicy.swift` is intentionally a behavior-preserving move of the old selection rules. Do not retune those thresholds without a new recognition sprint and fixture evidence.
 - `ChordInkSemanticCandidateComposer.swift` remains large; it owns semantic candidate recipes and contextual glyph promotion helpers that should be split only as behavior-preserving refactors.
 - The old handwriting plan and current-architecture audit are explicitly marked historical/stale when they conflict with this file.
 - `646` ink fixtures remain default-on in the regression path; decoded fixture data is now cached inside the test loader to avoid repeated file-system churn.
 - Full critical/full fixture tiering is deferred unless CI runtime or local loop cost becomes a real blocker.
-- PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is the active GitHub review surface; recheck rerun checks after the Sprint 5 push.
+- PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is the active GitHub review surface; recheck rerun checks after the Sprint 6 push.
 - No tracked cache/raster/direct-ink detour files remain in the current tree; remaining bloat is inside the current recognition path.
 
 ## Product North Star
@@ -102,11 +103,11 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ### Next Sprint: Pending Selection
 
-Status: waiting for post-Sprint 5 and PR decision.
+Status: waiting for post-Sprint 6 and PR decision.
 
-Sprint 5 is complete locally: semantic candidate generation now lives behind `ChordInkSemanticCandidateComposer`, recognition-level merge/timing lives in `ChordInkRecognitionCandidateComposer`, and score/candidate behavior remains unchanged.
+Sprint 6 is complete locally: glyph candidate selection now lives behind `ChordInkCandidateSelectionPolicy`, `ChordInkCandidateComposer` now focuses on sequence generation and text variants, and score/candidate behavior remains unchanged.
 
-Do not start Sprint 6 from memory alone. First review this file, PR [#4](https://github.com/beniandthe/smart-chart/pull/4), the current branch state, and any new CI result after the Sprint 5 push.
+Do not start Sprint 7 from memory alone. First review this file, PR [#4](https://github.com/beniandthe/smart-chart/pull/4), the current branch state, and any new CI result after the Sprint 6 push.
 
 ## Completed Sprints Log
 
@@ -167,12 +168,22 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: recheck PR [#4](https://github.com/beniandthe/smart-chart/pull/4) after the Sprint 5 push. `ChordInkCandidateComposer.swift` still owns glyph candidate selection and text variant expansion, and `ChordInkSemanticCandidateComposer.swift` still needs a later behavior-preserving split.
 - next sprint candidate: Choose between composer glyph-selection extraction, semantic contextualizer split, or a return to product/editor polish.
 
+### Sprint 6: Composer Glyph-Selection Extraction
+
+- status: complete locally; PR checks must be rechecked after push
+- commit range: `267cfaf Close sprint five semantic sidecar boundary` through the Sprint 6 closeout commit containing this entry
+- summary: Extracted glyph candidate selection and promotion rules from `ChordInkCandidateComposer.swift` into `ChordInkCandidateSelectionPolicy.swift`. The base composer now keeps sequence generation, text variant expansion, scoring delegation, and result metrics only. Selection thresholds, candidate promotion order, text variants, semantic sidecars, score constants, and recognition acceptance policy were unchanged.
+- tests and evidence: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1 --filter ChordInkCandidateComposerTests` passed with `49` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1 --filter ChordInkRecognizerTests` passed with `39` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` passed with `310` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `git diff --check` passed.
+- GitHub evidence before the Sprint 6 work: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `267cfaf`.
+- unresolved follow-up: recheck PR [#4](https://github.com/beniandthe/smart-chart/pull/4) after the Sprint 6 push. `ChordInkCandidateComposer.swift` still owns text variant expansion, and `ChordInkSemanticCandidateComposer.swift` still needs a later behavior-preserving split.
+- next sprint candidate: Choose between text variant extraction, semantic contextualizer split, or a return to product/editor polish.
+
 ## Next Sprint Backlog
 
-Discuss and choose one item after Sprint 5 is complete:
+Discuss and choose one item after Sprint 6 is complete:
 
 - Update PR [#4](https://github.com/beniandthe/smart-chart/pull/4) based on any CodeQL or CI findings.
-- Continue recognition cleanup by splitting composer glyph-selection or text-variant expansion without retuning.
+- Continue recognition cleanup by splitting composer text-variant expansion without retuning.
 - Split semantic contextual glyph promotion out of `ChordInkSemanticCandidateComposer` without changing recognition results.
 - Return to product/editor polish once the architecture boundary is stable.
 - Revisit fixture tiering only if CI runtime or local loop cost becomes a real blocker.
