@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: Sprint 10 product/export checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
+Active baseline commit: Sprint 10 closeout checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -23,10 +23,10 @@ The active app runtime implementation state is the latest Sprint 8 checkpoint. S
 - runtime checkpoint: `72cd12e Close sprint eight semantic contextualizer extraction`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor/export polish audit
+- implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor/export polish audit closed; Sprint 11 pending selection
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
-- latest local verification: Sprint 10 PDF export placeholder checkpoint passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures
-- latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on Sprint 10 PDF export placeholder commit `2eaa1a8`; the PR is not draft and remains blocked only by required review
+- latest local verification: Sprint 10 closeout passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures; live simulator audits covered open, chord mode, correction, export, PDF preview, and a synthetic-stroke chord confirmation/structured commit path
+- latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on Sprint 10 correction-audit commit `ffc97b6`; the PR is not draft and remains blocked only by required review
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -105,55 +105,11 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 10: Product/Editor Polish Audit
+### Sprint 11: Pending Selection
 
-Status: active.
+Status: pending discussion.
 
-Goal: resume product work from the recovered recognition baseline by auditing the current app against `open -> write -> recognize -> snap -> fix -> export`, then choosing the smallest user-facing editor polish fix backed by current app evidence.
-
-Non-goals:
-
-- no recognition scoring changes
-- no new recognition architecture or sidecars
-- no fixture pruning or tiering unless validation cost becomes a real blocker
-- no broad visual redesign
-- no custom ink capture path that weakens native `PKCanvasView` feel
-
-Tasks:
-
-- Review `docs/core-design-document.md`, `docs/developer-mvp-spec.md`, this file, and the current editor implementation before changing code.
-- Build and launch the current app on the intended simulator before judging handwriting or editor behavior.
-- Audit the live product path: open/create chart, write chord ink, recognize, snap to structured chord event, correct/fix, and export/share.
-- Record exact breakpoints and choose one smallest polish fix from current evidence.
-- If editor/PencilKit code changes, regenerate the Xcode project and run the existing iOS simulator `SmartChart` scheme.
-
-Current Sprint 10 audit notes:
-
-- Product intent reviewed from `docs/core-design-document.md` and `docs/developer-mvp-spec.md`: Sprint 10 should protect the fast `open -> write -> recognize -> snap -> fix -> export` editor path, Apple Pencil/native PencilKit input, readable one-page charts, and PDF/export readiness.
-- App evidence: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, opening the Chord Writing Test Chart exposed a portrait editor clipping bug. The paper was wider than the visible canvas and the title rendered as a truncated `CHORD WRITING TES` / `CHORD WRITING '`.
-- Root cause: `LeadSheetPageLayoutEngine` forced a `900` point minimum page width even when the editor host was about `772` points wide. No-composer title layout also stayed capped at `62%` of the header frame.
-- Sprint 10 fix: keep the live editor responsive down to a `720` point minimum page width and allow no-composer titles to use the full paper width. This is layout-only and does not change recognition scoring, PencilKit capture, chord parsing, or commit behavior.
-- Simulator evidence after the fix: the iOS 26.4 iPad Air 11-inch (M4) app build/run showed the full `CHORD WRITING TEST CHART` title and the paper stayed inside the portrait viewport.
-- Local verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `351` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`.
-- App evidence after the first fix: the chord-writing loop opened directly into `Chord` mode as intended, but the top-bar export/share control was disabled while chord writing was active. That blocked the `write -> recognize -> snap -> fix -> export` path unless the user knew to toggle out of the mode first.
-- Sprint 10 export fix: top-bar export is now available in chord-entry and note-correction modes because the export action already exits to browse before running. Free-hand page ink still keeps export locked while active.
-- Simulator evidence after the export fix: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, opening the Chord Writing Test Chart in `Chord` mode showed the export/share icon enabled; tapping it reached the expected Pro upgrade sheet in the free-plan state.
-- Local verification after the export fix: full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `351` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`.
-- GitHub evidence before the PDF placeholder fix: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `bc8c63f`; the PR remained blocked only by required review.
-- App evidence after the export reachability fix: using Pro Preview and exporting the Chord Writing Test Chart revealed that the PDF preview still leaked the editor instruction placeholder `Tap the measure in the editor to add a hit.` into empty measures.
-- Sprint 10 PDF placeholder fix: `ChartPDFRenderer` now leaves empty measures as clean rhythm grids in exported PDFs instead of drawing editor-only instruction copy; `PDFChartExporterTests` now checks exported PDF text with PDFKit so the placeholder cannot regress.
-- Simulator evidence after the PDF placeholder fix: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, exporting the fresh Chord Writing Test Chart reached the PDF preview and the visible/accessibility text contained the title, page, measure, and beat labels without the old `Tap the measure...` placeholder.
-- Local verification after the PDF placeholder fix: full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `352` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`; `git diff --check` passed.
-- GitHub evidence after the PDF placeholder fix: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `2eaa1a8`; the PR is not draft and remains blocked only by required review.
-- Fix-flow audit evidence: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, opening `Turnaround Study`, enabling `Chord` mode, and tapping rendered `C7` opened the `Correct Chord` sheet for measure 3. Replacing the field text with `F7` and tapping `Update Chord` rendered `F7` back onto the chart; the sample chart was then restored to `C7`. No code change was needed for this audit pass.
-
-Acceptance criteria:
-
-- Current app/editor state is captured in this file or a supporting audit note.
-- Any Sprint 10 code change is localized to the smallest user-facing product/editor issue found in the audit.
-- Native `PKCanvasView` writing feel is preserved.
-- Recognition behavior remains unchanged unless a tightly scoped product bug proves otherwise.
-- Sprint 10 closes with local test evidence, simulator evidence when relevant, and a next backlog decision.
+Sprint 10 is complete and recorded below. Do not start a new recognition or editor sprint from memory alone; choose the next sprint from the backlog after reviewing PR [#4](https://github.com/beniandthe/smart-chart/pull/4), current branch state, and the user priority at that time.
 
 ## Completed Sprints Log
 
@@ -251,6 +207,17 @@ Append one entry here after each sprint completes. Each entry must include:
 - tests and evidence: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `61caeb9`. `git diff --check` passed for the Sprint 10 kickoff doc update.
 - unresolved follow-up: recheck PR [#4](https://github.com/beniandthe/smart-chart/pull/4) after the Sprint 10 kickoff push. The PR is large and review-required; the main review risk remains size, especially the full ink fixture corpus and large recognition implementation files.
 - next sprint candidate: Sprint 10 is product/editor polish audit.
+
+### Sprint 10: Product/Editor Polish Audit
+
+- status: complete; final closeout commit is the commit containing this entry
+- commit range: `192c6c0 Open sprint ten product editor polish` through the Sprint 10 closeout commit containing this entry
+- summary: Audited the recovered app against `open -> write -> recognize -> snap -> fix -> export`, then shipped the smallest user-facing fixes found in the live loop. The editor page now fits the portrait iPad viewport, export stays reachable from chord-entry and note-correction modes, and exported PDFs no longer leak editor-only placeholder copy into empty measures. No recognition scoring, parser authority, PencilKit capture policy, fixture corpus, or recognition sidecar behavior changed.
+- tests and evidence: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `352` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`; `git diff --check` passed.
+- live app evidence: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, `Chord Writing Test Chart` opened in `Chord` mode with the full title visible and page inside the viewport; export was enabled from chord-entry mode; Pro Preview reached PDF preview; empty measures exported as clean grids without `Tap the measure...` placeholder text. `Turnaround Study` proved the correction loop by changing rendered `C7` to `F7`, then restoring it to `C7`. A fresh Chord Writing Test Chart accepted synthetic simulator strokes into the recognition proposal flow, surfaced `Confirm Chord`, and committed typed `C7` as a structured rendered chord; the disposable chart was reset afterward.
+- GitHub evidence: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `ffc97b6` before this closeout commit; the PR is not draft and remains blocked only by required review.
+- unresolved follow-up: recheck PR [#4](https://github.com/beniandthe/smart-chart/pull/4) after the Sprint 10 closeout push. The synthetic simulator stroke did not produce a reliable auto-read, so future handwriting-quality work should use real Pencil/user input or fixture replay rather than retuning from simulator swipe shapes.
+- next sprint candidate: choose between PR review/merge follow-through, another small product/editor polish pass, or behavior-preserving semantic candidate recipe splitting.
 
 ## Next Sprint Backlog
 
