@@ -18,6 +18,21 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertTrue(layout.header.titleFrame.midX > layout.paperFrame.minX)
     }
 
+    func testNarrowEditorWidthKeepsPaperInsideVisiblePageBounds() {
+        let chart = Chart.blank(title: "Chord Writing Test Chart", key: .cMajor, measureCount: 8)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 772, height: 1200)
+        )
+
+        XCTAssertEqual(layout.pageBounds.width, 772)
+        XCTAssertGreaterThanOrEqual(layout.paperFrame.minX, layout.pageBounds.minX)
+        XCTAssertLessThanOrEqual(layout.paperFrame.maxX, layout.pageBounds.maxX)
+        XCTAssertTrue(layout.paperFrame.contains(layout.header.titleFrame))
+        XCTAssertEqual(layout.header.titleFrame.width, layout.paperFrame.width)
+    }
+
     func testFiveLineLayoutPlacesChordTextAboveStaffWithoutImplicitNotes() throws {
         let chart = ChartSamples.straightAheadSwing
 

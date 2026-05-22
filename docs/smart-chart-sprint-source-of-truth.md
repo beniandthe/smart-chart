@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: Sprint 10 kickoff commit containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
+Active baseline commit: Sprint 10 editor-layout checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -25,8 +25,8 @@ The active app runtime implementation state is the latest Sprint 8 checkpoint. S
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
 - implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor polish audit
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
-- latest local verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint1` passed on 2026-05-21 with `310` tests, `1` skipped, `0` failures
-- latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `61caeb9`
+- latest local verification: Sprint 10 editor-layout checkpoint passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `351` tests, `1` skipped, `0` failures
+- latest GitHub verification before the Sprint 10 editor-layout checkpoint: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `192c6c0`
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -126,6 +126,15 @@ Tasks:
 - Audit the live product path: open/create chart, write chord ink, recognize, snap to structured chord event, correct/fix, and export/share.
 - Record exact breakpoints and choose one smallest polish fix from current evidence.
 - If editor/PencilKit code changes, regenerate the Xcode project and run the existing iOS simulator `SmartChart` scheme.
+
+Current Sprint 10 audit notes:
+
+- Product intent reviewed from `docs/core-design-document.md` and `docs/developer-mvp-spec.md`: Sprint 10 should protect the fast `open -> write -> recognize -> snap -> fix -> export` editor path, Apple Pencil/native PencilKit input, readable one-page charts, and PDF/export readiness.
+- App evidence: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, opening the Chord Writing Test Chart exposed a portrait editor clipping bug. The paper was wider than the visible canvas and the title rendered as a truncated `CHORD WRITING TES` / `CHORD WRITING '`.
+- Root cause: `LeadSheetPageLayoutEngine` forced a `900` point minimum page width even when the editor host was about `772` points wide. No-composer title layout also stayed capped at `62%` of the header frame.
+- Sprint 10 fix: keep the live editor responsive down to a `720` point minimum page width and allow no-composer titles to use the full paper width. This is layout-only and does not change recognition scoring, PencilKit capture, chord parsing, or commit behavior.
+- Simulator evidence after the fix: the iOS 26.4 iPad Air 11-inch (M4) app build/run showed the full `CHORD WRITING TEST CHART` title and the paper stayed inside the portrait viewport.
+- Local verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `351` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`.
 
 Acceptance criteria:
 
