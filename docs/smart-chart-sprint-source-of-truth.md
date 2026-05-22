@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: Sprint 10 editor/export checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
+Active baseline commit: Sprint 10 product/export checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -23,10 +23,10 @@ The active app runtime implementation state is the latest Sprint 8 checkpoint. S
 - runtime checkpoint: `72cd12e Close sprint eight semantic contextualizer extraction`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor polish audit
+- implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor/export polish audit
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
-- latest local verification: Sprint 10 editor/export checkpoint passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `351` tests, `1` skipped, `0` failures
-- latest GitHub verification before the Sprint 10 export checkpoint: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `977bb1c`
+- latest local verification: Sprint 10 PDF export placeholder checkpoint passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures
+- latest GitHub verification before the Sprint 10 PDF export placeholder checkpoint: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `bc8c63f`
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -139,6 +139,11 @@ Current Sprint 10 audit notes:
 - Sprint 10 export fix: top-bar export is now available in chord-entry and note-correction modes because the export action already exits to browse before running. Free-hand page ink still keeps export locked while active.
 - Simulator evidence after the export fix: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, opening the Chord Writing Test Chart in `Chord` mode showed the export/share icon enabled; tapping it reached the expected Pro upgrade sheet in the free-plan state.
 - Local verification after the export fix: full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `351` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`.
+- GitHub evidence before the PDF placeholder fix: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `bc8c63f`; the PR remained blocked only by required review.
+- App evidence after the export reachability fix: using Pro Preview and exporting the Chord Writing Test Chart revealed that the PDF preview still leaked the editor instruction placeholder `Tap the measure in the editor to add a hit.` into empty measures.
+- Sprint 10 PDF placeholder fix: `ChartPDFRenderer` now leaves empty measures as clean rhythm grids in exported PDFs instead of drawing editor-only instruction copy; `PDFChartExporterTests` now checks exported PDF text with PDFKit so the placeholder cannot regress.
+- Simulator evidence after the PDF placeholder fix: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, exporting the fresh Chord Writing Test Chart reached the PDF preview and the visible/accessibility text contained the title, page, measure, and beat labels without the old `Tap the measure...` placeholder.
+- Local verification after the PDF placeholder fix: full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `352` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`; `git diff --check` passed.
 
 Acceptance criteria:
 
