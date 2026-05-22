@@ -107,7 +107,7 @@ struct EditorView: View {
                         Label(exportButtonTitle, systemImage: "square.and.arrow.up")
                     }
                 }
-                .disabled(isExporting || canvasMode.locksDocumentActions)
+                .disabled(isExporting || !chart.hasCompletedInitialSetup || !canvasMode.allowsTopBarExport)
             }
         }
         .sheet(item: $activeSheet) { sheet in

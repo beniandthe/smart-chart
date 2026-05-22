@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: Sprint 10 editor-layout checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
+Active baseline commit: Sprint 10 editor/export checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -25,8 +25,8 @@ The active app runtime implementation state is the latest Sprint 8 checkpoint. S
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
 - implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor polish audit
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
-- latest local verification: Sprint 10 editor-layout checkpoint passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `351` tests, `1` skipped, `0` failures
-- latest GitHub verification before the Sprint 10 editor-layout checkpoint: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `192c6c0`
+- latest local verification: Sprint 10 editor/export checkpoint passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `351` tests, `1` skipped, `0` failures
+- latest GitHub verification before the Sprint 10 export checkpoint: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `977bb1c`
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -135,6 +135,10 @@ Current Sprint 10 audit notes:
 - Sprint 10 fix: keep the live editor responsive down to a `720` point minimum page width and allow no-composer titles to use the full paper width. This is layout-only and does not change recognition scoring, PencilKit capture, chord parsing, or commit behavior.
 - Simulator evidence after the fix: the iOS 26.4 iPad Air 11-inch (M4) app build/run showed the full `CHORD WRITING TEST CHART` title and the paper stayed inside the portrait viewport.
 - Local verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `351` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`.
+- App evidence after the first fix: the chord-writing loop opened directly into `Chord` mode as intended, but the top-bar export/share control was disabled while chord writing was active. That blocked the `write -> recognize -> snap -> fix -> export` path unless the user knew to toggle out of the mode first.
+- Sprint 10 export fix: top-bar export is now available in chord-entry and note-correction modes because the export action already exits to browse before running. Free-hand page ink still keeps export locked while active.
+- Simulator evidence after the export fix: on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator, opening the Chord Writing Test Chart in `Chord` mode showed the export/share icon enabled; tapping it reached the expected Pro upgrade sheet in the free-plan state.
+- Local verification after the export fix: full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` passed with `311` tests, `1` skipped, `0` failures; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `351` tests, `1` skipped, `0` failures using `OTHER_CODE_SIGN_FLAGS=--strip-disallowed-xattrs`.
 
 Acceptance criteria:
 
