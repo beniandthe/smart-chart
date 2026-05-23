@@ -1,9 +1,9 @@
 # Smart Chart Post-Merge App Audit
 
-Status: draft in progress
+Status: complete; Sprint 13-14 follow-through complete
 Date: 2026-05-23
 Branch: `main`
-Baseline: `1e4ef82 Open sprint twelve post merge audit`
+Baseline: `31f1dde Start sprint twelve app audit`
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
 ## Purpose
@@ -26,11 +26,12 @@ SwiftUI editor shell, native `PKCanvasView` ink capture, recovered chord
 recognition pipeline, compendium/parser validation, structured `ChordEvent`
 commit, fast correction, and native PDF export.
 
-The tracked app is aligned enough to move forward, but Sprint 12 should not be
-treated as done until the local duplicate test files are either intentionally
-cleaned or explicitly ignored and a live app smoke pass is completed from
-`main`. The largest risks are now maintenance and clarity risks, not obvious
-runtime detours:
+The tracked app is aligned enough to move forward. The local duplicate test
+files found during the audit were removed after explicit user approval, local
+verification is clean again, and a fresh simulator smoke pass from `main`
+confirmed the main product path through library open, chord chart open, chord
+mode, export, and PDF preview. The largest risks are now maintenance and clarity
+risks, not obvious runtime detours:
 
 - Recognition is source-of-truth aligned, but several files are still large and
   carry family-specific repairs that are hard to audit quickly.
@@ -39,30 +40,38 @@ runtime detours:
   orchestration surfaces.
 - Debug/audit tooling is mostly separated from live behavior, but the project
   still needs a clean "what runs by default" map for future work.
-- The local worktree has untracked duplicate test files named `* 2.swift`.
-  They are byte-identical to tracked files but still break local SwiftPM test
-  discovery because SwiftPM compiles them as extra sources. They should be
-  cleaned later only with explicit approval.
-- Documentation authority is much better than before, but `README.md` still
-  lists some older docs under active authority that the sprint source of truth
-  treats as subordinate or historical.
+- The local `* 2.swift` duplicate test files were workspace drift, not tracked
+  app state. They are now gone after explicit cleanup approval.
+- Documentation authority is much better than before; `README.md` now points to
+  the living sprint doc and this audit as the current implementation authority.
 
 ## Evidence Snapshot
 
 - PR #4 merged into `main` as `1b792df`.
 - Sprint 12 kickoff commit is `1e4ef82`.
+- Sprint 12 audit draft commit is `31f1dde`.
 - GitHub checks on `1e4ef82`: SwiftPM tests, iOS simulator tests, and Analyze
   Swift all completed successfully.
-- Local `git status --short --branch` is on `main...origin/main` with only
-  untracked duplicate `SmartChartTests/Recognition/* 2.swift` files.
-- Duplicate local test files inspected so far are byte-identical to their
-  tracked counterparts.
-- Local `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint12` currently
-  fails because those untracked duplicate files redeclare test types such as
-  `InkFixture`, `InkFixtureLoader`, and multiple `XCTestCase` classes.
+- GitHub checks on `31f1dde`: SwiftPM tests, iOS simulator tests, and Analyze
+  Swift all completed successfully.
+- `14` local duplicate `SmartChartTests/Recognition/* 2.swift` files were
+  removed after explicit user approval. They were byte-identical to tracked
+  counterparts but broke SwiftPM test discovery as extra sources.
+- `find SmartChartTests/Recognition -maxdepth 1 -name '* 2.swift' -print`
+  now returns no files.
+- Local `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint14` passed
+  with `311` tests, `1` skipped, `0` failures after cleanup and Sprint 14's
+  bridge refactor.
 - `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py
   scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py`
   passed locally.
+- `xcodegen generate` completed.
+- iOS simulator `SmartChart` scheme passed on iPad Air 11-inch (M4), iOS
+  26.4.1, with `352` passed, `1` skipped, `0` failed.
+- Live simulator smoke launched `Smart Chart`, opened `Chord Writing Test
+  Chart`, entered chord mode, opened export from the editor, and reached PDF
+  preview/share. It also opened `Turnaround Study` and verified rendered chord
+  selection affordance.
 - Fixture corpus count: `645` JSON files under `SmartChartTests/Fixtures/Ink`,
   about `6.7M`.
 
@@ -356,14 +365,10 @@ Debug/simulator/tooling:
 
 Immediate local drift:
 
-- The worktree contains untracked duplicate files under
-  `SmartChartTests/Recognition` with names ending in ` 2.swift`.
-- There are `14` duplicate files.
-- All inspected duplicates are byte-identical to tracked files.
-- Local SwiftPM verification fails until these duplicates are removed, moved, or
-  excluded because they redeclare test helpers and test classes.
-- Do not clean these in Sprint 12 without explicit approval; record them as
-  local workspace drift first.
+- The untracked duplicate files under `SmartChartTests/Recognition` with names
+  ending in ` 2.swift` were removed after explicit user approval.
+- No duplicate `* 2.swift` files remain in `SmartChartTests/Recognition`.
+- Local SwiftPM verification is clean again.
 
 Tracked bloat/complexity:
 
@@ -372,8 +377,7 @@ Tracked bloat/complexity:
   future behavior-preserving splits.
 - `EditorView.swift` and `LeadSheetCanvasHostView.swift` remain broad
   coordination surfaces.
-- README source-of-truth wording should be reconciled with the living sprint doc
-  after this audit, because README still lists several older docs as active.
+- README source-of-truth wording has been reconciled with the living sprint doc.
 
 ## Verification Status
 
@@ -381,52 +385,62 @@ Tracked GitHub state:
 
 - `1e4ef82` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on
   GitHub.
+- `31f1dde` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on
+  GitHub.
 
 Local workspace state:
 
+- `find SmartChartTests/Recognition -maxdepth 1 -name '* 2.swift' -print`
+  returns no duplicate files.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint14` passed with
+  `311` tests, `1` skipped, `0` failures.
 - `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py
   scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py`
   passed.
-- `git diff --check -- docs/smart-chart-post-merge-app-audit-2026-05-23.md`
+- `xcodegen generate` completed.
+- iOS simulator `SmartChart` scheme passed with `352` tests, `1` skipped, `0`
+  failures on iPad Air 11-inch (M4), iOS 26.4.1.
+- `git diff --check`
   passed.
-- `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint12` failed because
-  untracked duplicate `* 2.swift` files under `SmartChartTests/Recognition` are
-  compiled by SwiftPM and redeclare existing symbols.
 
 Implication:
 
 - The remote tracked project is green.
-- The local workspace is not verification-clean until the duplicate files are
-  handled.
-- XcodeGen/iOS local verification should wait until the duplicate-file decision
-  is made, because `project.yml` includes `SmartChartTests` by directory.
+- The local workspace is verification-clean again.
+- The first editor boundary cleanup is behavior-preserving and covered by both
+  SwiftPM and iOS simulator verification.
 
 ## Recommended Next Sprints
 
-### Sprint 13 Candidate: Local Hygiene And Product Smoke
+### Sprint 13: Local Hygiene And Product Smoke
+
+Status: complete.
 
 Goal: prove the merged `main` app path live and decide what to do with local
 duplicate files.
 
 Acceptance criteria:
 
-- Fresh simulator smoke covers open, create/open chart, chord mode, recognition
-  proposal or correction fallback, correction, export, and PDF preview.
-- Local duplicate `* 2.swift` files are either explicitly removed or explicitly
-  ignored with a documented reason.
-- Local SwiftPM verification passes again after the duplicate-file decision.
+- Fresh simulator smoke covered app launch, library open, opening an existing
+  chord chart, chord mode, export, PDF preview/share, and rendered chord
+  selection affordance. Correction behavior remains covered by the automated
+  chart editing and iOS simulator suites.
+- Local duplicate `* 2.swift` files were explicitly removed.
+- Local SwiftPM verification passes again after the duplicate-file cleanup.
 - No recognition retuning.
 
-### Sprint 14 Candidate: Editor Surface Boundary Cleanup
+### Sprint 14: Editor Surface Boundary Cleanup
+
+Status: complete.
 
 Goal: reduce editor coordination risk without changing behavior.
 
 Acceptance criteria:
 
-- Identify one small behavior-preserving extraction from `EditorView.swift` or
-  `LeadSheetCanvasHostView.swift`.
-- Preserve native `PKCanvasView` feel and chord ink lifecycle.
-- Run iOS simulator tests.
+- Extracted duplicate `LeadSheetCanvasHostView` SwiftUI-to-UIKit configuration
+  into one private `configure(_:context:)` helper.
+- Preserved native `PKCanvasView` feel and chord ink lifecycle.
+- Ran SwiftPM tests and iOS simulator tests.
 
 ### Sprint 15 Candidate: Recognition Maintenance Split
 
@@ -440,11 +454,8 @@ Acceptance criteria:
 - Run focused recognition tests, full SwiftPM tests, scripts py-compile, and
   iOS simulator tests if any editor-facing API changes.
 
-## Remaining Sprint 12 Work
+## Sprint 12 Closeout State
 
-- Get explicit cleanup/ignore direction for the local duplicate test files, or
-  leave Sprint 12 marked with local verification blocked by workspace drift.
-- Run the Sprint 12 verification commands from the source-of-truth document.
-- Run or explicitly defer a live simulator smoke pass from `main`.
-- Link this audit from `docs/smart-chart-sprint-source-of-truth.md`.
-- Close Sprint 12 with final evidence and next-sprint selection.
+- Sprint 12 is closed in the living source-of-truth document.
+- Sprint 13 and Sprint 14 follow-through are complete.
+- Sprint 15 should not begin until the user gives the next priority input.

@@ -26,11 +26,11 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, and PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge are complete; Sprint 12 post-merge app audit active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, and Sprint 14 editor boundary cleanup are complete; awaiting Sprint 15 user input
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
-- latest local verification: Sprint 10 closeout passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures; live simulator audits covered open, chord mode, correction, export, PDF preview, and a synthetic-stroke chord confirmation/structured commit path
-- latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the remaining review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- latest local verification: Sprint 14 passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint14` on 2026-05-23 with `311` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed on the iOS 26.4.1 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures; live simulator smoke covered app launch, library open, chord chart open, chord mode, export, PDF preview/share, and rendered chord selection affordance
+- latest GitHub verification: main commit `31f1dde Start sprint twelve app audit` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-23; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -48,7 +48,8 @@ Known drift after Sprint 8:
 - `646` ink fixtures remain default-on in the regression path; decoded fixture data is now cached inside the test loader to avoid repeated file-system churn.
 - Full critical/full fixture tiering is deferred unless CI runtime or local loop cost becomes a real blocker.
 - PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merged the recovery branch into `main`; it is no longer the active review surface.
-- No tracked cache/raster/direct-ink detour files remain in the current tree; remaining bloat is inside the current recognition path.
+- The local duplicate `SmartChartTests/Recognition/* 2.swift` files found during Sprint 12 were removed after explicit approval; no duplicate files remain in that directory.
+- No tracked cache/raster/direct-ink detour files remain in the current tree; remaining bloat is inside the current recognition path and broad editor surfaces.
 
 ## Product North Star
 
@@ -111,65 +112,31 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 12: Post-Merge App Audit
+### Sprint 15: User Decision Point
 
-Status: active.
+Status: waiting for user input.
 
-Goal: make sure the merged app, architecture, and future plan are aligned before starting more implementation.
+Goal: choose the next product or maintenance sprint after the completed Sprint 12-14 app audit and cleanup pass.
 
-Primary deliverable:
+Current state:
 
-- Create `docs/smart-chart-post-merge-app-audit-2026-05-23.md` from `main` as the written and visual audit artifact explaining the current app architecture, live user workflow, major systems, authority boundaries, bloat/dead-path risks, and future sprint options. The artifact exists and is currently draft-in-progress.
+- Sprint 12 produced the written and visual post-merge app audit.
+- Sprint 13 removed approved local duplicate test drift and verified the live product path.
+- Sprint 14 made the first behavior-preserving editor boundary cleanup by consolidating `LeadSheetCanvasHostView` bridge configuration.
 
-Audit scope:
+Candidate directions to discuss:
 
-- Product workflow: `open -> write -> recognize -> snap -> fix -> export`.
-- App shell and navigation: app root, library, editor entry points, chart persistence, sample/test chart flows.
-- Editor system: canvas modes, `PKCanvasView` ownership, chord ink lifecycle, correction loop, export reachability, PDF preview/export.
-- Recognition system: adapter, clustering, glyph recognition, candidate composition, compendium/parser validation, policy/trust, OCR sidecar, ledger diagnostics, fixture/audit tooling.
-- Data model and persistence: `Chart`, measures, chord events, rhythm mapping, source ink storage, repository behavior.
-- Test and CI surface: SwiftPM tests, iOS simulator tests, fixture corpus, audit scripts, duplicated/untracked local files.
-- Documentation authority: this file, core design document, active audit docs, stale historical docs.
+- Recognition maintenance split: choose semantic candidate recipes, stroke clustering passes, or glyph-shape gates; move code only, no score retuning.
+- Real-input handwriting validation: use real Pencil/user input or fixture replay before recognition quality changes.
+- Editor/product polish: continue trimming broad editor surfaces or improve a visible workflow gap found during live smoke.
+- Persistence/app shell polish: decide whether placeholder Workspace/Settings and prototype entitlement toggles remain v1 surface area.
 
-Visual deliverables:
-
-- Current whole-app architecture diagram.
-- Chord recognition pipeline diagram.
-- User workflow/state diagram for chord writing, confirmation, correction, and export.
-- Authority/boundary diagram showing which layers may validate, suggest, render, or only diagnose.
-
-Written feedback deliverables:
-
-- What is aligned and should stay.
-- What is confusing, bloated, duplicated, or stale.
-- What is live runtime behavior vs debug/audit/tooling behavior.
-- What should be deferred, retired, or split later.
-- Recommended Sprint 13-15 candidates with acceptance criteria.
-
-Non-goals:
+Non-goals until the user chooses Sprint 15:
 
 - No recognition score retuning.
 - No parser/compendium behavior changes.
-- No editor behavior changes unless the audit finds a critical breakage that blocks the audit itself.
-- No fixture pruning, corpus tiering, or file deletion without a separate follow-up decision.
-- No direct changes to the current chord ink lifecycle rule; rendered chord still clears the chord ink pass.
-
-Verification plan:
-
-- Inspect repo docs and current `main` implementation.
-- Run `git status --short --branch` and account for untracked/dirty files separately from tracked app state.
-- Run `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint12`.
-- Run `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py`.
-- Run `git diff --check`.
-- If simulator/app verification is needed for audit confidence, regenerate the Xcode project with `xcodegen generate` and run the iOS simulator `SmartChart` scheme.
-
-Acceptance criteria:
-
-- Sprint 12 produces a new audit artifact linked from this source-of-truth document.
-- The audit includes written findings and Mermaid visual diagrams.
-- The audit separates live app behavior from debug/audit/tooling paths.
-- The audit explicitly identifies architecture risks, stale paths, local untracked/duplicate files, and next-sprint recommendations.
-- No runtime behavior changes are made unless explicitly approved after the audit.
+- No fixture pruning or corpus tiering.
+- No direct change to the current chord ink lifecycle rule; rendered chord still clears the chord ink pass.
 
 ## Completed Sprints Log
 
@@ -288,14 +255,43 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: no PR review blocker remains. Future work should start from `main`, not `codex/symbol-ledger-recognition`.
 - next sprint candidate: choose between a post-merge product/app audit, another small editor polish pass, behavior-preserving semantic candidate recipe splitting, or real-input handwriting validation.
 
+### Sprint 12: Post-Merge App Audit
+
+- status: complete; final closeout commit is the commit containing this entry
+- commit range: `1e4ef82 Open sprint twelve post merge audit` through the Sprint 12 closeout commit containing this entry
+- summary: Produced `docs/smart-chart-post-merge-app-audit-2026-05-23.md` as the written and visual post-merge app/architecture audit. The audit maps the whole app, app shell/persistence, user workflow, chord recognition pipeline, editor/export system, authority boundaries, live runtime paths, debug/tooling paths, local drift, bloat risks, and Sprint 13-15 recommendations.
+- tests and evidence: main commit `31f1dde Start sprint twelve app audit` had SwiftPM tests, iOS simulator tests, and Analyze Swift passing on GitHub. Local audit verification initially found `14` untracked duplicate `SmartChartTests/Recognition/* 2.swift` files that were byte-identical to tracked tests but broke SwiftPM discovery.
+- unresolved follow-up: the duplicate files required explicit cleanup approval before local verification could be clean again; Sprint 13 handled that approved cleanup and live smoke.
+- next sprint candidate: Sprint 13 local hygiene and product smoke.
+
+### Sprint 13: Local Hygiene And Product Smoke
+
+- status: complete; final closeout commit is the commit containing this entry
+- commit range: post-`31f1dde` cleanup through the Sprint 13 closeout commit containing this entry
+- summary: Removed the `14` untracked duplicate `SmartChartTests/Recognition/* 2.swift` files after explicit user approval and proved the merged app path from `main`. No tracked fixture corpus, recognition score, parser, compendium, or chord ink lifecycle behavior changed.
+- tests and evidence: `find SmartChartTests/Recognition -maxdepth 1 -name '* 2.swift' -print` returned no files; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint12` passed with `311` tests, `1` skipped, `0` failures after duplicate cleanup; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `352` tests, `1` skipped, `0` failures on iPad Air 11-inch (M4), iOS 26.4.1.
+- live app evidence: launched `Smart Chart`, verified the Projects library, opened `Chord Writing Test Chart`, entered chord mode, opened export from the editor, reached PDF preview/share, opened `Turnaround Study`, and verified rendered chord selection affordance. Correction behavior remains covered by automated chart editing and iOS simulator tests; no fragile coordinate-only correction edit was forced during smoke.
+- unresolved follow-up: the library still exposes prototype debug/test-chart surface in debug/simulator builds and Workspace/Settings remain placeholder app-shell decisions.
+- next sprint candidate: Sprint 14 editor surface boundary cleanup.
+
+### Sprint 14: Editor Surface Boundary Cleanup
+
+- status: complete; final closeout commit is the commit containing this entry
+- commit range: post-Sprint 13 cleanup through the Sprint 14 closeout commit containing this entry
+- summary: Reduced duplicated bridge coordination in `LeadSheetCanvasHostView` by extracting the repeated SwiftUI-to-UIKit property and callback wiring into one private `configure(_:context:)` helper. Native `PKCanvasView` behavior, chord recognition, chord ink lifecycle, placement, correction, and export behavior were unchanged.
+- tests and evidence: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint14` passed with `311` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed with `352` tests, `1` skipped, `0` failures on iPad Air 11-inch (M4), iOS 26.4.1; `git diff --check` passed.
+- unresolved follow-up: `EditorView.swift` and `LeadSheetCanvasHostView.swift` remain broad surfaces; future work should continue with one small behavior-preserving extraction at a time.
+- next sprint candidate: Sprint 15 decision point for user input.
+
 ## Next Sprint Backlog
 
-Discuss and choose one item after Sprint 12 is complete:
+Discuss and choose one item for Sprint 15:
 
 - Split semantic candidate recipes into smaller behavior-preserving files only if the review surface still feels too large.
 - Continue product/editor polish based on the Sprint 10 audit findings.
 - Validate handwriting quality with real Pencil/user input or fixture replay before any recognition retuning.
 - Revisit fixture tiering only if CI runtime or local loop cost becomes a real blocker.
+- Decide whether placeholder Workspace/Settings and prototype entitlement toggles stay in v1 or become later-sprint cleanup.
 
 ## Retired Or Stale Docs
 

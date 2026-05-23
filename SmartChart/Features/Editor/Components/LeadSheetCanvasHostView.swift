@@ -26,6 +26,15 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> LeadSheetCanvasUIKitView {
         let view = LeadSheetCanvasUIKitView()
+        configure(view, context: context)
+        return view
+    }
+
+    func updateUIView(_ uiView: LeadSheetCanvasUIKitView, context: Context) {
+        configure(uiView, context: context)
+    }
+
+    private func configure(_ view: LeadSheetCanvasUIKitView, context: Context) {
         view.chart = chart
         view.selectedMeasureID = selectedMeasureID
         view.selectedNoteSelection = selectedNoteSelection
@@ -45,29 +54,6 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         view.onRhythmicNotationValidationError = onRhythmicNotationValidationError
         view.onChordInkRecognitionProposal = onChordInkRecognitionProposal
         view.onChordCorrectionRequested = onChordCorrectionRequested
-        return view
-    }
-
-    func updateUIView(_ uiView: LeadSheetCanvasUIKitView, context: Context) {
-        uiView.chart = chart
-        uiView.selectedMeasureID = selectedMeasureID
-        uiView.selectedNoteSelection = selectedNoteSelection
-        uiView.interactionMode = interactionMode
-        uiView.onMeasureSelectionChanged = { measureID in
-            context.coordinator.selectedMeasureID.wrappedValue = measureID
-        }
-        uiView.onNoteSelectionChanged = { selection in
-            context.coordinator.selectedNoteSelection.wrappedValue = selection
-            onNoteSelectionChanged?(selection)
-        }
-        uiView.onChartChanged = { updatedChart in
-            context.coordinator.chart.wrappedValue = updatedChart
-        }
-        uiView.onTimeSignatureTargetRequested = onTimeSignatureTargetRequested
-        uiView.onRhythmicNotationProposal = onRhythmicNotationProposal
-        uiView.onRhythmicNotationValidationError = onRhythmicNotationValidationError
-        uiView.onChordInkRecognitionProposal = onChordInkRecognitionProposal
-        uiView.onChordCorrectionRequested = onChordCorrectionRequested
     }
 
     final class Coordinator {
