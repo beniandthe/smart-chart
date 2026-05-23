@@ -4,7 +4,7 @@ Status: active living sprint document
 Created: 2026-05-20
 Repo: `beniandthe/smart-chart`
 Active branch: `codex/symbol-ledger-recognition`
-Active baseline commit: Sprint 10 closeout checkpoint containing this entry; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
+Active baseline commit: `c76a356 Close sprint ten product editor audit`; runtime checkpoint is `72cd12e Close sprint eight semantic contextualizer extraction`
 Trusted checkpoint reference: `c60bb46 Polish altered chord recognition trust`
 
 ## Purpose
@@ -23,10 +23,10 @@ The active app runtime implementation state is the latest Sprint 8 checkpoint. S
 - runtime checkpoint: `72cd12e Close sprint eight semantic contextualizer extraction`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor/export polish audit closed; Sprint 11 pending selection
+- implementation state: Sprint 8 semantic glyph-contextualizer extraction; Sprint 9 merge-readiness documentation and PR review prep; Sprint 10 product/editor/export polish audit closed; Sprint 11 PR review follow-through active
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - latest local verification: Sprint 10 closeout passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures; live simulator audits covered open, chord mode, correction, export, PDF preview, and a synthetic-stroke chord confirmation/structured commit path
-- latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on Sprint 10 correction-audit commit `ffc97b6`; the PR is not draft and remains blocked only by required review
+- latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on Sprint 10 closeout commit `c76a356`; the PR is not draft and remains blocked only by required review
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -61,6 +61,7 @@ Product rules:
 - Recognition proposes; structured chart objects decide.
 - Correction speed matters more than perfect recognition.
 - Raw ink should support reinterpretation, but the chart must not depend on raw ink alone.
+- Current chord-entry rule: accepting/rendering a chord consumes the chord-writing pass and clears the live chord ink layer, including other unrendered strokes from that pass. Do not preserve leftover chord ink after commit unless a future product sprint explicitly changes the writing workflow.
 
 ## Source-Of-Truth Pipeline
 
@@ -101,15 +102,29 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 - Raw OCR text must never render or appear as a trusted suggestion unless it normalizes through the compendium.
 - `ChordInkSymbolLedger` may explain or audit a result, but it must not auto-render a different answer on its own.
 - Recognition must not own beat placement. The editor/layout layer decides where a structured `ChordEvent` lands.
+- The editor owns chord ink lifecycle. Under the current product flow, a committed `ChordEvent` clears the chord ink layer instead of carrying forward unprocessed chord strokes.
 - Native `PKCanvasView` stays the writing renderer unless a future sprint explicitly proves a better native-feeling path.
 
 ## Active Sprint
 
-### Sprint 11: Pending Selection
+### Sprint 11: PR Review Follow-Through
 
-Status: pending discussion.
+Status: active.
 
-Sprint 10 is complete and recorded below. Do not start a new recognition or editor sprint from memory alone; choose the next sprint from the backlog after reviewing PR [#4](https://github.com/beniandthe/smart-chart/pull/4), current branch state, and the user priority at that time.
+Goal: clear the remaining PR review ambiguity without changing recovered runtime behavior.
+
+Tasks:
+
+- Record the product decision that accepting/rendering a chord consumes the current chord-writing pass and clears the live chord ink layer.
+- Treat the unresolved PR [#4](https://github.com/beniandthe/smart-chart/pull/4) review suggestion to preserve unconsumed chord ink as intentionally out of scope for the current product flow.
+- Do not change `EditorView` commit behavior to carry forward leftover chord ink in Sprint 11.
+- Do not post to or resolve GitHub review threads unless the user explicitly approves that GitHub write.
+
+Acceptance criteria:
+
+- This source-of-truth doc states the chord ink lifecycle rule in Product North Star and Authority Rules.
+- `git diff --check` passes for the doc update.
+- Any eventual PR review response says the clear-after-render behavior is intentional for now.
 
 ## Completed Sprints Log
 
