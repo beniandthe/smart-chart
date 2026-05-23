@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, and PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge are complete; Sprint 12 pending selection
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, and PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge are complete; Sprint 12 post-merge app audit active
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - latest local verification: Sprint 10 closeout passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint10` on 2026-05-22 with `311` tests, `1` skipped, `0` failures; the iOS simulator `SmartChart` scheme passed on the explicit iOS 26.4 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures; live simulator audits covered open, chord mode, correction, export, PDF preview, and a synthetic-stroke chord confirmation/structured commit path
 - latest GitHub verification: PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the remaining review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
@@ -110,11 +110,65 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 12: Pending Selection
+### Sprint 12: Post-Merge App Audit
 
-Status: pending discussion.
+Status: active.
 
-Sprints 1-11 are complete and PR [#4](https://github.com/beniandthe/smart-chart/pull/4) is merged. Do not start a new recognition or editor sprint from memory alone; choose the next sprint from the backlog after reviewing `main`, the current app state, and the user priority at that time.
+Goal: make sure the merged app, architecture, and future plan are aligned before starting more implementation.
+
+Primary deliverable:
+
+- Create `docs/smart-chart-post-merge-app-audit-2026-05-23.md` from `main` as the written and visual audit artifact explaining the current app architecture, live user workflow, major systems, authority boundaries, bloat/dead-path risks, and future sprint options.
+
+Audit scope:
+
+- Product workflow: `open -> write -> recognize -> snap -> fix -> export`.
+- App shell and navigation: app root, library, editor entry points, chart persistence, sample/test chart flows.
+- Editor system: canvas modes, `PKCanvasView` ownership, chord ink lifecycle, correction loop, export reachability, PDF preview/export.
+- Recognition system: adapter, clustering, glyph recognition, candidate composition, compendium/parser validation, policy/trust, OCR sidecar, ledger diagnostics, fixture/audit tooling.
+- Data model and persistence: `Chart`, measures, chord events, rhythm mapping, source ink storage, repository behavior.
+- Test and CI surface: SwiftPM tests, iOS simulator tests, fixture corpus, audit scripts, duplicated/untracked local files.
+- Documentation authority: this file, core design document, active audit docs, stale historical docs.
+
+Visual deliverables:
+
+- Current whole-app architecture diagram.
+- Chord recognition pipeline diagram.
+- User workflow/state diagram for chord writing, confirmation, correction, and export.
+- Authority/boundary diagram showing which layers may validate, suggest, render, or only diagnose.
+
+Written feedback deliverables:
+
+- What is aligned and should stay.
+- What is confusing, bloated, duplicated, or stale.
+- What is live runtime behavior vs debug/audit/tooling behavior.
+- What should be deferred, retired, or split later.
+- Recommended Sprint 13-15 candidates with acceptance criteria.
+
+Non-goals:
+
+- No recognition score retuning.
+- No parser/compendium behavior changes.
+- No editor behavior changes unless the audit finds a critical breakage that blocks the audit itself.
+- No fixture pruning, corpus tiering, or file deletion without a separate follow-up decision.
+- No direct changes to the current chord ink lifecycle rule; rendered chord still clears the chord ink pass.
+
+Verification plan:
+
+- Inspect repo docs and current `main` implementation.
+- Run `git status --short --branch` and account for untracked/dirty files separately from tracked app state.
+- Run `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint12`.
+- Run `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py`.
+- Run `git diff --check`.
+- If simulator/app verification is needed for audit confidence, regenerate the Xcode project with `xcodegen generate` and run the iOS simulator `SmartChart` scheme.
+
+Acceptance criteria:
+
+- Sprint 12 produces a new audit artifact linked from this source-of-truth document.
+- The audit includes written findings and Mermaid visual diagrams.
+- The audit separates live app behavior from debug/audit/tooling paths.
+- The audit explicitly identifies architecture risks, stale paths, local untracked/duplicate files, and next-sprint recommendations.
+- No runtime behavior changes are made unless explicitly approved after the audit.
 
 ## Completed Sprints Log
 
@@ -235,9 +289,8 @@ Append one entry here after each sprint completes. Each entry must include:
 
 ## Next Sprint Backlog
 
-Discuss and choose one item after Sprint 11 is complete:
+Discuss and choose one item after Sprint 12 is complete:
 
-- Run a post-merge product/app audit from `main`, including real simulator launch and core `open -> write -> recognize -> snap -> fix -> export` smoke checks.
 - Split semantic candidate recipes into smaller behavior-preserving files only if the review surface still feels too large.
 - Continue product/editor polish based on the Sprint 10 audit findings.
 - Validate handwriting quality with real Pencil/user input or fixture replay before any recognition retuning.
