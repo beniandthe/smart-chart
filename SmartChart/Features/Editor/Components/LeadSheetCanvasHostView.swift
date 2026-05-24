@@ -902,7 +902,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 primaryDecision: primaryDecision
             ),
                let ocrCandidateProvider,
-               let ocrImage = self?.chordOCRImage(for: drawingForOCR) {
+               self != nil,
+               let ocrImage = LeadSheetChordInkImageRenderer.ocrImage(for: drawingForOCR) {
                 let ocrStartedAt = Date()
                 result.ocrCandidates = ocrCandidateProvider.recognizeCandidates(in: ocrImage)
                 result.metrics.ocrMilliseconds = Date().timeIntervalSince(ocrStartedAt) * 1_000
@@ -985,40 +986,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
     private func chordInkRecognitionIdleDelay(for _: PKDrawing) -> TimeInterval {
         chordInkIdleDelay
-    }
-
-    private func inkRenderBounds(for drawing: PKDrawing) -> CGRect {
-        drawing.strokes.reduce(CGRect.null) { partialBounds, stroke in
-            let strokeBounds = stroke.renderBounds
-            guard !strokeBounds.isNull else {
-                return partialBounds
-            }
-
-            return partialBounds.isNull ? strokeBounds : partialBounds.union(strokeBounds)
-        }
-    }
-
-    private func chordOCRImage(for drawing: PKDrawing) -> CGImage? {
-        let inkBounds = inkRenderBounds(for: drawing)
-        guard !inkBounds.isNull,
-              inkBounds.width > 1,
-              inkBounds.height > 1 else {
-            return nil
-        }
-
-        let cropBounds = inkBounds.insetBy(dx: -18, dy: -18)
-        let inkImage = drawing.image(from: cropBounds, scale: 3)
-        let rendererFormat = UIGraphicsImageRendererFormat.default()
-        rendererFormat.opaque = true
-        rendererFormat.scale = 1
-        let renderer = UIGraphicsImageRenderer(size: inkImage.size, format: rendererFormat)
-        let image = renderer.image { context in
-            UIColor.white.setFill()
-            context.fill(CGRect(origin: .zero, size: inkImage.size))
-            inkImage.draw(in: CGRect(origin: .zero, size: inkImage.size))
-        }
-
-        return image.cgImage
     }
 
     private func logChordInkRecognitionTiming(
@@ -1160,7 +1127,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return nil
         }
 
-        let inkBounds = inkRenderBounds(for: drawing)
+        let inkBounds = LeadSheetChordInkImageRenderer.renderBounds(for: drawing)
         guard !inkBounds.isNull,
               inkBounds.width >= 4 || inkBounds.height >= 4 else {
             return nil
