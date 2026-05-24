@@ -13,24 +13,38 @@ Each fixture should include:
 - `expectedClusterCount`: optional grouping expectation.
 - `expectedTopGlyphs`: optional first-choice glyphs once glyph recognition exists.
 
-When real iPad handwriting fails, export the strokes as a new fixture, add a
-failing test, fix the deterministic recognition layer, and keep the fixture.
+Ink fixtures are regression evidence, not training data. They should prove that
+known recognition paths stay stable, but they should not become a continuous
+sample collection loop for one writer's hand.
+
+When real iPad handwriting exposes a transferable product regression, export the
+strokes as a new fixture, add or update a failing test, fix the deterministic
+recognition layer, and keep the fixture. Do not add captured samples simply to
+increase corpus size.
 
 During app testing, the chord confirmation sheet can copy fixture JSON for the
 current chord ink. The importer names the file after the fixture `name` and
 adds a captured suffix when that seed already exists.
 
-All `.json` files in this directory are automatically loaded by the recognition,
-cluster, and glyph tests, so adding a captured fixture is enough to put it under
-the full pure Swift regression harness.
+All `.json` files in this directory remain available to the full pure Swift
+archive harness, but default recognition, cluster, and glyph tests now use a
+compact regression suite selected by `InkFixtureLoader.defaultRegressionFixtureNames`.
 
-## Runtime Policy
+## Test Policy
 
-Keep the full fixture corpus in the default SwiftPM and CI test path until the
-living sprint source of truth explicitly changes that policy. Sprint 3 caches
-the decoded corpus inside the test loader so repeated coverage tests do not
-re-read every fixture file, but it does not hide fixtures behind a smaller smoke
-set.
+Default SwiftPM and CI tests use a compact, transferable regression suite. The
+full captured handwriting archive is opt-in and should be run deliberately when
+auditing recognition drift, preparing recognition changes, or reviewing fixture
+coverage:
+
+```bash
+SMART_CHART_FULL_INK_FIXTURES=1 swift test --scratch-path /tmp/SmartChartSwiftBuild-full-ink
+```
+
+The full archive still loads through the cached test loader, so archive audits
+do not re-read every fixture file repeatedly inside one process. Captured
+handwriting count is not a product authority; compendium/parser validation and
+structured `ChordEvent` output remain the runtime authority.
 
 ## Live Capture Protocol
 

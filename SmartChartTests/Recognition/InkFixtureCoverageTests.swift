@@ -1,7 +1,7 @@
 import XCTest
 @testable import SmartChart
 
-final class InkFixtureCoverageTests: XCTestCase {
+final class InkFixtureArchiveIntegrityTests: XCTestCase {
     func testFixtureCorpusDoesNotContainExactDuplicateInkSamples() throws {
         let fixtures = try InkFixtureLoader.loadAll(file: #filePath)
         var seenFixturesByFingerprint: [InkFixture: String] = [:]
@@ -14,6 +14,15 @@ final class InkFixtureCoverageTests: XCTestCase {
                 seenFixturesByFingerprint[fingerprint] = fixture.name
             }
         }
+    }
+}
+
+final class InkFixtureCoverageTests: XCTestCase {
+    override func setUpWithError() throws {
+        try XCTSkipUnless(
+            InkFixtureLoader.shouldRunFullInkFixtureArchiveTests,
+            "Set \(InkFixtureLoader.fullInkFixtureArchiveEnvironmentVariable)=1 to run captured handwriting coverage."
+        )
     }
 
     func testCapturedFixtureCoverageProtectsRootFoundation() throws {

@@ -26,10 +26,10 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, and Sprint 14 editor boundary cleanup are complete; awaiting Sprint 15 user input
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, and Sprint 15 recognition corpus debloat are complete; awaiting Sprint 16 user input
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
-- latest local verification: Sprint 14 passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint14` on 2026-05-23 with `311` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed on the iOS 26.4.1 iPad Air 11-inch (M4) simulator with `352` tests, `1` skipped, `0` failures; live simulator smoke covered app launch, library open, chord chart open, chord mode, export, PDF preview/share, and rendered chord selection affordance
+- latest local verification: Sprint 15 passed default `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint15` on 2026-05-24 with `315` tests, `36` skipped, `0` failures; opt-in archive `SMART_CHART_FULL_INK_FIXTURES=1 swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint15-full` passed with `315` tests, `1` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `git diff --check` passed. No editor/PencilKit files changed in Sprint 15, so `xcodegen generate` and simulator scheme rerun were not required by the sprint test policy.
 - latest GitHub verification: main commit `31f1dde Start sprint twelve app audit` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-23; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -45,8 +45,8 @@ Known drift after Sprint 8:
 - `ChordInkSemanticGlyphContextualizer.swift` is intentionally a behavior-preserving move of the old contextual glyph promotion rules. Do not retune those promotions without fixture evidence.
 - `ChordInkSemanticCandidateComposer.swift` remains large; it owns semantic candidate recipes and shared suffix-shape helpers that should be split only as behavior-preserving refactors.
 - The old handwriting plan and current-architecture audit are explicitly marked historical/stale when they conflict with this file.
-- `646` ink fixtures remain default-on in the regression path; decoded fixture data is now cached inside the test loader to avoid repeated file-system churn.
-- Full critical/full fixture tiering is deferred unless CI runtime or local loop cost becomes a real blocker.
+- The full ink fixture archive remains test-only evidence, not runtime authority or user handwriting training data. Default recognition, cluster, and glyph tests now use a compact transferable regression suite; full archive/captured coverage runs are opt-in through `SMART_CHART_FULL_INK_FIXTURES=1`.
+- Fixture pruning/deletion remains deferred. Sprint 15 changes default test authority, not the archived fixture files.
 - PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merged the recovery branch into `main`; it is no longer the active review surface.
 - The local duplicate `SmartChartTests/Recognition/* 2.swift` files found during Sprint 12 were removed after explicit approval; no duplicate files remain in that directory.
 - No tracked cache/raster/direct-ink detour files remain in the current tree; remaining bloat is inside the current recognition path and broad editor surfaces.
@@ -93,7 +93,7 @@ Deferred sidecars:
 
 - Raster/classifier evidence.
 - Incremental symbol cache/session state.
-- Fixture corpus pruning or tiering.
+- Fixture corpus pruning or deletion.
 - CoreML/HOMUS expansion.
 
 ## Authority Rules
@@ -112,30 +112,31 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 15: User Decision Point
+### Sprint 16: User Decision Point
 
 Status: waiting for user input.
 
-Goal: choose the next product or maintenance sprint after the completed Sprint 12-14 app audit and cleanup pass.
+Goal: choose the next product or maintenance sprint after Sprint 15 removed the default training-style pressure from the ink fixture archive.
 
 Current state:
 
-- Sprint 12 produced the written and visual post-merge app audit.
-- Sprint 13 removed approved local duplicate test drift and verified the live product path.
-- Sprint 14 made the first behavior-preserving editor boundary cleanup by consolidating `LeadSheetCanvasHostView` bridge configuration.
+- Default recognition, cluster, and glyph tests now run a compact transferable regression suite.
+- Full captured handwriting archive and captured coverage checks remain available with `SMART_CHART_FULL_INK_FIXTURES=1`.
+- No fixture JSON files were deleted, and no recognition scoring/parser/runtime behavior changed.
 
 Candidate directions to discuss:
 
 - Recognition maintenance split: choose semantic candidate recipes, stroke clustering passes, or glyph-shape gates; move code only, no score retuning.
-- Real-input handwriting validation: use real Pencil/user input or fixture replay before recognition quality changes.
+- Real-input handwriting validation: use real Pencil/user input to test writing feel and raw input delivery before recognition quality changes.
 - Editor/product polish: continue trimming broad editor surfaces or improve a visible workflow gap found during live smoke.
 - Persistence/app shell polish: decide whether placeholder Workspace/Settings and prototype entitlement toggles remain v1 surface area.
+- Fixture archive policy: discuss archive pruning only as repository/data hygiene, not as recognition training.
 
-Non-goals until the user chooses Sprint 15:
+Non-goals until the user chooses Sprint 16:
 
 - No recognition score retuning.
 - No parser/compendium behavior changes.
-- No fixture pruning or corpus tiering.
+- No fixture deletion.
 - No direct change to the current chord ink lifecycle rule; rendered chord still clears the chord ink pass.
 
 ## Completed Sprints Log
@@ -283,14 +284,23 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: `EditorView.swift` and `LeadSheetCanvasHostView.swift` remain broad surfaces; future work should continue with one small behavior-preserving extraction at a time.
 - next sprint candidate: Sprint 15 decision point for user input.
 
+### Sprint 15: Recognition Corpus And Runtime Authority Debloat
+
+- status: complete; final closeout commit is the commit containing this entry
+- summary: Decoupled the default recognition test lane from the full captured handwriting archive. `InkFixtureLoader` now exposes a compact default regression suite plus an explicit `SMART_CHART_FULL_INK_FIXTURES=1` archive lane. Recognizer, glyph, and cluster tests use the compact suite by default while preserving full archive checks as opt-in. Captured fixture coverage tests moved behind the opt-in archive gate, and fixture docs now state that captured samples are regression evidence, not continuous training data or runtime authority.
+- tests and evidence: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint15` passed with `315` tests, `36` skipped, `0` failures; `SMART_CHART_FULL_INK_FIXTURES=1 swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint15-full` passed with `315` tests, `1` skipped, `0` failures; focused loader/recognizer/glyph/cluster/archive-integrity checks passed; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `git diff --check` passed.
+- behavior boundary: no fixture JSON files were deleted; no recognition score, parser, compendium, PencilKit, editor, chord ink lifecycle, or app runtime behavior changed.
+- unresolved follow-up: the full fixture archive still exists and may need future repository/data hygiene discussion, but it is no longer default recognition authority. The next recognition-maintenance sprint should continue to avoid score retuning until it has real-input evidence.
+- next sprint candidate: Sprint 16 decision point for user input.
+
 ## Next Sprint Backlog
 
-Discuss and choose one item for Sprint 15:
+Discuss and choose one item for Sprint 16:
 
 - Split semantic candidate recipes into smaller behavior-preserving files only if the review surface still feels too large.
 - Continue product/editor polish based on the Sprint 10 audit findings.
-- Validate handwriting quality with real Pencil/user input or fixture replay before any recognition retuning.
-- Revisit fixture tiering only if CI runtime or local loop cost becomes a real blocker.
+- Validate handwriting quality with real Pencil/user input before any recognition retuning.
+- Discuss full fixture archive pruning only as repository/data hygiene, not as recognition training.
 - Decide whether placeholder Workspace/Settings and prototype entitlement toggles stay in v1 or become later-sprint cleanup.
 
 ## Retired Or Stale Docs

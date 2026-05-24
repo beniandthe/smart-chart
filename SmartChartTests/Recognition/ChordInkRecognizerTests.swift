@@ -2,23 +2,25 @@ import XCTest
 @testable import SmartChart
 
 final class ChordInkRecognizerTests: XCTestCase {
-    private static let fixtureCorpus: Result<[InkFixture], Error> = Result {
+    private static let defaultFixtureCorpus: Result<[InkFixture], Error> = Result {
+        try InkFixtureLoader.loadDefaultRegressionFixtures(file: #filePath)
+    }
+    private static let fullArchiveFixtureCorpus: Result<[InkFixture], Error> = Result {
         try InkFixtureLoader.loadAll(file: #filePath)
     }
 
     private let recognizer = ChordInkRecognizer()
 
-    func testRecognizesEveryInkFixtureThroughPureSwiftPipeline() throws {
-        for fixture in try allFixtures() {
-            let result = recognizer.recognize(strokes: fixture.strokes)
+    func testRecognizesDefaultRegressionFixturesThroughPureSwiftPipeline() throws {
+        try assertRecognizes(fixtures: allFixtures())
+    }
 
-            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
-            XCTAssertFalse(result.rawCandidates.isEmpty, fixture.name)
-            if !fixture.allowsCompactSemanticRecognition {
-                XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
-            }
-            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
-        }
+    func testRecognizesFullInkFixtureArchiveWhenEnabled() throws {
+        try XCTSkipUnless(
+            InkFixtureLoader.shouldRunFullInkFixtureArchiveTests,
+            "Set \(InkFixtureLoader.fullInkFixtureArchiveEnvironmentVariable)=1 to run the full ink fixture archive."
+        )
+        try assertRecognizes(fixtures: fullArchiveFixtures())
     }
 
     func testRecognizesDominantFlatFiveInkFixtures() throws {
@@ -706,7 +708,24 @@ final class ChordInkRecognizerTests: XCTestCase {
     }
 
     private func allFixtures() throws -> [InkFixture] {
-        try Self.fixtureCorpus.get()
+        try Self.defaultFixtureCorpus.get()
+    }
+
+    private func fullArchiveFixtures() throws -> [InkFixture] {
+        try Self.fullArchiveFixtureCorpus.get()
+    }
+
+    private func assertRecognizes(fixtures: [InkFixture]) throws {
+        for fixture in fixtures {
+            let result = recognizer.recognize(strokes: fixture.strokes)
+
+            XCTAssertEqual(result.match?.displayText, fixture.expectedDisplayText, fixture.name)
+            XCTAssertFalse(result.rawCandidates.isEmpty, fixture.name)
+            if !fixture.allowsCompactSemanticRecognition {
+                XCTAssertEqual(result.glyphCandidates.count, fixture.expectedClusterCount, fixture.name)
+            }
+            XCTAssertGreaterThan(result.confidence, 0, fixture.name)
+        }
     }
 }
 

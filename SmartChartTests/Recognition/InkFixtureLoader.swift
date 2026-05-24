@@ -4,6 +4,37 @@ import Foundation
 typealias InkFixture = InkFixtureDocument
 
 enum InkFixtureLoader {
+    static let fullInkFixtureArchiveEnvironmentVariable = "SMART_CHART_FULL_INK_FIXTURES"
+
+    static let defaultRegressionFixtureNames = [
+        "C",
+        "Bb",
+        "FSharp",
+        "CMinor",
+        "CMinor7",
+        "Db7b9",
+        "GSlashB",
+        "C7Flat5",
+        "C7Sharp5",
+        "C7Sharp9",
+        "C7Flat13",
+        "C7Sharp11",
+        "C7alt",
+        "C7sus",
+        "CMinor6",
+        "C6Captured01",
+        "C9Captured01",
+        "CMinorMajor7"
+    ]
+
+    static var shouldRunFullInkFixtureArchiveTests: Bool {
+        guard let value = ProcessInfo.processInfo.environment[fullInkFixtureArchiveEnvironmentVariable] else {
+            return false
+        }
+
+        return ["1", "true", "yes"].contains(value.lowercased())
+    }
+
     static func load(_ name: String, file: StaticString = #filePath) throws -> InkFixture {
         let corpus = try fixtureCorpus(relativeTo: file)
         if let fixture = corpus.fixturesByFilename[name] {
@@ -21,6 +52,22 @@ enum InkFixtureLoader {
 
     static func loadAll(file: StaticString = #filePath) throws -> [InkFixture] {
         try fixtureCorpus(relativeTo: file).fixtures
+    }
+
+    static func loadDefaultRegressionFixtures(file: StaticString = #filePath) throws -> [InkFixture] {
+        let corpus = try fixtureCorpus(relativeTo: file)
+        return try defaultRegressionFixtureNames.map { fixtureName in
+            guard let fixture = corpus.fixturesByFilename[fixtureName] else {
+                let fixtureURL = fixturesDirectoryURL(relativeTo: file)
+                    .appendingPathComponent("\(fixtureName).json")
+                throw NSError(
+                    domain: NSCocoaErrorDomain,
+                    code: NSFileReadNoSuchFileError,
+                    userInfo: [NSFilePathErrorKey: fixtureURL.path]
+                )
+            }
+            return fixture
+        }
     }
 
     static func fixtureNames(file: StaticString = #filePath) throws -> [String] {

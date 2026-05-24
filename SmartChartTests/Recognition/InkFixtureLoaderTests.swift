@@ -29,4 +29,13 @@ final class InkFixtureLoaderTests: XCTestCase {
         XCTAssertTrue(Set(fixtureNames).isSuperset(of: seedFixtureNames))
         XCTAssertEqual(fixtures.map(\.name), fixtureNames)
     }
+
+    func testLoadsDefaultRegressionFixturesAsCompactSuite() throws {
+        let fixtures = try InkFixtureLoader.loadDefaultRegressionFixtures(file: #filePath)
+        let expectedDisplayTexts = Set(fixtures.map(\.expectedDisplayText))
+
+        XCTAssertEqual(fixtures.map(\.name), InkFixtureLoader.defaultRegressionFixtureNames)
+        XCTAssertLessThan(fixtures.count, try InkFixtureLoader.loadAll(file: #filePath).count)
+        XCTAssertTrue(expectedDisplayTexts.isSuperset(of: ["C", "Bb", "F#", "C-", "C-7", "Db7(b9)", "G/B"]))
+    }
 }

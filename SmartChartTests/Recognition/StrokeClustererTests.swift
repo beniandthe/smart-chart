@@ -4,8 +4,22 @@ import XCTest
 final class StrokeClustererTests: XCTestCase {
     private let clusterer = StrokeClusterer()
 
-    func testClustersPlanAcceptanceFixturesIntoGlyphSizedGroups() throws {
-        for fixture in try InkFixtureLoader.loadAll(file: #filePath) {
+    func testClustersDefaultRegressionFixturesIntoGlyphSizedGroups() throws {
+        try assertClustersIntoExpectedGlyphGroups(
+            fixtures: InkFixtureLoader.loadDefaultRegressionFixtures(file: #filePath)
+        )
+    }
+
+    func testClustersFullInkFixtureArchiveWhenEnabled() throws {
+        try XCTSkipUnless(
+            InkFixtureLoader.shouldRunFullInkFixtureArchiveTests,
+            "Set \(InkFixtureLoader.fullInkFixtureArchiveEnvironmentVariable)=1 to run the full ink fixture archive."
+        )
+        try assertClustersIntoExpectedGlyphGroups(fixtures: InkFixtureLoader.loadAll(file: #filePath))
+    }
+
+    private func assertClustersIntoExpectedGlyphGroups(fixtures: [InkFixture]) throws {
+        for fixture in fixtures {
             guard let expectedClusterCount = fixture.expectedClusterCount else {
                 continue
             }

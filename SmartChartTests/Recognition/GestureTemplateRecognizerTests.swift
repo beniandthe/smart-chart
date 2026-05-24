@@ -5,34 +5,20 @@ final class GestureTemplateRecognizerTests: XCTestCase {
     private let clusterer = StrokeClusterer()
     private let recognizer = GestureTemplateRecognizer()
 
-    func testExpectedGlyphAppearsInTopThreeForCurrentFixtures() throws {
-        let templates = ChordGlyphTemplateLibrary.initialTemplates
+    func testExpectedGlyphAppearsInTopThreeForDefaultRegressionFixtures() throws {
+        try assertExpectedGlyphAppearsInTopCandidates(
+            for: InkFixtureLoader.loadDefaultRegressionFixtures(file: #filePath)
+        )
+    }
 
-        for fixture in try InkFixtureLoader.loadAll(file: #filePath) {
-            let clusters = clusterer.cluster(fixture.strokes)
-
-            if fixture.allowsCompactSemanticRecognition {
-                continue
-            }
-
-            XCTAssertEqual(clusters.count, fixture.expectedTopGlyphs.count, fixture.name)
-
-            for (cluster, expectedGlyph) in zip(clusters, fixture.expectedTopGlyphs) {
-                if fixture.allowsComposerInjectedGlyph(expectedGlyph) {
-                    continue
-                }
-
-                let candidateLimit = fixture.recognizerCandidateLimit(for: expectedGlyph)
-                let topThree = recognizer
-                    .rankedCandidates(for: cluster, templates: templates, limit: candidateLimit)
-                    .map(\.text)
-
-                XCTAssertTrue(
-                    topThree.contains(expectedGlyph),
-                    "Expected \(expectedGlyph) in top \(candidateLimit) for \(fixture.name), got \(topThree)"
-                )
-            }
-        }
+    func testExpectedGlyphAppearsInTopThreeForFullArchiveWhenEnabled() throws {
+        try XCTSkipUnless(
+            InkFixtureLoader.shouldRunFullInkFixtureArchiveTests,
+            "Set \(InkFixtureLoader.fullInkFixtureArchiveEnvironmentVariable)=1 to run the full ink fixture archive."
+        )
+        try assertExpectedGlyphAppearsInTopCandidates(
+            for: InkFixtureLoader.loadAll(file: #filePath)
+        )
     }
 
     func testConfidenceSortsNearestTemplateFirst() throws {
@@ -164,6 +150,36 @@ final class GestureTemplateRecognizerTests: XCTestCase {
         let candidates = recognizer.rankedCandidates(for: cluster, templates: templates)
 
         XCTAssertEqual(candidates.map(\.text), ["C"])
+    }
+
+    private func assertExpectedGlyphAppearsInTopCandidates(for fixtures: [InkFixture]) throws {
+        let templates = ChordGlyphTemplateLibrary.initialTemplates
+
+        for fixture in fixtures {
+            let clusters = clusterer.cluster(fixture.strokes)
+
+            if fixture.allowsCompactSemanticRecognition {
+                continue
+            }
+
+            XCTAssertEqual(clusters.count, fixture.expectedTopGlyphs.count, fixture.name)
+
+            for (cluster, expectedGlyph) in zip(clusters, fixture.expectedTopGlyphs) {
+                if fixture.allowsComposerInjectedGlyph(expectedGlyph) {
+                    continue
+                }
+
+                let candidateLimit = fixture.recognizerCandidateLimit(for: expectedGlyph)
+                let topThree = recognizer
+                    .rankedCandidates(for: cluster, templates: templates, limit: candidateLimit)
+                    .map(\.text)
+
+                XCTAssertTrue(
+                    topThree.contains(expectedGlyph),
+                    "Expected \(expectedGlyph) in top \(candidateLimit) for \(fixture.name), got \(topThree)"
+                )
+            }
+        }
     }
 }
 
