@@ -799,7 +799,12 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func scheduleChordInkRecognition() {
-        scheduleChordInkRecognition(after: chordInkRecognitionIdleDelay(for: pageInkCanvasView.drawing))
+        scheduleChordInkRecognition(
+            after: LeadSheetChordInkRecognitionScheduling.idleDelay(
+                for: pageInkCanvasView.drawing,
+                defaultDelay: chordInkIdleDelay
+            )
+        )
     }
 
     private func scheduleChordInkRecognition(after requestedDelay: TimeInterval) {
@@ -954,20 +959,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         drawingData: Data,
         timing: ChordInkRecognitionTiming
     ) -> Bool {
-        guard chordInkContinuationGraceDrawingData != drawingData,
-              timing.requestedDelay <= chordInkIdleDelay + 0.01,
-              ChordInkContinuationGracePolicy.shouldWaitForPossibleContinuation(
-                  result: result,
-                  strokeCount: timing.strokeCount
-              ) else {
-            return false
-        }
-
-        return true
-    }
-
-    private func chordInkRecognitionIdleDelay(for _: PKDrawing) -> TimeInterval {
-        chordInkIdleDelay
+        LeadSheetChordInkRecognitionScheduling.shouldGiveContinuationGrace(
+            previousDrawingData: chordInkContinuationGraceDrawingData,
+            drawingData: drawingData,
+            timing: timing,
+            idleDelay: chordInkIdleDelay,
+            result: result
+        )
     }
 
     private func shouldFinalizeRhythmicNotation(from previousMeasureID: UUID?, to nextMeasureID: UUID?) -> Bool {
