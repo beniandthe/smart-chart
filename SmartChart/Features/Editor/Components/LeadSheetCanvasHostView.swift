@@ -428,35 +428,19 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func drawSavedPageInk() {
-        guard let pageLayout,
-              let drawingData = chart.pageHandwrittenNotationData,
-              let drawing = try? PKDrawing(data: drawingData),
-              !drawing.strokes.isEmpty else {
+        guard let pageLayout else {
             return
         }
 
-        let writingFrame = LeadSheetActiveInkScope.pageWritingFrame(for: pageLayout)
-        let image = drawing.image(
-            from: CGRect(origin: .zero, size: writingFrame.size),
-            scale: UIScreen.main.scale
-        )
-        image.draw(in: writingFrame)
+        LeadSheetSavedInkRenderer.drawPageInk(chart.pageHandwrittenNotationData, in: pageLayout)
     }
 
     private func drawSavedChordInk() {
-        guard let pageLayout,
-              let drawingData = chart.pageHandwrittenChordData,
-              let drawing = try? PKDrawing(data: drawingData),
-              !drawing.strokes.isEmpty else {
+        guard let pageLayout else {
             return
         }
 
-        let writingFrame = LeadSheetActiveInkScope.chordWritingFrame(for: pageLayout)
-        let image = drawing.image(
-            from: CGRect(origin: .zero, size: writingFrame.size),
-            scale: UIScreen.main.scale
-        )
-        image.draw(in: writingFrame)
+        LeadSheetSavedInkRenderer.drawChordInk(chart.pageHandwrittenChordData, in: pageLayout)
     }
 
     private func drawChordWritingLanes(_ pageLayout: LeadSheetPageLayout) {
@@ -519,10 +503,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func drawSavedMeasureRhythmicNotation(_ measure: LeadSheetMeasureLayout) {
-        guard let sourceMeasureID = measure.sourceMeasureID,
-              let drawingData = chart.measure(id: sourceMeasureID)?.handwrittenRhythmicNotationData,
-              let drawing = try? PKDrawing(data: drawingData),
-              !drawing.strokes.isEmpty else {
+        guard let sourceMeasureID = measure.sourceMeasureID else {
             return
         }
 
@@ -531,11 +512,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return
         }
 
-        let image = drawing.image(
-            from: CGRect(origin: .zero, size: measure.writableFrame.size),
-            scale: UIScreen.main.scale
+        LeadSheetSavedInkRenderer.drawRhythmicNotationInk(
+            chart.measure(id: sourceMeasureID)?.handwrittenRhythmicNotationData,
+            in: measure
         )
-        image.draw(in: measure.writableFrame)
     }
 
     private func selectedMeasureLayout() -> LeadSheetMeasureLayout? {
