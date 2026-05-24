@@ -852,25 +852,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         let drawingData = currentCanvasDrawingData()
-        var updatedChart = chart
-
-        switch activeInkScope {
-        case .page:
-            guard chart.pageHandwrittenNotationData != drawingData,
-                  updatedChart.setPageHandwrittenNotationDrawing(drawingData) else {
-                return
-            }
-        case .chords:
-            guard chart.pageHandwrittenChordData != drawingData,
-                  updatedChart.setPageHandwrittenChordDrawing(drawingData) else {
-                return
-            }
-        case .rhythmicMeasure(let measureID, _):
-            guard chart.measure(id: measureID)?.handwrittenRhythmicNotationData != drawingData,
-                  updatedChart.setMeasureHandwrittenRhythmicNotationDrawing(drawingData, for: measureID) else {
-                return
-            }
-        case .noteSelection:
+        guard let updatedChart = activeInkScope.chartByPersistingDrawingData(drawingData, in: chart) else {
             return
         }
 

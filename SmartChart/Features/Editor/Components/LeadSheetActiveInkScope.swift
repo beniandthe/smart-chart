@@ -68,5 +68,31 @@ enum LeadSheetActiveInkScope {
             return nil
         }
     }
+
+    func chartByPersistingDrawingData(_ drawingData: Data?, in chart: Chart) -> Chart? {
+        var updatedChart = chart
+
+        switch self {
+        case .page:
+            guard chart.pageHandwrittenNotationData != drawingData,
+                  updatedChart.setPageHandwrittenNotationDrawing(drawingData) else {
+                return nil
+            }
+        case .chords:
+            guard chart.pageHandwrittenChordData != drawingData,
+                  updatedChart.setPageHandwrittenChordDrawing(drawingData) else {
+                return nil
+            }
+        case .rhythmicMeasure(let measureID, _):
+            guard chart.measure(id: measureID)?.handwrittenRhythmicNotationData != drawingData,
+                  updatedChart.setMeasureHandwrittenRhythmicNotationDrawing(drawingData, for: measureID) else {
+                return nil
+            }
+        case .noteSelection:
+            return nil
+        }
+
+        return updatedChart
+    }
 }
 #endif
