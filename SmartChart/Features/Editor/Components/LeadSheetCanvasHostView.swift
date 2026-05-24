@@ -486,8 +486,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         for chordLayout: LeadSheetChordLayout,
         using renderer: LeadSheetNotationRenderer
     ) {
-        let editFrame = chordEditFrame(for: chordLayout)
-        let controlFrames = chordEditControlFrames(for: chordLayout)
+        let editFrame = LeadSheetChordEditOverlayGeometry.editFrame(for: chordLayout)
+        let controlFrames = LeadSheetChordEditOverlayGeometry.controlFrames(for: chordLayout)
 
         let boxPath = UIBezierPath(roundedRect: editFrame, cornerRadius: 5)
         UIColor(red: 0.88, green: 0.93, blue: 1, alpha: 0.18).setFill()
@@ -516,38 +516,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         UIColor.white.withAlphaComponent(0.95).setStroke()
         movePath.lineWidth = 1
         movePath.stroke()
-    }
-
-    private func chordEditFrame(for chordLayout: LeadSheetChordLayout) -> CGRect {
-        CGRect(
-            x: chordLayout.frame.minX - 8,
-            y: chordLayout.frame.minY + 1,
-            width: chordLayout.frame.width + 18,
-            height: 25
-        )
-    }
-
-    private func chordEditControlFrames(
-        for chordLayout: LeadSheetChordLayout
-    ) -> (delete: CGRect, move: CGRect) {
-        let editFrame = chordEditFrame(for: chordLayout)
-        let controlSize: CGFloat = 14
-        let originY = editFrame.minY - controlSize / 2
-
-        return (
-            delete: CGRect(
-                x: editFrame.minX - controlSize / 2,
-                y: originY,
-                width: controlSize,
-                height: controlSize
-            ),
-            move: CGRect(
-                x: editFrame.maxX - controlSize / 2,
-                y: originY,
-                width: controlSize,
-                height: controlSize
-            )
-        )
     }
 
     private func drawSavedMeasureRhythmicNotation(_ measure: LeadSheetMeasureLayout) {
@@ -640,42 +608,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return nil
         }
 
-        let measures = pageLayout.systems.flatMap(\.measures)
-        for measure in measures.reversed() {
-            guard let measureID = measure.sourceMeasureID else {
-                continue
-            }
-
-            for chordLayout in measure.chordLayouts.reversed() {
-                let controlFrames = chordEditControlFrames(for: chordLayout)
-                let hitInset: CGFloat = -9
-                if controlFrames.delete.insetBy(dx: hitInset, dy: hitInset).contains(location) {
-                    return ChordEditHitTarget(
-                        measureID: measureID,
-                        chordID: chordLayout.id,
-                        action: .delete
-                    )
-                }
-
-                if controlFrames.move.insetBy(dx: hitInset, dy: hitInset).contains(location) {
-                    return ChordEditHitTarget(
-                        measureID: measureID,
-                        chordID: chordLayout.id,
-                        action: .move
-                    )
-                }
-
-                if chordEditFrame(for: chordLayout).insetBy(dx: -8, dy: -8).contains(location) {
-                    return ChordEditHitTarget(
-                        measureID: measureID,
-                        chordID: chordLayout.id,
-                        action: .review
-                    )
-                }
-            }
-        }
-
-        return nil
+        return LeadSheetChordEditOverlayGeometry.hitTarget(at: location, in: pageLayout)
     }
 
     private func chordMoveTarget(at location: CGPoint) -> (measureID: UUID, fraction: Double)? {
@@ -1580,30 +1513,6 @@ private struct ActiveMeasureResizeDrag {
 
 private struct ActiveChordMoveDrag {
     var chordID: UUID
-}
-
-private struct ChordEditHitTarget {
-    enum Action {
-        case delete
-        case move
-        case review
-    }
-
-    var measureID: UUID
-    var chordID: UUID
-    var action: Action
-}
-
-private final class ChordEditHitOverlayView: UIView {
-    var containsEditableControl: ((CGPoint) -> Bool)?
-
-    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        guard !isHidden, isUserInteractionEnabled else {
-            return false
-        }
-
-        return containsEditableControl?(point) ?? false
-    }
 }
 
 private enum ActiveInkScope {
