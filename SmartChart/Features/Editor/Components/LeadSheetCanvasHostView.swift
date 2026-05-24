@@ -435,7 +435,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return
         }
 
-        let writingFrame = pageWritingFrame(for: pageLayout)
+        let writingFrame = LeadSheetActiveInkScope.pageWritingFrame(for: pageLayout)
         let image = drawing.image(
             from: CGRect(origin: .zero, size: writingFrame.size),
             scale: UIScreen.main.scale
@@ -451,7 +451,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             return
         }
 
-        let writingFrame = chordWritingFrame(for: pageLayout)
+        let writingFrame = LeadSheetActiveInkScope.chordWritingFrame(for: pageLayout)
         let image = drawing.image(
             from: CGRect(origin: .zero, size: writingFrame.size),
             scale: UIScreen.main.scale
@@ -806,7 +806,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         pageInkCanvasView.frame = activeInkScope.frame
         pageInkCanvasView.contentSize = activeInkScope.frame.size
 
-        let desiredData = drawingData(for: activeInkScope)
+        let desiredData = activeInkScope.drawingData(in: chart)
         let currentData = currentCanvasDrawingData()
         guard currentData != desiredData else {
             return
@@ -1337,56 +1337,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
     }
 
-    private func pageWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
-        pageLayout.paperFrame.insetBy(dx: 10, dy: 10)
-    }
-
-    private func chordWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
-        pageLayout.paperFrame.insetBy(dx: 10, dy: 10)
-    }
-
-    private func activeInkScope() -> ActiveInkScope? {
-        if interactionMode.allowsDirectRhythmicNotationInk,
-           let selectedMeasureID,
-           let targetMeasureLayout = measureLayout(for: selectedMeasureID) {
-            return .rhythmicMeasure(
-                measureID: selectedMeasureID,
-                frame: targetMeasureLayout.writableFrame.insetBy(dx: 2, dy: 2)
-            )
-        }
-
-        if interactionMode.allowsNoteSelectionInk,
-           let pageLayout {
-            return .noteSelection(frame: pageWritingFrame(for: pageLayout))
-        }
-
-        if interactionMode.allowsChordInkEditing,
-           let pageLayout {
-            return .chords(frame: chordWritingFrame(for: pageLayout))
-        }
-
-        guard interactionMode.allowsPageInkEditing else {
-            return nil
-        }
-
-        guard let pageLayout else {
-            return nil
-        }
-
-        return .page(frame: pageWritingFrame(for: pageLayout))
-    }
-
-    private func drawingData(for inkScope: ActiveInkScope) -> Data? {
-        switch inkScope {
-        case .page:
-            return chart.pageHandwrittenNotationData
-        case .chords:
-            return chart.pageHandwrittenChordData
-        case .rhythmicMeasure(let measureID, _):
-            return chart.measure(id: measureID)?.handwrittenRhythmicNotationData
-        case .noteSelection:
-            return nil
-        }
+    private func activeInkScope() -> LeadSheetActiveInkScope? {
+        LeadSheetActiveInkScope.resolve(
+            interactionMode: interactionMode,
+            selectedMeasureID: selectedMeasureID,
+            selectedMeasureLayout: selectedMeasureID.flatMap { measureLayout(for: $0) },
+            pageLayout: pageLayout
+        )
     }
 
     private func noteSelectionLassoFrame(ignoringTapAt tapLocation: CGPoint) -> CGRect? {
@@ -1463,17 +1420,4 @@ private struct ActiveChordMoveDrag {
     var chordID: UUID
 }
 
-private enum ActiveInkScope {
-    case page(frame: CGRect)
-    case chords(frame: CGRect)
-    case rhythmicMeasure(measureID: UUID, frame: CGRect)
-    case noteSelection(frame: CGRect)
-
-    var frame: CGRect {
-        switch self {
-        case .page(let frame), .chords(let frame), .rhythmicMeasure(_, let frame), .noteSelection(let frame):
-            return frame
-        }
-    }
-}
 #endif
