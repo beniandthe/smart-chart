@@ -26,11 +26,11 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, and Sprint 20 chord edit overlay geometry extraction are complete locally; awaiting Sprint 20 GitHub verification before Sprint 21 begins
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, and Sprint 21 measure resize geometry extraction are complete locally; awaiting Sprint 21 GitHub verification before Sprint 22 begins
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
-- latest local verification: Sprint 20 passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint20` on 2026-05-24 with `315` tests, `36` skipped, `0` failures; focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint20 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed through XcodeBuildMCP with `321` passed, `36` skipped, `0` failures on the configured iPad Air 11-inch (M4) simulator; build/run succeeded; screenshot confirmed the app still launches to the compact Projects/Local library surface; `git diff --check` passed.
-- latest GitHub verification: main commit `7fb205f Extract rhythm confirmation view` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-24; Supabase and Expo suites remained queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- latest local verification: Sprint 21 passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint21` on 2026-05-24 with `315` tests, `36` skipped, `0` failures; focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint21 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; iOS simulator `SmartChart` scheme passed through XcodeBuildMCP with `321` passed, `36` skipped, `0` failures on the configured iPad Air 11-inch (M4) simulator; build/run succeeded; screenshot confirmed the app still launches to the compact Projects/Local library surface; `git diff --check` passed.
+- latest GitHub verification: main commit `cfbc1ff Extract chord edit overlay geometry` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-24; Supabase and Expo suites remained queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -50,7 +50,7 @@ Known drift after Sprint 8:
 - PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merged the recovery branch into `main`; it is no longer the active review surface.
 - The local duplicate `SmartChartTests/Recognition/* 2.swift` files found during Sprint 12 were removed after explicit approval; no duplicate files remain in that directory.
 - No tracked cache/raster/direct-ink detour files remain in the current tree; remaining bloat is inside the current recognition path and broad editor surfaces.
-- `EditorView.swift` no longer owns chord confirmation/correction sheet UI, rhythm confirmation sheet UI, or the shared flow layout after Sprint 19, but it remains broad at roughly `1544` lines. `LeadSheetCanvasHostView.swift` no longer owns chord edit overlay frame math, hit targeting, or the overlay hit-test view after Sprint 20, but it remains the largest live editor bridge at roughly `1531` lines.
+- `EditorView.swift` no longer owns chord confirmation/correction sheet UI, rhythm confirmation sheet UI, or the shared flow layout after Sprint 19, but it remains broad at roughly `1544` lines. `LeadSheetCanvasHostView.swift` no longer owns chord edit overlay geometry or measure resize handle geometry after Sprint 21, but it remains the largest live editor bridge at roughly `1479` lines.
 
 ## Product North Star
 
@@ -113,9 +113,9 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 21: Editor Bridge Cleanup Gate
+### Sprint 22: Editor Bridge Cleanup Gate
 
-Status: queued after Sprint 20 GitHub verification.
+Status: queued after Sprint 21 GitHub verification.
 
 Goal: continue the approved cleanup/audit plan with one behavior-preserving editor extraction, likely another small `LeadSheetCanvasHostView.swift` support boundary.
 
@@ -131,18 +131,19 @@ Current state:
 - `EditorView.swift` now delegates rhythm confirmation sheet UI to `RhythmicNotationConfirmationSheetView.swift`.
 - `FlowLayout` is a shared editor component instead of a private type embedded in `EditorView.swift`.
 - `LeadSheetCanvasHostView.swift` now delegates chord edit overlay geometry, control hit frames, and overlay hit testing to `LeadSheetChordEditOverlayGeometry.swift`.
+- `LeadSheetCanvasHostView.swift` now delegates measure resize handle geometry and hit target creation to `LeadSheetMeasureResizeGeometry.swift`.
 - The user has approved continuing one scoped cleanup sprint at a time until the current audit/cleanup plan reaches a necessary approval point or is complete.
 
-Candidate Sprint 21 directions:
+Candidate Sprint 22 directions:
 
-- Continue `LeadSheetCanvasHostView.swift` cleanup with a low-risk extraction such as measure resize geometry or active ink-scope support.
+- Continue `LeadSheetCanvasHostView.swift` cleanup with a low-risk extraction such as active ink-scope support or saved ink rendering helpers.
 - Continue editor surface cleanup with another small modal/subview extraction from `EditorView.swift` only if the bridge file split is higher risk than it looks.
 - Continue app-shell/product polish only if the next Library need is real organization work such as search, sort, archive, or import.
 - Validate handwriting quality with real Pencil/user input before any recognition retuning.
 - Split semantic candidate recipes into smaller behavior-preserving files only if review surface still feels too large.
 - Discuss full fixture archive pruning only as repository/data hygiene, not as recognition training.
 
-Non-goals for Sprint 21:
+Non-goals for Sprint 22:
 
 - No recognition score retuning, parser/compendium changes, or fixture deletion.
 - No StoreKit implementation unless explicitly selected.
@@ -347,20 +348,31 @@ Append one entry here after each sprint completes. Each entry must include:
 
 ### Sprint 20: Chord Edit Overlay Geometry Extraction
 
-- status: complete locally; GitHub checks must be rechecked after push
-- final closeout commit: the commit containing this entry
+- status: complete; GitHub Actions passed on `cfbc1ff`
+- final closeout commit: `cfbc1ff Extract chord edit overlay geometry`
 - summary: Moved chord edit overlay frame math, delete/move control frame calculation, chord edit hit targeting, and the transparent overlay hit-test view out of `LeadSheetCanvasHostView.swift` into `SmartChart/Features/Editor/Components/LeadSheetChordEditOverlayGeometry.swift`. The bridge keeps only the mode gate and drawing call site. This reduced `LeadSheetCanvasHostView.swift` from roughly `1622` lines to roughly `1531` lines while keeping native ink and editor orchestration in place.
 - tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint20 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint20` passed with `315` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme test passed with `321` passed, `36` skipped, `0` failures; XcodeBuildMCP build/run succeeded on the configured iPad Air 11-inch (M4) simulator; `git diff --check` passed.
 - visual evidence: simulator screenshot after launch confirmed the app still opens to the compact Projects/Local library surface. Sprint 20 intentionally made no visible product change.
 - behavior boundary: no recognition score, parser, compendium, fixture, PencilKit, editor chord lifecycle, rhythm quantization, chart persistence, entitlement rules, StoreKit, or export behavior changed. Chord edit delete, move, and review routing remain wired through `LeadSheetCanvasHostView`.
 - unresolved follow-up: `LeadSheetCanvasHostView.swift` remains the largest live editor bridge at roughly `1531` lines, with measure resize geometry, ink-scope support, gesture handling, ink persistence, recognition scheduling, and rhythm finalization still in one file. Continue one behavior-preserving extraction at a time.
-- next sprint candidate: Sprint 21 editor bridge cleanup gate after Sprint 20 GitHub checks pass.
+- next sprint candidate: Sprint 21 editor bridge cleanup gate.
+
+### Sprint 21: Measure Resize Geometry Extraction
+
+- status: complete locally; GitHub checks must be rechecked after push
+- final closeout commit: the commit containing this entry
+- summary: Moved measure resize handle frame calculation, touch expansion, hit target creation, and `ActiveMeasureResizeDrag` out of `LeadSheetCanvasHostView.swift` into `SmartChart/Features/Editor/Components/LeadSheetMeasureResizeGeometry.swift`. The bridge keeps the mode gate, selected-measure lookup, and gesture state handling. This reduced `LeadSheetCanvasHostView.swift` from roughly `1531` lines to roughly `1479` lines while keeping native ink and editor orchestration in place.
+- tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint21 --filter LeadSheetPageLayoutTests` passed with `27` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint21` passed with `315` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme test passed with `321` passed, `36` skipped, `0` failures; XcodeBuildMCP build/run succeeded on the configured iPad Air 11-inch (M4) simulator; `git diff --check` passed.
+- visual evidence: simulator screenshot after launch confirmed the app still opens to the compact Projects/Local library surface. Sprint 21 intentionally made no visible product change.
+- behavior boundary: no recognition score, parser, compendium, fixture, PencilKit, editor chord lifecycle, rhythm quantization, chart persistence, entitlement rules, StoreKit, or export behavior changed. Measure resize gesture gating and chart update routing remain wired through `LeadSheetCanvasHostView`.
+- unresolved follow-up: `LeadSheetCanvasHostView.swift` remains the largest live editor bridge at roughly `1479` lines, with active ink-scope support, gesture handling, ink persistence, recognition scheduling, and rhythm finalization still in one file. Continue one behavior-preserving extraction at a time.
+- next sprint candidate: Sprint 22 editor bridge cleanup gate after Sprint 21 GitHub checks pass.
 
 ## Next Sprint Backlog
 
-Use this queue for Sprint 21 after Sprint 20 GitHub checks pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
+Use this queue for Sprint 22 after Sprint 21 GitHub checks pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
 
-- Continue editor surface cleanup with one behavior-preserving extraction from `LeadSheetCanvasHostView.swift`, likely measure resize geometry or active ink-scope support.
+- Continue editor surface cleanup with one behavior-preserving extraction from `LeadSheetCanvasHostView.swift`, likely active ink-scope support or saved ink rendering helpers.
 - Continue editor surface cleanup with another small modal/subview extraction from `EditorView.swift` if bridge extraction looks too entangled for a single sprint.
 - Continue app-shell/product polish only if the next Library need is real organization work such as search, sort, archive, or import.
 - Validate handwriting quality with real Pencil/user input before any recognition retuning.
