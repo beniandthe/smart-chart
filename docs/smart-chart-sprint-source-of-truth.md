@@ -26,13 +26,13 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, and Sprint 37 recognition-session boundary implementation are complete locally; awaiting Sprint 37 GitHub verification before Sprint 38 begins
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, and Sprint 38 recognition-session OCR gate test hardening are complete locally; awaiting Sprint 38 GitHub verification before Sprint 39 begins
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
 - Sprint 35 design artifact: `docs/smart-chart-recognition-session-boundary-design-2026-05-25.md`
-- latest local verification: Sprint 37 passed focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint37 --filter ChordInkRecognizerTests` with `40` tests, `1` skipped, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint37-full` passed with `315` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `323` passed, `36` skipped, `0` failures on the configured iPad Pro 13-inch (M5) simulator, including `ChordInkRecognitionSessionTests`; XcodeBuildMCP build/run succeeded; screenshot confirmed the app opens to the compact Projects/Local library surface; `git diff --check` passed.
-- latest GitHub verification: main commit `6ab1d05 Reset recognition fixture authority policy` passed required GitHub Actions on 2026-05-25, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites remained queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- latest local verification: Sprint 38 passed focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint38 --filter ChordInkRecognizerTests` with `40` tests, `1` skipped, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint38-full` passed with `315` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `324` passed, `36` skipped, `0` failures on the configured iPad Pro 13-inch (M5) simulator, including all three `ChordInkRecognitionSessionTests`; `git diff --check` passed.
+- latest GitHub verification: main commit `f8019c6 Extract chord ink recognition session` passed required GitHub Actions on 2026-05-25, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -56,6 +56,7 @@ Known drift after Sprint 8:
 - `EditorView.swift` no longer owns chord confirmation/correction sheet UI, rhythm confirmation sheet UI, or the shared flow layout after Sprint 19, but it remains broad at roughly `1544` lines. `LeadSheetCanvasHostView.swift` no longer owns chord edit overlay geometry, measure resize handle geometry, active ink-scope support, saved ink image rendering, active ink persistence write-back decisions, chord ink bounds/OCR image rendering, gesture/targeting support, note-selection lasso targeting, chord ink recognition target selection, chord recognition timing log formatting, chord recognition scheduling/continuation policy, rhythmic notation finalization policy/apply helpers, interaction-mode recognizer/canvas/tool policy, chord recognition request-state bookkeeping, or prepared recognition/OCR execution after Sprint 37, but it remains the largest live editor bridge at roughly `1126` lines.
 - Sprint 34 audited the remaining editor-to-recognition execution path and found it is no longer obvious cleanup. The remaining chord path crosses async recognition, optional OCR, trust policy, proposal routing, chart mutation, diagnostics, and chord ink clearing, so further extraction should wait for an explicit recognition-session boundary design or product validation evidence.
 - Sprint 37 implemented the first `ChordInkRecognitionSession` boundary defined in `docs/smart-chart-recognition-session-boundary-design-2026-05-25.md`. UIKit/PencilKit state, mode/scope guards, stale request validation, continuation-grace requeue, proposal routing, chart mutation, diagnostics, and chord ink clearing remain outside the session; the session owns prepared recognition execution, optional OCR evidence, timing construction, and main-thread payload delivery.
+- Sprint 38 added app-target coverage proving the recognition session skips OCR sidecar work when the primary recognition decision does not need ambiguity evidence, even when an OCR provider exists. This is test-only hardening; it does not change runtime recognition behavior.
 
 ## Product North Star
 
@@ -122,11 +123,11 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 38: Real Pencil Validation Or Session Follow-Up Decision
+### Sprint 39: Real Pencil Validation Or Product Evidence Decision
 
-Status: queued after Sprint 37 GitHub verification.
+Status: queued after Sprint 38 GitHub verification.
 
-Goal: choose between validating the product loop with real Pencil input or, if the work must remain repo-local, selecting only narrow behavior-preserving session-boundary polish.
+Goal: choose the next product-evidence step now that the recognition session boundary is implemented and test-hardened. The preferred next validation is real Pencil/product-loop evidence, not more architecture extraction without new signal.
 
 Current state:
 
@@ -158,18 +159,20 @@ Current state:
 - Sprint 35 documented the future recognition-session boundary in `docs/smart-chart-recognition-session-boundary-design-2026-05-25.md`.
 - Sprint 36 reset recognition policy and debug fixture language around generalization: recognition is writer-agnostic by default, captured handwriting is regression/archive evidence only, and any future personalization requires explicit opt-in product design.
 - Sprint 37 implemented the first behavior-preserving `ChordInkRecognitionSession` boundary and added app-target tests for main-thread payload delivery plus OCR gating.
+- Sprint 38 added app-target session coverage proving OCR is skipped for clear primary decisions even when an OCR provider exists.
 - The user has approved continuing one scoped cleanup sprint at a time until the current audit/cleanup plan reaches a necessary approval point or is complete.
 
-Candidate Sprint 38 directions:
+Candidate Sprint 39 directions:
 
 - Real Pencil validation sprint: verify the recovered `open -> write -> recognize -> snap -> fix -> export` loop with actual user-like handwriting before any recognition tuning. This must measure product behavior and generalization; it must not create another one-writer training pass.
-- Recognition-session follow-up sprint: only if product validation must wait, inspect whether any remaining session-boundary polish is clearly behavior-preserving and keeps policy/UI/commit/chord-ink clearing outside the session.
+- Product evidence fallback sprint: if real Pencil validation must wait, pick a repo-local product surface with direct user value and clear evidence, such as export reachability, Library organization, or correction workflow friction.
+- Recognition-session follow-up sprint: only if new evidence shows a boundary bug or maintenance hotspot, keep any work behavior-preserving and keep policy/UI/commit/chord-ink clearing outside the session.
 - Continue editor surface cleanup with another small modal/subview extraction from `EditorView.swift` only if the bridge file split is higher risk than it looks.
 - Continue app-shell/product polish only if the next Library need is real organization work such as search, sort, archive, or import.
 - Split semantic candidate recipes into smaller behavior-preserving files only if review surface still feels too large.
 - Discuss full fixture archive pruning only as repository/data hygiene, not as recognition training.
 
-Non-goals for Sprint 38:
+Non-goals for Sprint 39:
 
 - No recognition score retuning, parser/compendium changes, or fixture deletion.
 - No StoreKit implementation unless explicitly selected.
@@ -576,20 +579,32 @@ Append one entry here after each sprint completes. Each entry must include:
 
 ### Sprint 37: Recognition Session Boundary Implementation
 
-- status: complete locally; GitHub checks must be rechecked after push
-- final closeout commit: the commit containing this entry
+- status: complete; required GitHub Actions passed
+- final closeout commit: `f8019c6 Extract chord ink recognition session`
 - summary: Implemented the first `ChordInkRecognitionSession` boundary from the Sprint 35 design. `LeadSheetCanvasHostView.swift` still prepares request inputs, owns mode/scope guards, target selection, stale-request validation, continuation-grace requeue, proposal callbacks, and current chord ink lifecycle. The new `ChordInkRecognitionSession.swift` owns only prepared background recognizer execution, primary decision calculation for OCR gating, optional OCR sidecar evidence, timing construction, and main-thread payload delivery. Added app-target `ChordInkRecognitionSessionTests` for main-thread payload delivery and OCR gating.
 - tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint37 --filter ChordInkRecognizerTests` passed with `40` tests, `1` skipped, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint37-full` passed with `315` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `323` passed, `36` skipped, `0` failures, including the two new session tests; XcodeBuildMCP build/run succeeded on the configured iPad Pro 13-inch (M5) simulator; screenshot confirmed the app opens to the compact Projects/Local library surface; `git diff --check` passed.
 - behavior boundary: no recognition score, parser, compendium, fixture JSON, PencilKit, chord ink lifecycle, rhythm quantization, chart persistence semantics, entitlement rules, StoreKit, export behavior, mode behavior, OCR authority, auto-render/confirmation routing, structured `ChordEvent` commit, diagnostics, continuation-grace policy, or chord ink clearing changed.
+- GitHub evidence: main commit `f8019c6` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-25.
 - unresolved follow-up: real Pencil validation is now the product-preferred next step because the repo-local session boundary is in place. Any further repo-local session work must remain behavior-preserving and keep auto-render/confirmation, commit, diagnostics, continuation grace, and ink clearing outside the session.
-- next sprint candidate: Sprint 38 real Pencil validation or narrowly scoped session follow-up decision after Sprint 37 GitHub checks pass.
+- next sprint candidate: Sprint 38 OCR-gate test hardening, then Sprint 39 real Pencil validation or product-evidence decision.
+
+### Sprint 38: Recognition Session OCR Gate Test Hardening
+
+- status: complete locally; GitHub checks must be rechecked after push
+- final closeout commit: the commit containing this entry
+- summary: Added app-target coverage for the recognition-session OCR gate. `ChordInkRecognitionSessionTests` now proves that a clear primary recognition decision does not request OCR image generation, does not call the OCR provider, does not attach OCR candidates, and reports zero OCR candidate count even when an OCR provider is available.
+- tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint38 --filter ChordInkRecognizerTests` passed with `40` tests, `1` skipped, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint38-full` passed with `315` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `324` passed, `36` skipped, `0` failures, including all three session tests; `git diff --check` passed.
+- behavior boundary: test-only hardening. No production code, recognition score, parser, compendium, fixture JSON, PencilKit behavior, chord ink lifecycle, chart persistence semantics, OCR authority, auto-render/confirmation routing, structured `ChordEvent` commit, diagnostics, continuation-grace policy, or chord ink clearing changed.
+- unresolved follow-up: real Pencil validation requires human hardware input. If continuing repo-local before that input, choose a product-evidence sprint rather than hidden training, score tuning, or blind extraction.
+- next sprint candidate: Sprint 39 real Pencil validation or product-evidence decision after Sprint 38 GitHub checks pass.
 
 ## Next Sprint Backlog
 
-Use this queue for Sprint 38 after Sprint 37 GitHub checks pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
+Use this queue for Sprint 39 after Sprint 38 GitHub checks pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
 
 - Run a real Pencil validation sprint against the recovered `open -> write -> recognize -> snap -> fix -> export` loop before recognition tuning.
-- Inspect any remaining `ChordInkRecognitionSession` follow-up only as behavior-preserving boundary polish, keeping UI, chart mutation, diagnostics, continuation grace, and chord ink clearing outside the session.
+- If real Pencil validation must wait, choose a repo-local product-evidence sprint with direct user value, such as export reachability, Library organization, or correction workflow friction.
+- Inspect any remaining `ChordInkRecognitionSession` follow-up only if new evidence shows a boundary bug or maintenance hotspot, keeping UI, chart mutation, diagnostics, continuation grace, and chord ink clearing outside the session.
 - Continue editor surface cleanup with another small modal/subview extraction from `EditorView.swift` if bridge extraction looks too entangled for a single sprint.
 - Continue app-shell/product polish only if the next Library need is real organization work such as search, sort, archive, or import.
 - Split semantic candidate recipes into smaller behavior-preserving files only if the review surface still feels too large.

@@ -96,6 +96,53 @@ final class ChordInkRecognitionSessionTests: XCTestCase {
         wait(for: [expectation], timeout: 2)
     }
 
+    func testSessionSkipsOCRWhenPrimaryDecisionDoesNotNeedSidecarEvidence() {
+        let ocrProvider = StubChordOCRCandidateProvider(candidates: [
+            ChordOCRCandidate.normalized(
+                rawText: "C",
+                confidence: 0.9,
+                source: .testDouble
+            )
+        ])
+        let session = ChordInkRecognitionSession(
+            queue: DispatchQueue(label: "com.smartchart.tests.chord-session.skip-ocr"),
+            recognizer: StubChordInkRecognizer(
+                result: ChordInkRecognitionResult(
+                    rawCandidates: ["C"],
+                    glyphCandidates: [],
+                    match: ChordRecognitionCompendium.match("C"),
+                    confidence: 4.5
+                )
+            ),
+            ocrCandidateProvider: ocrProvider
+        )
+        let expectation = expectation(description: "no ocr payload")
+
+        session.start(
+            request: ChordInkRecognitionSessionRequest(
+                requestID: UUID(),
+                scheduledAt: Date(),
+                requestedDelay: 0.1,
+                strokes: [],
+                drawingData: Data(),
+                target: (measureID: UUID(), fraction: 0),
+                options: .live,
+                ocrImageProvider: {
+                    XCTFail("OCR image should not be requested for a clear primary decision")
+                    return Self.makeTestImage()
+                }
+            )
+        ) { payload in
+            XCTAssertEqual(ocrProvider.recognizeCallCount, 0)
+            XCTAssertNil(payload.result.ocrCandidates)
+            XCTAssertNil(payload.result.metrics.ocrMilliseconds)
+            XCTAssertEqual(payload.timing.ocrCandidateCount, 0)
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 2)
+    }
+
     private static func makeTestImage() -> CGImage {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let context = CGContext(
