@@ -14,8 +14,13 @@ Each fixture should include:
 - `expectedTopGlyphs`: optional first-choice glyphs once glyph recognition exists.
 
 Ink fixtures are regression evidence, not training data. They should prove that
-known recognition paths stay stable, but they should not become a continuous
+known recognition paths stay stable, but they must not become a continuous
 sample collection loop for one writer's hand.
+
+Smart Chart recognition must stay writer-agnostic by default. Do not design,
+tune, or expand the recognizer around one person's repeated chord-writing
+passes. Any future user-specific personalization must be an explicit product
+feature with a separate opt-in data boundary, not a hidden fixture habit.
 
 When real iPad handwriting exposes a transferable product regression, export the
 strokes as a new fixture, add or update a failing test, fix the deterministic
@@ -46,29 +51,32 @@ do not re-read every fixture file repeatedly inside one process. Captured
 handwriting count is not a product authority; compendium/parser validation and
 structured `ChordEvent` output remain the runtime authority.
 
-## Live Capture Protocol
+## Regression Capture Protocol
 
-Use this exact loop when collecting data:
+Use this loop only when a real iPad writing pass exposes a transferable product
+regression or a general chord/glyph shape that should be protected for all
+users:
 
 1. Select the chord tab and write exactly one chord symbol.
 2. In the confirmation sheet, set `Intended chord` to the exact target text.
-3. Tap `Copy Test Fixture`.
+3. Tap `Copy Regression Fixture`.
 4. Wait for the watcher to print `Imported ...`.
-5. Tap `Clear & Next Sample`.
-6. Repeat with the next chord.
+5. Tap `Clear Ink`.
+6. Stop unless there is another distinct, transferable regression to protect.
 
-During a data pass, do not tap `Use Chord` unless you are testing normal chart
-entry. The fixture label is the source of truth, so correct the text before
-copying even when the app suggestion is wrong.
+During validation, do not turn the test chart into an ongoing personal corpus.
+The fixture label is the source of truth, so correct the text before copying
+even when the app suggestion is wrong.
 
-Recommended first targets:
+Useful regression seed targets, when they expose a real issue:
 
 - `C`, `D`, `E`, `F`, `G`, `A`, `B`
 - `Bb`, `F#`, `Db`
 - `C-`, `Bb-`, `F#-`
 - `C△7`, `C-7`, `Db7(b9)`, `G/B`
 
-To watch a booted simulator pasteboard and import copied samples automatically:
+To watch a booted simulator pasteboard and import copied regression fixtures
+automatically:
 
 ```bash
 scripts/watch_simulator_chord_fixtures.py --clear-on-start

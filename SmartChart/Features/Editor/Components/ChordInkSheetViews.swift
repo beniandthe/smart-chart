@@ -79,7 +79,7 @@ enum ChordInkFixtureCopyResult: Equatable {
     var message: String {
         switch self {
         case .copied(let displayText, let fixtureName):
-            "Copied \(displayText) sample as \(fixtureName). Watcher will import it."
+            "Copied \(displayText) regression fixture as \(fixtureName). Watcher will import it."
         case .failed(let message):
             message
         }
@@ -250,7 +250,7 @@ struct ChordInkConfirmationSheetView: View {
             Button {
                 fixtureCopyStatus = onCopyFixtureJSON(trimmedCandidateText)
             } label: {
-                Text("Copy Test Fixture")
+                Text("Copy Regression Fixture")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -266,7 +266,7 @@ struct ChordInkConfirmationSheetView: View {
             Button(role: .destructive) {
                 onClearAndRewrite()
             } label: {
-                Text("Clear Ink & Next Sample")
+                Text("Clear Ink")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)

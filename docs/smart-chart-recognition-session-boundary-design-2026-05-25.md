@@ -16,6 +16,11 @@ The goal is to make the next extraction safe by separating two concerns:
 - The editor bridge owns UIKit/PencilKit state, active mode, page layout, and callbacks.
 - A future recognition session owns one in-flight recognition request from prepared ink input to a main-thread proposal payload.
 
+This boundary is not a new training or personalization layer. Recognition must
+remain writer-agnostic by default. Real Pencil validation should measure whether
+the pipeline generalizes beyond one hand; it should not become a continuous
+personal chord-sample loop.
+
 This boundary should only be implemented after a separate sprint explicitly chooses it.
 
 ## Why This Boundary Exists
@@ -201,12 +206,14 @@ Behavior checks:
 - no StoreKit/export work
 - no change to the current chord ink clear rule
 - no new training layer or handwriting personalization
+- no tuning based on one person's repeated chord-writing passes
+- no automatic or hidden user-specific corpus growth
 
 ## Recommendation
 
 The next code sprint should not implement this boundary until we either:
 
-1. Run a real Pencil validation sprint and confirm the product loop is worth stabilizing around the current interaction model.
+1. Run a real Pencil validation sprint and confirm the product loop generalizes enough to stabilize around the current interaction model.
 2. Explicitly choose the recognition-session implementation sprint as a behavior-preserving architecture move.
 
-For now, Sprint 35 should close as a design checkpoint. Sprint 36 should prefer real Pencil validation unless the user wants to keep the work entirely repo-local.
+Sprint 35 closed as a design checkpoint. After the Sprint 36 recognition generalization policy reset, Sprint 37 should prefer real Pencil validation unless the user wants to keep the work entirely repo-local.

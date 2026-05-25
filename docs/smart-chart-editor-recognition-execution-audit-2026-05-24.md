@@ -137,7 +137,8 @@ The current path works because these pieces are close together. Splitting them w
 1. Real Pencil validation sprint
    - Best product value.
    - Confirms the recovered pipeline with actual user-like input before any tuning.
-   - Should capture observations, not train the app from one writer.
+   - Should capture observations and transferable regressions, not train the app from one writer.
+   - Must not become a continuous personal chord-sample pass.
 
 2. Editor execution-boundary design sprint
    - Write a small design for a future `ChordInkRecognitionSession` or `ChordInkRecognitionCoordinator`.
@@ -158,7 +159,7 @@ Stop the editor-bridge extraction sequence here unless the next sprint is explic
 
 The audit plan has largely completed its original recovery goal: dead detours and default training/corpus authority were removed or demoted, the source-of-truth pipeline is restored, and broad editor files were reduced through many small behavior-preserving extractions. The remaining work is no longer cleanup for cleanup's sake. It should be selected based on product evidence:
 
-- real handwriting validation,
+- real handwriting validation across general/user-like writing behavior,
 - correction-loop speed,
 - Library organization,
 - export quality,

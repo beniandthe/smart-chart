@@ -12,6 +12,12 @@ For current execution, start with `docs/smart-chart-sprint-source-of-truth.md`. 
 
 When this document conflicts with the living sprint source of truth, the living sprint source of truth wins.
 
+Important current override: do not use this historical plan as a mandate to
+keep expanding one writer's captured chord samples or to build recognition
+around repeated personal test passes. Current recognition work must stay
+writer-agnostic by default. Fixtures are regression evidence only unless a
+future sprint explicitly designs opt-in user-specific personalization.
+
 ## Purpose
 
 Smart Chart should convert Apple Pencil input into clean, editable chord-chart objects without making handwriting recognition the fragile center of the app.
@@ -505,21 +511,22 @@ Whenever recognition fails on real iPad input:
 
 This is the main guardrail against recurring regressions.
 
-### Live fixture capture loop
+### Historical live fixture capture loop
 
-For exact data collection, use the confirmation sheet as a labeling tool rather
-than as a chart-entry tool:
+This loop is historical. Do not use it as an ongoing data collection or
+training habit. Current fixture capture is only for transferable regressions,
+and the active button labels now refer to regression fixtures:
 
 1. write exactly one chord symbol in chord mode
 2. correct `Intended chord` to the exact target spelling
-3. tap `Copy Test Fixture`
-4. let `scripts/watch_simulator_chord_fixtures.py` import the copied sample
-5. tap `Clear & Next Sample`
-6. repeat
+3. tap `Copy Regression Fixture`
+4. let `scripts/watch_simulator_chord_fixtures.py` import the copied fixture
+5. tap `Clear Ink`
+6. stop unless another distinct transferable regression needs protection
 
 The corrected `Intended chord` label is the source of truth for the captured
-fixture. Do not tap `Use Chord` during a fixture pass unless the goal is to test
-normal chart entry instead of data capture.
+fixture. Do not tap `Use Chord` during a fixture capture unless the goal is to
+test normal chart entry instead of regression fixture export.
 
 ### Current captured fixture coverage
 

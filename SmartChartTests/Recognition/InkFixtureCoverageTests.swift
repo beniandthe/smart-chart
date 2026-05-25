@@ -21,7 +21,13 @@ final class InkFixtureCoverageTests: XCTestCase {
     override func setUpWithError() throws {
         try XCTSkipUnless(
             InkFixtureLoader.shouldRunFullInkFixtureArchiveTests,
-            "Set \(InkFixtureLoader.fullInkFixtureArchiveEnvironmentVariable)=1 to run captured handwriting coverage."
+            "Set \(InkFixtureLoader.fullInkFixtureArchiveEnvironmentVariable)=1 to inspect the historical captured fixture archive."
+        )
+
+        throw XCTSkip(
+            """
+            Captured handwriting coverage count gates are retired. Fixtures are regression evidence, not personal training data. Use full archive recognition/cluster/glyph replays for drift audits, and add fixtures only for transferable regressions.
+            """
         )
     }
 

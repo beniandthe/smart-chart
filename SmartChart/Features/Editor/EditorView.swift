@@ -1053,7 +1053,7 @@ struct EditorView: View {
             return .copied(displayText: fixtureJSON, fixtureName: "clipboard")
             #endif
         } catch {
-            return .failed("Could not export this ink sample. Keep the ink and try again.")
+            return .failed("Could not export this regression fixture. Keep the ink and try again.")
         }
     }
 
