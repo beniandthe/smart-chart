@@ -1074,21 +1074,22 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func updateInteractionMode() {
-        selectionTapRecognizer.isEnabled = interactionMode.allowsMeasureSelection || interactionMode.allowsNoteSelection
-        inkSelectionTapRecognizer.isEnabled = interactionMode.allowsNoteSelection || interactionMode.allowsChordInkEditing
-        measureResizePanRecognizer.isEnabled = interactionMode.showsMeasureResizeHandles
-        chordEditTapRecognizer.isEnabled = interactionMode.allowsChordInkEditing
-        chordMovePanRecognizer.isEnabled = interactionMode.allowsChordInkEditing
-        chordEditHitOverlayView.isHidden = !interactionMode.allowsChordInkEditing
-        chordEditHitOverlayView.isUserInteractionEnabled = interactionMode.allowsChordInkEditing
-        pageInkCanvasView.isUserInteractionEnabled = interactionMode.allowsAnyInkEditing
-        updateInkTool()
+        let policy = LeadSheetInteractionModeStatePolicy.resolve(for: interactionMode)
+        selectionTapRecognizer.isEnabled = policy.selectionTapEnabled
+        inkSelectionTapRecognizer.isEnabled = policy.inkSelectionTapEnabled
+        measureResizePanRecognizer.isEnabled = policy.measureResizePanEnabled
+        chordEditTapRecognizer.isEnabled = policy.chordEditTapEnabled
+        chordMovePanRecognizer.isEnabled = policy.chordMovePanEnabled
+        chordEditHitOverlayView.isHidden = policy.chordEditOverlayHidden
+        chordEditHitOverlayView.isUserInteractionEnabled = policy.chordEditOverlayInteractionEnabled
+        pageInkCanvasView.isUserInteractionEnabled = policy.pageInkCanvasInteractionEnabled
+        pageInkCanvasView.tool = policy.inkTool
 
-        if !interactionMode.showsMeasureResizeHandles {
+        if policy.clearsMeasureResizeDrag {
             activeMeasureResizeDrag = nil
         }
 
-        if !interactionMode.allowsChordInkEditing {
+        if policy.clearsChordInteractionState {
             activeChordMoveDrag = nil
             pendingChordRecognitionWorkItem?.cancel()
             pendingChordRecognitionWorkItem = nil
@@ -1096,29 +1097,11 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             lastRecognizedChordDrawingData = nil
         }
 
-        if !interactionMode.allowsAnyInkEditing {
+        if policy.hidesPageInkCanvas {
             pageInkCanvasView.isHidden = true
             pageInkCanvasView.resignFirstResponder()
         }
 
-    }
-
-    private func updateInkTool() {
-        if interactionMode.allowsNoteSelectionInk {
-            pageInkCanvasView.tool = PKInkingTool(
-                .pen,
-                color: UIColor(red: 0.12, green: 0.36, blue: 0.88, alpha: 0.9),
-                width: 2.4
-            )
-        } else if interactionMode.allowsChordInkEditing {
-            pageInkCanvasView.tool = PKInkingTool(
-                .pen,
-                color: UIColor(red: 0.04, green: 0.05, blue: 0.06, alpha: 1),
-                width: 2.5
-            )
-        } else {
-            pageInkCanvasView.tool = PKInkingTool(.pen, color: UIColor(white: 0.06, alpha: 1), width: 2.8)
-        }
     }
 
     private func clearNoteSelectionInk() {
