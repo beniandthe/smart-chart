@@ -181,10 +181,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     )
     private var isSyncingInkCanvasFromModel = false
     private var pendingInkPersistWorkItem: DispatchWorkItem?
-    private var pendingChordRecognitionWorkItem: DispatchWorkItem?
-    private var activeChordRecognitionRequestID: UUID?
-    private var lastRecognizedChordDrawingData: Data?
-    private var chordInkContinuationGraceDrawingData: Data?
+    private var chordInkRecognitionRequestState = LeadSheetChordInkRecognitionRequestState()
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
     private var isRestoringSelection = false
@@ -810,11 +807,9 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private func scheduleChordInkRecognition(after requestedDelay: TimeInterval) {
         pendingInkPersistWorkItem?.cancel()
         pendingInkPersistWorkItem = nil
-        pendingChordRecognitionWorkItem?.cancel()
 
         let requestID = UUID()
         let scheduledAt = Date()
-        activeChordRecognitionRequestID = requestID
         let workItem = DispatchWorkItem { [weak self] in
             self?.recognizeChordInkIfNeeded(
                 requestID: requestID,
@@ -822,16 +817,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 requestedDelay: requestedDelay
             )
         }
-        pendingChordRecognitionWorkItem = workItem
+        chordInkRecognitionRequestState.schedule(requestID: requestID, workItem: workItem)
         DispatchQueue.main.asyncAfter(deadline: .now() + requestedDelay, execute: workItem)
     }
 
     private func persistActiveInkIfNeeded() {
         pendingInkPersistWorkItem?.cancel()
         pendingInkPersistWorkItem = nil
-        pendingChordRecognitionWorkItem?.cancel()
-        pendingChordRecognitionWorkItem = nil
-        activeChordRecognitionRequestID = nil
+        chordInkRecognitionRequestState.cancelPendingRequest()
 
         guard let activeInkScope = activeInkScope() else {
             return
@@ -851,10 +844,9 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         scheduledAt: Date,
         requestedDelay: TimeInterval
     ) {
-        pendingChordRecognitionWorkItem?.cancel()
-        pendingChordRecognitionWorkItem = nil
+        chordInkRecognitionRequestState.markPendingWorkStarted()
 
-        guard activeChordRecognitionRequestID == requestID else {
+        guard chordInkRecognitionRequestState.isActive(requestID) else {
             return
         }
 
@@ -862,13 +854,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
               let activeInkScope = activeInkScope(),
               case .chords(let chordFrame) = activeInkScope,
               let drawingData = currentCanvasDrawingData(),
-              drawingData != lastRecognizedChordDrawingData,
+              drawingData != chordInkRecognitionRequestState.lastRecognizedDrawingData,
               let target = LeadSheetChordInkRecognitionTargeting.target(
                 for: pageInkCanvasView.drawing,
                 chordFrame: chordFrame,
                 pageLayout: pageLayout
               ) else {
-            activeChordRecognitionRequestID = nil
+            chordInkRecognitionRequestState.clearActiveRequest()
             return
         }
         let strokes = PencilKitInkAdapter.inkStrokes(from: pageInkCanvasView.drawing)
@@ -922,10 +914,9 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         target: (measureID: UUID, fraction: Double),
         timing: ChordInkRecognitionTiming
     ) {
-        guard activeChordRecognitionRequestID == requestID else {
+        guard chordInkRecognitionRequestState.finishActiveRequest(requestID) else {
             return
         }
-        activeChordRecognitionRequestID = nil
 
         LeadSheetChordInkRecognitionTimingLogger.log(timing, result: result)
 
@@ -939,13 +930,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             drawingData: drawingData,
             timing: timing
         ) {
-            chordInkContinuationGraceDrawingData = drawingData
+            chordInkRecognitionRequestState.continuationGraceDrawingData = drawingData
             scheduleChordInkRecognition(after: chordInkContinuationGraceDelay)
             return
         }
 
-        chordInkContinuationGraceDrawingData = nil
-        lastRecognizedChordDrawingData = drawingData
+        chordInkRecognitionRequestState.continuationGraceDrawingData = nil
+        chordInkRecognitionRequestState.lastRecognizedDrawingData = drawingData
         onChordInkRecognitionProposal?(
             target.measureID,
             result,
@@ -960,7 +951,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         timing: ChordInkRecognitionTiming
     ) -> Bool {
         LeadSheetChordInkRecognitionScheduling.shouldGiveContinuationGrace(
-            previousDrawingData: chordInkContinuationGraceDrawingData,
+            previousDrawingData: chordInkRecognitionRequestState.continuationGraceDrawingData,
             drawingData: drawingData,
             timing: timing,
             idleDelay: chordInkIdleDelay,
@@ -1091,10 +1082,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if policy.clearsChordInteractionState {
             activeChordMoveDrag = nil
-            pendingChordRecognitionWorkItem?.cancel()
-            pendingChordRecognitionWorkItem = nil
-            activeChordRecognitionRequestID = nil
-            lastRecognizedChordDrawingData = nil
+            chordInkRecognitionRequestState.clearForChordEditingDisabled()
         }
 
         if policy.hidesPageInkCanvas {
