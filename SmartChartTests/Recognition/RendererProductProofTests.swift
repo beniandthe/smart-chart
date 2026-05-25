@@ -41,8 +41,8 @@ final class RendererProductProofTests: XCTestCase {
 
             XCTAssertEqual(match.displayText, fixture.expectedDisplayText, fixture.name)
             XCTAssertTrue(chart.setPageHandwrittenChordDrawing(fixtureData), fixture.name)
-            XCTAssertTrue(
-                chart.appendRecognizedChord(
+            XCTAssertNotNil(
+                chart.commitRecognizedChordInk(
                     match.symbol,
                     rawInput: fixture.name,
                     to: measureID,
@@ -51,7 +51,6 @@ final class RendererProductProofTests: XCTestCase {
                 ),
                 fixture.name
             )
-            XCTAssertTrue(chart.setPageHandwrittenChordDrawing(nil), fixture.name)
             XCTAssertNil(chart.pageHandwrittenChordData, fixture.name)
 
             expectedDisplayTexts.append(fixture.expectedDisplayText)

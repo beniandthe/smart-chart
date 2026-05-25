@@ -289,6 +289,28 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func commitRecognizedChordInk(
+        _ symbol: ChordSymbol,
+        rawInput: String?,
+        to measureID: UUID,
+        atFraction fraction: Double?,
+        sourceInkData: Data
+    ) -> UUID? {
+        guard let chordEventID = appendRecognizedChordEvent(
+            symbol,
+            rawInput: rawInput,
+            to: measureID,
+            atFraction: fraction,
+            sourceInkData: sourceInkData
+        ) else {
+            return nil
+        }
+
+        _ = setPageHandwrittenChordDrawing(nil)
+        return chordEventID
+    }
+
+    @discardableResult
     mutating func replaceChordEvent(
         _ chordEventID: UUID,
         with symbol: ChordSymbol,

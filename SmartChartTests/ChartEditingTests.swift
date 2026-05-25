@@ -261,8 +261,8 @@ final class ChartEditingTests: XCTestCase {
             let match = try XCTUnwrap(ChordRecognitionCompendium.match(chordCase.written))
 
             XCTAssertTrue(chart.setPageHandwrittenChordDrawing(inkData))
-            XCTAssertTrue(
-                chart.appendRecognizedChord(
+            let chordID = try XCTUnwrap(
+                chart.commitRecognizedChordInk(
                     match.symbol,
                     rawInput: chordCase.written,
                     to: measureID,
@@ -271,15 +271,34 @@ final class ChartEditingTests: XCTestCase {
                 ),
                 chordCase.written
             )
-            XCTAssertTrue(chart.setPageHandwrittenChordDrawing(nil))
 
-            let chord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
+            let chord = try XCTUnwrap(chart.chordEvent(id: chordID))
             XCTAssertEqual(chord.symbol.displayText, chordCase.expected)
             XCTAssertEqual(chord.rawInput, chordCase.written)
             XCTAssertEqual(chord.sourceInkData, inkData)
             XCTAssertEqual(chord.startPosition.displayText, "1")
             XCTAssertNil(chart.pageHandwrittenChordData)
         }
+    }
+
+    func testRecognizedChordInkCommitKeepsInkWhenMeasureIsUnavailable() throws {
+        var chart = Chart.blank(title: "Chord Writing Test Chart", measureCount: 1)
+        let inkData = Data("ink-C".utf8)
+        let match = try XCTUnwrap(ChordRecognitionCompendium.match("C"))
+
+        XCTAssertTrue(chart.setPageHandwrittenChordDrawing(inkData))
+        XCTAssertNil(
+            chart.commitRecognizedChordInk(
+                match.symbol,
+                rawInput: "C",
+                to: UUID(),
+                atFraction: 0.05,
+                sourceInkData: inkData
+            )
+        )
+
+        XCTAssertEqual(chart.pageHandwrittenChordData, inkData)
+        XCTAssertTrue(chart.measures.allSatisfy(\.chordEvents.isEmpty))
     }
 
     func testDeleteChordEventRemovesRenderedChordFromMeasure() throws {

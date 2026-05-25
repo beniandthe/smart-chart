@@ -819,7 +819,7 @@ struct EditorView: View {
         }
 
         var updatedChart = chart
-        guard let chordEventID = updatedChart.appendRecognizedChordEvent(
+        guard let chordEventID = updatedChart.commitRecognizedChordInk(
             match.symbol,
             rawInput: candidateText,
             to: confirmation.measureID,
@@ -831,7 +831,6 @@ struct EditorView: View {
             return
         }
 
-        _ = updatedChart.setPageHandwrittenChordDrawing(nil)
         chart = updatedChart
 
         #if DEBUG || targetEnvironment(simulator)
