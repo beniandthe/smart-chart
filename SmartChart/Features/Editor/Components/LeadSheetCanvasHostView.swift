@@ -159,6 +159,11 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         label: "com.smartchart.chord-ink-recognition",
         qos: .userInitiated
     )
+    private lazy var chordInkRecognitionSession = ChordInkRecognitionSession(
+        queue: chordInkRecognitionQueue,
+        recognizer: chordInkRecognizer,
+        ocrCandidateProvider: chordOCRCandidateProvider
+    )
     private lazy var selectionTapRecognizer = UITapGestureRecognizer(
         target: self,
         action: #selector(handleTap(_:))
@@ -866,82 +871,56 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         let strokes = PencilKitInkAdapter.inkStrokes(from: pageInkCanvasView.drawing)
         let drawingForOCR = pageInkCanvasView.drawing
 
-        let recognizer = chordInkRecognizer
-        let recognitionOptions = chordInkRecognitionOptions
-        let ocrCandidateProvider = chordOCRCandidateProvider
-        chordInkRecognitionQueue.async { [weak self] in
-            let recognitionStartedAt = Date()
-            var result = recognizer.recognize(
-                strokes: strokes,
-                options: recognitionOptions
-            )
-            let primaryDecision = ChordInkRecognitionPolicy.decision(for: result)
-            if ChordRecognitionTrustArbiter.shouldRequestOCR(
-                for: result,
-                primaryDecision: primaryDecision
-            ),
-               let ocrCandidateProvider,
-               self != nil,
-               let ocrImage = LeadSheetChordInkImageRenderer.ocrImage(for: drawingForOCR) {
-                let ocrStartedAt = Date()
-                result.ocrCandidates = ocrCandidateProvider.recognizeCandidates(in: ocrImage)
-                result.metrics.ocrMilliseconds = Date().timeIntervalSince(ocrStartedAt) * 1_000
+        let sessionRequest = ChordInkRecognitionSessionRequest(
+            requestID: requestID,
+            scheduledAt: scheduledAt,
+            requestedDelay: requestedDelay,
+            strokes: strokes,
+            drawingData: drawingData,
+            target: target,
+            options: chordInkRecognitionOptions,
+            ocrImageProvider: { [weak self, drawingForOCR] in
+                guard self != nil else {
+                    return nil
+                }
+
+                return LeadSheetChordInkImageRenderer.ocrImage(for: drawingForOCR)
             }
-            let recognitionFinishedAt = Date()
-            DispatchQueue.main.async { [weak self] in
-                self?.finishChordInkRecognition(
-                    requestID: requestID,
-                    result: result,
-                    drawingData: drawingData,
-                    target: target,
-                    timing: ChordInkRecognitionTiming(
-                        scheduledAt: scheduledAt,
-                        requestedDelay: requestedDelay,
-                        recognitionStartedAt: recognitionStartedAt,
-                        recognitionFinishedAt: recognitionFinishedAt,
-                        strokeCount: strokes.count,
-                        ocrCandidateCount: result.ocrCandidates?.count ?? 0
-                    )
-                )
-            }
+        )
+        chordInkRecognitionSession.start(request: sessionRequest) { [weak self] payload in
+            self?.finishChordInkRecognition(payload)
         }
     }
 
-    private func finishChordInkRecognition(
-        requestID: UUID,
-        result: ChordInkRecognitionResult,
-        drawingData: Data,
-        target: (measureID: UUID, fraction: Double),
-        timing: ChordInkRecognitionTiming
-    ) {
-        guard chordInkRecognitionRequestState.finishActiveRequest(requestID) else {
+    private func finishChordInkRecognition(_ payload: ChordInkRecognitionProposalPayload) {
+        guard chordInkRecognitionRequestState.finishActiveRequest(payload.requestID) else {
             return
         }
 
-        LeadSheetChordInkRecognitionTimingLogger.log(timing, result: result)
+        LeadSheetChordInkRecognitionTimingLogger.log(payload.timing, result: payload.result)
 
         guard interactionMode.allowsChordInkEditing,
-              !result.rawCandidates.isEmpty else {
+              !payload.result.rawCandidates.isEmpty else {
             return
         }
 
         if shouldGiveChordInkContinuationGrace(
-            result: result,
-            drawingData: drawingData,
-            timing: timing
+            result: payload.result,
+            drawingData: payload.drawingData,
+            timing: payload.timing
         ) {
-            chordInkRecognitionRequestState.continuationGraceDrawingData = drawingData
+            chordInkRecognitionRequestState.continuationGraceDrawingData = payload.drawingData
             scheduleChordInkRecognition(after: chordInkContinuationGraceDelay)
             return
         }
 
         chordInkRecognitionRequestState.continuationGraceDrawingData = nil
-        chordInkRecognitionRequestState.lastRecognizedDrawingData = drawingData
+        chordInkRecognitionRequestState.lastRecognizedDrawingData = payload.drawingData
         onChordInkRecognitionProposal?(
-            target.measureID,
-            result,
-            drawingData,
-            target.fraction
+            payload.target.measureID,
+            payload.result,
+            payload.drawingData,
+            payload.target.fraction
         )
     }
 

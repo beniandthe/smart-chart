@@ -1,6 +1,6 @@
 # Smart Chart Recognition Session Boundary Design
 
-Status: Sprint 35 design proposal
+Status: Sprint 35 design proposal; first implementation completed in Sprint 37
 Date: 2026-05-25
 Branch: `main`
 Baseline commit: `4f1de60 Audit editor recognition execution path`
@@ -9,19 +9,19 @@ Supporting audit: `docs/smart-chart-editor-recognition-execution-audit-2026-05-2
 
 ## Summary
 
-Sprint 35 defines a future recognition-session boundary before any more code is moved out of `LeadSheetCanvasHostView.swift`. This is a design-only sprint. It does not change recognition behavior, OCR behavior, chart mutation, chord ink clearing, native `PKCanvasView`, parser/compendium authority, or fixture policy.
+Sprint 35 defined a future recognition-session boundary before any more code was moved out of `LeadSheetCanvasHostView.swift`. Sprint 37 implemented the first behavior-preserving version of that boundary. It did not change recognition behavior, OCR behavior, chart mutation, chord ink clearing, native `PKCanvasView`, parser/compendium authority, or fixture policy.
 
 The goal is to make the next extraction safe by separating two concerns:
 
 - The editor bridge owns UIKit/PencilKit state, active mode, page layout, and callbacks.
-- A future recognition session owns one in-flight recognition request from prepared ink input to a main-thread proposal payload.
+- `ChordInkRecognitionSession` owns one in-flight recognition request from prepared ink input to a main-thread proposal payload.
 
 This boundary is not a new training or personalization layer. Recognition must
 remain writer-agnostic by default. Real Pencil validation should measure whether
 the pipeline generalizes beyond one hand; it should not become a continuous
 personal chord-sample loop.
 
-This boundary should only be implemented after a separate sprint explicitly chooses it.
+This boundary was explicitly selected for Sprint 37 after Sprint 36 reset fixture authority and writer-agnostic recognition policy.
 
 ## Why This Boundary Exists
 
@@ -46,25 +46,19 @@ The next extraction should avoid changing those semantics by giving the future h
 
 ## Proposed Type
 
-Future type name:
+Implemented type name:
 
 ```swift
 final class ChordInkRecognitionSession
 ```
 
-Alternative if a value-type wrapper is easier:
-
-```swift
-struct ChordInkRecognitionExecution
-```
-
-Recommended owner: `SmartChart/Features/Editor/Components/ChordInkRecognitionSession.swift`.
+Owner: `SmartChart/Features/Editor/Components/ChordInkRecognitionSession.swift`.
 
 The type should be editor-adjacent, not a core recognition package type, because it depends on UI/runtime concerns: scheduling, queueing, optional Vision OCR image input, and main-thread proposal delivery.
 
 ## Inputs
 
-A future session request should receive only prepared values:
+The session request receives only prepared values:
 
 - `requestID: UUID`
 - `scheduledAt: Date`
@@ -166,6 +160,17 @@ The final auto-render vs confirmation decision should remain in `EditorView.swif
 
 This avoids accidentally moving product behavior into a background execution helper.
 
+## Implementation Status
+
+Sprint 37 completed the first implementation:
+
+- added `ChordInkRecognitionSessionRequest`
+- added `ChordInkRecognitionProposalPayload`
+- added `ChordInkRecognitionSession`
+- moved background recognizer execution, primary decision calculation for OCR gating, optional OCR request, OCR timing, and timing construction into the session
+- kept active-mode guards, target selection, stale-request validation, continuation-grace requeue, proposal callbacks, chart mutation, diagnostics, and chord ink clearing in the host/editor layers
+- added app-target session tests for main-thread payload delivery and OCR gating
+
 ## Proposed Implementation Steps
 
 1. Add `ChordInkRecognitionProposalPayload`.
@@ -176,7 +181,7 @@ This avoids accidentally moving product behavior into a background execution hel
 6. Keep continuation-grace logic in the host for the first implementation.
 7. Verify no change to auto-render/confirmation/commit behavior.
 
-## Test Plan For A Future Implementation Sprint
+## Test Plan
 
 - `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint-session --filter ChordInkRecognizerTests`
 - `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint-session --filter ChartEditingTests`
@@ -211,9 +216,4 @@ Behavior checks:
 
 ## Recommendation
 
-The next code sprint should not implement this boundary until we either:
-
-1. Run a real Pencil validation sprint and confirm the product loop generalizes enough to stabilize around the current interaction model.
-2. Explicitly choose the recognition-session implementation sprint as a behavior-preserving architecture move.
-
-Sprint 35 closed as a design checkpoint. After the Sprint 36 recognition generalization policy reset, Sprint 37 should prefer real Pencil validation unless the user wants to keep the work entirely repo-local.
+Sprint 37 implemented the behavior-preserving session boundary. The next product-safe step should be real Pencil validation across general/user-like handwriting before any recognition tuning. If the work stays repo-local, further session cleanup should stay limited to behavior-preserving boundary polish and must keep auto-render/confirmation, structured commit, diagnostics, and chord ink clearing outside the session.
