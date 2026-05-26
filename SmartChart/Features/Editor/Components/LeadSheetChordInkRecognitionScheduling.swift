@@ -2,11 +2,30 @@ import Foundation
 import PencilKit
 
 enum LeadSheetChordInkRecognitionScheduling {
+    static let defaultIdleDelay: TimeInterval = 0.85
+    static let defaultContinuationGraceDelay: TimeInterval = 1.2
+    static let rootOnlyContinuationGraceDelay: TimeInterval = 0.55
+
     static func idleDelay(
         for _: PKDrawing,
         defaultDelay: TimeInterval
     ) -> TimeInterval {
         defaultDelay
+    }
+
+    static func continuationGraceDelay(
+        for result: ChordInkRecognitionResult,
+        defaultDelay: TimeInterval
+    ) -> TimeInterval {
+        guard let symbol = result.match?.symbol,
+              symbol.extensions.isEmpty,
+              symbol.alterations.isEmpty,
+              symbol.slashBass == nil,
+              result.confidence >= ChordInkRecognitionPolicy.autoRenderMinimumConfidence else {
+            return defaultDelay
+        }
+
+        return min(defaultDelay, rootOnlyContinuationGraceDelay)
     }
 
     static func shouldGiveContinuationGrace(

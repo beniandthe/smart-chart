@@ -8,15 +8,18 @@ final class LeadSheetChordInkRecognitionSchedulingTests: XCTestCase {
         XCTAssertEqual(
             LeadSheetChordInkRecognitionScheduling.idleDelay(
                 for: PKDrawing(),
-                defaultDelay: 1.2
+                defaultDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay
             ),
-            1.2
+            0.85
         )
     }
 
-    func testClearRootCanPayIdleDelayAndContinuationGraceBeforeProposal() throws {
-        let idleDelay = 1.2
-        let continuationGraceDelay = 1.2
+    func testClearRootUsesShortContinuationGraceBeforeProposal() throws {
+        let idleDelay = LeadSheetChordInkRecognitionScheduling.defaultIdleDelay
+        let continuationGraceDelay = LeadSheetChordInkRecognitionScheduling.continuationGraceDelay(
+            for: try recognitionResult(for: "C", confidence: 4.5),
+            defaultDelay: LeadSheetChordInkRecognitionScheduling.defaultContinuationGraceDelay
+        )
         let result = try recognitionResult(for: "C", confidence: 4.5)
         let drawingData = Data([0x43])
         let timing = recognitionTiming(requestedDelay: idleDelay, strokeCount: 1)
@@ -30,7 +33,32 @@ final class LeadSheetChordInkRecognitionSchedulingTests: XCTestCase {
                 result: result
             )
         )
-        XCTAssertEqual(idleDelay + continuationGraceDelay, 2.4, accuracy: 0.001)
+        XCTAssertEqual(continuationGraceDelay, 0.55, accuracy: 0.001)
+        XCTAssertEqual(idleDelay + continuationGraceDelay, 1.4, accuracy: 0.001)
+    }
+
+    func testExtensionPrefixKeepsFullContinuationGrace() throws {
+        let result = try recognitionResult(for: "A9", confidence: 4.5)
+
+        XCTAssertTrue(
+            LeadSheetChordInkRecognitionScheduling.shouldGiveContinuationGrace(
+                previousDrawingData: nil,
+                drawingData: Data([0x41, 0x39]),
+                timing: recognitionTiming(
+                    requestedDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay,
+                    strokeCount: 4
+                ),
+                idleDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay,
+                result: result
+            )
+        )
+        XCTAssertEqual(
+            LeadSheetChordInkRecognitionScheduling.continuationGraceDelay(
+                for: result,
+                defaultDelay: LeadSheetChordInkRecognitionScheduling.defaultContinuationGraceDelay
+            ),
+            1.2
+        )
     }
 
     func testContinuationGraceDoesNotRepeatForSameDrawingData() throws {
@@ -41,15 +69,21 @@ final class LeadSheetChordInkRecognitionSchedulingTests: XCTestCase {
             LeadSheetChordInkRecognitionScheduling.shouldGiveContinuationGrace(
                 previousDrawingData: drawingData,
                 drawingData: drawingData,
-                timing: recognitionTiming(requestedDelay: 1.2, strokeCount: 1),
-                idleDelay: 1.2,
+                timing: recognitionTiming(
+                    requestedDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay,
+                    strokeCount: 1
+                ),
+                idleDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay,
                 result: result
             )
         )
     }
 
     func testSlashAndAlteredChordsDoNotUseContinuationGrace() throws {
-        let timing = recognitionTiming(requestedDelay: 1.2, strokeCount: 6)
+        let timing = recognitionTiming(
+            requestedDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay,
+            strokeCount: 6
+        )
         let drawingData = Data([0x01])
 
         for chord in ["G/B", "Db7(b9)"] {
@@ -58,7 +92,7 @@ final class LeadSheetChordInkRecognitionSchedulingTests: XCTestCase {
                     previousDrawingData: nil,
                     drawingData: drawingData,
                     timing: timing,
-                    idleDelay: 1.2,
+                    idleDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay,
                     result: try recognitionResult(for: chord, confidence: 4.5)
                 ),
                 chord

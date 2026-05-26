@@ -1,6 +1,6 @@
 # Smart Chart Recognition Latency Triage
 
-Status: Sprint 46 initial evidence gathered; behavior unchanged
+Status: Sprint 46 scheduler tuning implemented; local verification complete; GitHub verification pending after push
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Trigger evidence: `docs/smart-chart-post-export-field-test-log-2026-05-26.md`
@@ -28,10 +28,11 @@ PKCanvasView drawing changed
 -> onChordInkRecognitionProposal
 ```
 
-Current configured delays in `LeadSheetCanvasHostView`:
+Current configured delays:
 
-- `chordInkIdleDelay`: `1.2` seconds
-- `chordInkContinuationGraceDelay`: `1.2` seconds
+- default chord-ink idle delay: `0.85` seconds
+- default continuation-grace delay: `1.2` seconds
+- root-only continuation-grace delay: `0.55` seconds
 
 ## Initial Evidence
 
@@ -50,15 +51,34 @@ This means:
 - `G/B` latency is likely the normal idle delay plus writing/user-perception/render handoff, not the root-continuation grace path.
 - `Db7(b9)` behaving as confirmation-gated remains expected.
 
+## Sprint 46 Scheduler Adjustment
+
+Sprint 46 makes a narrow scheduler-policy change:
+
+- The normal chord-ink idle delay is reduced from `1.2s` to `0.85s`.
+- Root-only continuation grace is reduced from `1.2s` to `0.55s`.
+- Extension prefixes such as `A9` still keep the full `1.2s` continuation grace.
+- Slash chords such as `G/B` and altered chords such as `Db7(b9)` still do not use continuation grace.
+
+Expected product impact:
+
+- A clear root-only case such as `C` can now propose after about `1.4s` of scheduler time instead of about `2.4s`.
+- `G/B` can propose after the shorter normal idle window because it does not use continuation grace.
+- `Db7(b9)` remains confirmation-gated and outside the simple continuation path.
+
 ## Verification
 
-- XcodeBuildMCP focused iOS simulator test `SmartChartTests/LeadSheetChordInkRecognitionSchedulingTests` passed with `4` tests, `0` failures on the configured `iPad Pro 13-inch (M5)` simulator.
-- `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures; the bounded recognizer/readiness pass completed in `0.187s`, keeping recognizer compute well below the product-loop latency budget.
+- Before scheduler tuning, XcodeBuildMCP focused iOS simulator test `SmartChartTests/LeadSheetChordInkRecognitionSchedulingTests` passed with `4` tests, `0` failures on the configured `iPad Pro 13-inch (M5)` simulator.
+- Before scheduler tuning, `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures; the bounded recognizer/readiness pass completed in `0.187s`, keeping recognizer compute well below the product-loop latency budget.
 - `xcodegen generate` completed after adding the app-target scheduling test.
+- After scheduler tuning, XcodeBuildMCP focused iOS simulator test `SmartChartTests/LeadSheetChordInkRecognitionSchedulingTests` passed with `5` tests, `0` failures.
+- After scheduler tuning, `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures; the bounded recognizer/readiness pass completed in `0.131s`.
+- After scheduler tuning, `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46` passed with `317` tests, `36` skipped, `0` failures.
+- After scheduler tuning, XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `334` tests, `36` skipped, `0` failures on `iPad Pro 13-inch (M5)`.
 
 ## Next Evidence To Gather
 
-- Inspect whether the first-pass continuation grace can be made more selective for high-confidence root-only reads without making partially written extensions auto-render too early.
+- Repeat the bounded real iPad/Pencil pass after GitHub is green to confirm the perceived delay improves without premature root-only auto-render.
 - Inspect existing debug timing logs from a live/simulator pass if available:
   - `delay`
   - `idle`
