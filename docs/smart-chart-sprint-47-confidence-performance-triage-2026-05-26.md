@@ -69,6 +69,18 @@ Expected use on the next real-device pass:
 - If OCR appears for clear `C` or `G/B`, verify it was requested only because the primary decision needed ambiguity evidence.
 - If `Db7(b9)` stays quick, keep it as the confirmation-gated control case.
 
+## Timing Capture Gate
+
+Use `docs/smart-chart-sprint-47-timing-capture-log-2026-05-26.md` for the next real iPad/Pencil pass.
+
+Copy the Xcode/device console output that includes the three Sprint 47 labels and parse it with:
+
+```bash
+python3 scripts/analyze_chord_timing_logs.py path/to/device-console.log
+```
+
+The parser groups the timing, proposal, and commit lines into chord attempts and prints the fields needed to route Sprint 48. The pass remains product evidence only; do not import its ink metadata as fixtures or retune recognition from one writer.
+
 ## Acceptance Criteria
 
 - Sprint 47 identifies whether the remaining delay is primarily confidence/trust routing, candidate conflict, recognizer compute, UI proposal/commit, ink clearing, or render handoff.

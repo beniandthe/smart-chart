@@ -37,8 +37,9 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 46 latency triage artifact: `docs/smart-chart-recognition-latency-triage-2026-05-26.md`
 - Sprint 46 latency repeat log: `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`
 - Sprint 47 confidence/performance triage artifact: `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`
-- latest local verification: Sprint 47 instrumentation passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint47 --filter ChordRecognitionTrustArbiterTests` with `8` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint47` passed with `317` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `334` tests, `36` skipped, `0` failures; `git diff --check` passed.
-- latest GitHub verification: main commit `bb85460 Record sprint 46 repeat and open sprint 47` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- Sprint 47 timing capture log: `docs/smart-chart-sprint-47-timing-capture-log-2026-05-26.md`
+- latest local verification: Sprint 47 instrumentation passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint47 --filter ChordRecognitionTrustArbiterTests` with `8` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint47` passed with `317` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `334` tests, `36` skipped, `0` failures; Sprint 47 timing-capture setup passed `python3 -m py_compile scripts/analyze_chord_timing_logs.py scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py`, a sample parser run, and `git diff --check`.
+- latest GitHub verification: main commit `7d0347b Add sprint 47 chord timing instrumentation` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -148,6 +149,7 @@ Current state:
 - `Db7(b9)` is a useful control case because it was extremely quick while remaining in the intended confirmation/trust lane.
 - Export/share is not the active blocker.
 - The next evidence artifact is `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`.
+- The bounded timing capture log is `docs/smart-chart-sprint-47-timing-capture-log-2026-05-26.md`; parse copied device logs with `python3 scripts/analyze_chord_timing_logs.py path/to/device-console.log`.
 
 Sprint 47 tasks:
 
@@ -162,6 +164,7 @@ Sprint 47 current evidence:
 - Existing recognizer timing already captures scheduler idle, recognition phases, OCR time, counts, and best read.
 - Existing committed-chord diagnostics already preserve confidence, candidate scores, trust source, agreement level, OCR evidence, and primary/final decision details after a chord is accepted.
 - Sprint 47 added debug-only console labels for final trust action/reason plus proposal and commit mutation timing. Recognition behavior is unchanged.
+- Sprint 47 added a timing-capture log and parser so the next real iPad/Pencil pass can be reduced into recognizer, trust/proposal, commit, and render-handoff evidence without importing the pass as fixtures.
 
 Acceptance criteria:
 
@@ -715,6 +718,7 @@ Current authority:
 - `docs/smart-chart-recognition-latency-triage-2026-05-26.md`: Sprint 46 recognition latency evidence.
 - `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`: Sprint 46 real Pencil latency repeat gate.
 - `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`: Sprint 47 confidence/performance split triage.
+- `docs/smart-chart-sprint-47-timing-capture-log-2026-05-26.md`: Sprint 47 real-device timing capture gate.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.
