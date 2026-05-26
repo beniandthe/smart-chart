@@ -1,6 +1,6 @@
 # Smart Chart Sprint 51 Real-Life Polish
 
-Status: active kickoff
+Status: complete; routed to Sprint 52 correction UX
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Prior evidence: `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`
@@ -59,3 +59,14 @@ Capture:
 - If placement/snapping is the main issue, route Sprint 52 to chart placement polish.
 - If export/share regresses, route Sprint 52 to export.
 - If Library/navigation friction dominates, route Sprint 52 to app-shell polish.
+
+## Outcome
+
+The user chose correction UX as the first product polish lane after the bounded writing-to-render loop felt good. Sprint 52 starts the chord confirmation/user loop system:
+
+- auto-render remains the preferred lane
+- complete failures auto-clear for two attempts, then direct input appears
+- close races show the top three suggestions
+- local user-specific correction rules may apply only to non-extremely-tight close races
+- manual entry after wrong suggestions records a local exclusion
+- no personal handwriting fixture expansion, score retuning, OCR expansion, or symbol-ledger diagnostics cost

@@ -2,6 +2,7 @@ import Foundation
 
 enum ChordEntryDiagnosticResolution: String, Codable, Equatable {
     case autoRendered
+    case userRuleApplied
     case confirmedSuggestion
     case manualCorrection
     case renderedChordCorrection

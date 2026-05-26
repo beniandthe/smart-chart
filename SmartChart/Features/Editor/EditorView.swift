@@ -41,6 +41,8 @@ struct EditorView: View {
     @State private var pendingChordInkConfirmation: PendingChordInkConfirmation?
     @State private var pendingChordCorrection: PendingChordCorrection?
     @State private var pendingChordRenderTimingEvidence: [UUID: PendingChordRenderTimingEvidence] = [:]
+    @State private var chordInkUserCorrectionMemory: ChordInkUserCorrectionMemory
+    @State private var chordInkAutomaticRewriteFailures = ChordInkAutomaticRewriteFailureTracker()
     @State private var chordInkErrorMessage = ""
     @State private var showingChordInkError = false
     @State private var pendingTimeSignatureSourceMeasureID: UUID?
@@ -49,15 +51,21 @@ struct EditorView: View {
     @State private var canvasMode: EditorCanvasMode = .browse
     @State private var pendingChordDiagnosticReconciliationWorkItem: DispatchWorkItem?
     private let exporter: any ChartExporting
+    private let chordInkUserCorrectionMemoryStore: ChordInkUserCorrectionMemoryStore
 
     init(
         chart: Binding<Chart>,
         exporter: any ChartExporting = PDFChartExporter.live(),
+        chordInkUserCorrectionMemoryStore: ChordInkUserCorrectionMemoryStore = .live(),
         initialCanvasMode: EditorCanvasMode = .browse
     ) {
         self._chart = chart
         self.exporter = exporter
+        self.chordInkUserCorrectionMemoryStore = chordInkUserCorrectionMemoryStore
         _canvasMode = State(initialValue: initialCanvasMode)
+        _chordInkUserCorrectionMemory = State(
+            initialValue: (try? chordInkUserCorrectionMemoryStore.load()) ?? ChordInkUserCorrectionMemory()
+        )
     }
 
     var body: some View {
@@ -809,11 +817,50 @@ struct EditorView: View {
 
         if decision.action == .autoRender,
            let acceptedText = decision.acceptedText {
-            commitChordInkCandidate(
+            _ = commitChordInkCandidate(
                 acceptedText,
                 confirmation: confirmation,
                 resolution: .autoRendered
             )
+            return
+        }
+
+        let isCompleteFailure = ChordInkUserCorrectionMemoryPolicy.isCompleteFailure(
+            result: result,
+            decision: decision,
+            candidateTexts: confirmation.candidateTexts
+        )
+
+        if isCompleteFailure {
+            let failureCount = chordInkAutomaticRewriteFailures.recordFailure(
+                measureID: measureID,
+                targetFraction: targetFraction
+            )
+
+            if failureCount <= ChordInkUserCorrectionMemoryPolicy.maximumAutomaticRewriteFailures {
+                clearChordInkForRewrite()
+                return
+            }
+        } else {
+            chordInkAutomaticRewriteFailures.reset()
+        }
+
+        if !isCompleteFailure,
+           let preferredCandidate = chordInkUserCorrectionMemory.preferredCandidate(
+               for: confirmation.candidateTexts,
+               decision: decision
+           ) {
+            if commitChordInkCandidate(
+                preferredCandidate,
+                confirmation: confirmation,
+                resolution: .userRuleApplied
+            ) {
+                chordInkUserCorrectionMemory.recordRuleApplication(
+                    acceptedText: preferredCandidate,
+                    candidateTexts: confirmation.candidateTexts
+                )
+                persistChordInkUserCorrectionMemory()
+            }
             return
         }
 
@@ -825,29 +872,56 @@ struct EditorView: View {
         confirmation: PendingChordInkConfirmation
     ) {
         let trimmedCandidateText = candidateText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolution: ChordEntryDiagnosticResolution = confirmation.candidateTexts.contains(trimmedCandidateText)
+        let resolution: ChordEntryDiagnosticResolution = confirmation.visibleCandidateTexts.contains(trimmedCandidateText)
             ? .confirmedSuggestion
             : .manualCorrection
 
-        commitChordInkCandidate(
+        let didCommit = commitChordInkCandidate(
             trimmedCandidateText,
             confirmation: confirmation,
             resolution: resolution
         )
+
+        guard didCommit else {
+            return
+        }
+
+        switch resolution {
+        case .confirmedSuggestion:
+            if chordInkUserCorrectionMemory.recordConfirmedSuggestion(
+                acceptedText: trimmedCandidateText,
+                drawingData: confirmation.drawingData,
+                candidateTexts: confirmation.candidateTexts,
+                decision: confirmation.decision
+            ) {
+                persistChordInkUserCorrectionMemory()
+            }
+        case .manualCorrection:
+            if chordInkUserCorrectionMemory.recordManualCorrection(
+                acceptedText: trimmedCandidateText,
+                drawingData: confirmation.drawingData,
+                candidateTexts: confirmation.candidateTexts
+            ) {
+                persistChordInkUserCorrectionMemory()
+            }
+        case .autoRendered, .userRuleApplied, .renderedChordCorrection, .reconciledRenderedChord:
+            break
+        }
     }
 
+    @discardableResult
     private func commitChordInkCandidate(
         _ candidateText: String,
         confirmation: PendingChordInkConfirmation,
         resolution: ChordEntryDiagnosticResolution
-    ) {
+    ) -> Bool {
         #if DEBUG || targetEnvironment(simulator)
         let commitStartedAt = Date()
         #endif
         guard let match = ChordRecognitionCompendium.match(candidateText) else {
             chordInkErrorMessage = "That chord candidate is not supported yet. Try another candidate or edit the text."
             showingChordInkError = true
-            return
+            return false
         }
 
         var updatedChart = chart
@@ -860,10 +934,11 @@ struct EditorView: View {
         ) else {
             chordInkErrorMessage = "That measure is no longer available. Keep the ink and try again."
             showingChordInkError = true
-            return
+            return false
         }
 
         chart = updatedChart
+        chordInkAutomaticRewriteFailures.reset()
 
         #if DEBUG || targetEnvironment(simulator)
         let commitMutationMilliseconds = Date().timeIntervalSince(commitStartedAt) * 1_000
@@ -893,6 +968,8 @@ struct EditorView: View {
             commitMilliseconds: commitMutationMilliseconds
         )
         #endif
+
+        return true
     }
 
     private func handleChordCorrectionRequested(_ chordEventID: UUID) {
@@ -1197,11 +1274,26 @@ struct EditorView: View {
     }
 
     private func handleChordInkRewriteRequested() {
+        chordInkAutomaticRewriteFailures.reset()
+        clearChordInkForRewrite()
+    }
+
+    private func clearChordInkForRewrite() {
         var updatedChart = chart
         _ = updatedChart.setPageHandwrittenChordDrawing(nil)
         chart = updatedChart
         pendingChordInkConfirmation = nil
         canvasMode = .chordEntry
+    }
+
+    private func persistChordInkUserCorrectionMemory() {
+        do {
+            try chordInkUserCorrectionMemoryStore.save(chordInkUserCorrectionMemory)
+        } catch {
+            #if DEBUG || targetEnvironment(simulator)
+            print("SmartChart chord user correction memory error: \(error)")
+            #endif
+        }
     }
 
     private func handleNoteSelectionChanged(_ selection: LeadSheetNoteSelection?) {

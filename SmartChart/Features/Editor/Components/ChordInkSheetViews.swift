@@ -35,9 +35,12 @@ struct PendingChordInkConfirmation: Identifiable {
         self.primaryDecision = primaryDecision
         self.decision = decision
 
+        let rankedCandidateTexts = ChordInkRecognitionPolicy.rankedSupportedScores(for: result)
+            .compactMap(\.displayText)
+        let primaryCandidateTexts = [result.match?.displayText].compactMap { $0 }
         let ocrCandidateTexts = result.ocrCandidates?.compactMap(\.displayText) ?? []
         let userFacingCandidateTexts = ChordRecognitionCompendium.userFacingCandidateTexts(
-            from: result.rawCandidates + ocrCandidateTexts
+            from: rankedCandidateTexts + primaryCandidateTexts + result.rawCandidates + ocrCandidateTexts
         )
         self.candidateTexts = userFacingCandidateTexts
         self.bestCandidateText = result.match?.displayText ?? userFacingCandidateTexts.first
@@ -45,6 +48,14 @@ struct PendingChordInkConfirmation: Identifiable {
 
     var displayMeasureNumber: Int {
         measureIndex + 1
+    }
+
+    var requiresDirectEntry: Bool {
+        candidateTexts.isEmpty && result.match == nil && decision.acceptedText == nil
+    }
+
+    var visibleCandidateTexts: [String] {
+        Array(candidateTexts.prefix(3))
     }
 }
 
@@ -143,11 +154,18 @@ struct ChordInkConfirmationSheetView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle("Confirm Chord")
+            .navigationTitle(confirmation.requiresDirectEntry ? "Enter Chord" : "Confirm Chord")
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(true)
+        .task(id: confirmation.id) {
+            guard confirmation.requiresDirectEntry else {
+                return
+            }
+
+            isManualEntryFocused = true
+        }
     }
 
     private var trimmedCandidateText: String {
@@ -189,7 +207,7 @@ struct ChordInkConfirmationSheetView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            let candidates = Array(confirmation.candidateTexts.prefix(5))
+            let candidates = confirmation.visibleCandidateTexts
             if candidates.isEmpty {
                 Text("No candidates yet.")
                     .font(.subheadline)

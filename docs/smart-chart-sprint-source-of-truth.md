@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, and Sprint 50 post-stroke responsiveness are complete locally; Sprint 51 real-life polish is active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, and Sprint 51 real-life polish are complete locally; Sprint 52 chord confirmation/user loop UX is active
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -42,7 +42,8 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 49 flat-root candidate availability artifact: `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`
 - Sprint 50 post-stroke responsiveness artifact: `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`
 - Sprint 51 real-life polish artifact: `docs/smart-chart-sprint-51-real-life-polish-2026-05-26.md`
-- latest local verification: Sprint 50 post-stroke responsiveness passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint50 --filter WritingToRenderPipelineReadinessTests` with `1` test, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint50` passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP focused iOS simulator scheduling tests passed with `5` tests, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed for timing/audit/import/watch scripts; `git diff --check` passed; repeat metadata on chart `3800A7BA-DA57-4596-A4F2-A3336FA5742B` showed quicker `C`, stable `G/B`, and trust-correct `Db7(b9)` confirmation, and the user confirmed the pass felt good with no premature render.
+- Sprint 52 chord confirmation/user loop artifact: `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`
+- latest local verification: Sprint 52 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests` passed with `5` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests` passed with `7` tests, `0` failures; XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests` passed with `5` tests, `0` failures; `git diff --check` passed. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
 - latest GitHub verification: main commit `a84e397 Tune sprint 50 post-stroke responsiveness` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -138,46 +139,50 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 51: Real-Life Polish
+### Sprint 52: Chord Confirmation User Loop
 
-Status: active kickoff after Sprint 50 closed the bounded writing-to-render responsiveness loop.
+Status: active implementation after Sprint 51 routed product polish to correction UX.
 
-Goal: move from narrow recognition validation to real-life product polish across open -> write -> recognize -> snap -> fix -> export.
+Goal: make the chord confirmation loop feel fast, recoverable, and locally personalized without turning the recognizer into a handwriting training system.
 
-Trigger: Sprint 50 repeat pass confirmed the shorter post-stroke scheduler timing felt good, with no premature rendering. The bounded chord path is now good enough to test the whole app flow instead of continuing chord-loop tuning.
+Trigger: the bounded writing-to-render loop now feels good, and the next product work is UX/UI around confirmation, direct input, and user-specific correction memory.
 
 Current state:
 
-- Native PencilKit writing feel is preserved.
-- Simple and slash chords auto-render reliably in the bounded pass.
-- Altered close races keep supported suggestions and route to confirmation instead of failing empty.
-- Full-chart PDF export/share has been fixed.
-- The next evidence artifact is `docs/smart-chart-sprint-51-real-life-polish-2026-05-26.md`.
+- Auto-render remains the preferred lane.
+- Close races route to confirmation when trust is not clear enough.
+- Complete failures previously opened confirmation/direct entry immediately; Sprint 52 changes the first two complete misses into automatic ink clears so rewriting is instant.
+- User-specific correction memory is local app support data and must not become global recognition tuning.
+- The active evidence artifact is `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`.
 
-Sprint 51 tasks:
+Sprint 52 tasks:
 
-- Run one normal chart-writing pass rather than a narrow chord fixture loop.
-- Capture product friction across opening, writing, recognition, correction, placement/snapping, export, navigation, and Library return.
-- Choose the next scoped product polish implementation from observed friction only.
-- Keep verification proportional to the touched surface.
+- Add local user correction memory for close-race rules, suggestion exclusions, and automatic rewrite failure tracking.
+- Show only the top three supported candidates in chord confirmation.
+- Auto-clear complete recognition failures for two consecutive attempts per measure/target slot, then show direct input on the third.
+- Persist a local rule when the user confirms a non-extremely-tight close-race suggestion.
+- Avoid creating rules for extremely tight races.
+- Persist a local exclusion when the user manually enters a supported chord outside the suggestions.
 
-Sprint 51 current evidence:
+Sprint 52 current evidence:
 
-- The recovery/audit arc has removed the obvious recognition architecture drift and stabilized the core writing-to-render loop.
-- Remaining work should now look like product polish, not recognition training.
+- Focused SwiftPM and XcodeBuildMCP iOS simulator tests cover the new correction-memory policy, complete-failure cap, non-extremely-tight rule creation, extremely-tight no-rule behavior, manual exclusion behavior, and persistence.
 
 Acceptance criteria:
 
-- A real chart-writing pass is recorded with clear product findings.
-- The next implementation sprint is chosen from actual friction, not speculative architecture work.
-- No personal fixture expansion, score retuning from one pass, default OCR expansion, or symbol-ledger diagnostics cost.
+- Existing compendium/parser validation still gates every accepted chord.
+- Complete failures clear ink immediately for attempts one and two, then direct input appears.
+- Close-race confirmation presents top-three supported candidates.
+- Learned local rules apply only to matching top-three candidate signatures that are not extremely tight and have no exclusion.
+- Manual correction outside the suggestions records an exclusion.
+- No fixture expansion, score retuning from one user's pass, default OCR expansion, or symbol-ledger diagnostics cost.
 
-Non-goals for Sprint 51:
+Non-goals for Sprint 52:
 
 - No broad recognition quality retuning.
 - No new handwriting corpus or repeated-pass training loop.
-- No long full-suite verification unless the next implementation touches broad recognition, editor, export, or project configuration surfaces.
-- No implementation before the first product-polish pass identifies a real blocker.
+- No global score changes based on local user correction memory.
+- No export, Library, or placement/snap changes unless a compile-level dependency requires it.
 
 ## Completed Sprints Log
 
@@ -727,14 +732,24 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: none for the bounded writing-to-render loop; the user confirmed it felt good and rendered when expected.
 - next sprint candidate: Sprint 51 real-life polish.
 
+### Sprint 51: Real-Life Polish
+
+- status: complete; routed to Sprint 52 correction UX
+- kickoff commit: `ec0b30b Close sprint 50 and open sprint 51`
+- summary: Moved out of the bounded chord-recognition loop and into product polish planning. The user chose UX/UI for chord confirmation and the user correction loop as the first post-loop product lane.
+- tests and evidence: Sprint 51 was doc/routing work, backed by Sprint 50's green broad app baseline and the user's confirmation that the writing-to-render pass felt good and rendered when expected.
+- behavior boundary: no recognition score, fixture corpus, OCR authority, symbol-ledger behavior, PencilKit capture, export/share, or chord ink clearing changed in Sprint 51.
+- unresolved follow-up: implement the first correction UX rules without creating a new handwriting training loop.
+- next sprint candidate: Sprint 52 chord confirmation user loop.
+
 ## Next Sprint Backlog
 
-Use this queue for Sprint 52 routing after Sprint 51 real-life polish. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
+Use this queue for Sprint 53 routing after Sprint 52 chord confirmation/user loop. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
 
 - If the full flow feels good, close the recovery/audit arc and move to feature prioritization.
-- If correction friction is the main issue, route Sprint 52 to correction UX.
-- If placement/snapping is the main issue, route Sprint 52 to chart placement polish.
-- If Library/navigation friction dominates, route Sprint 52 to app-shell polish.
+- If correction friction remains after Sprint 52, route Sprint 53 to confirmation sheet interaction polish or direct-input affordances.
+- If placement/snapping is the main issue, route Sprint 53 to chart placement polish.
+- If Library/navigation friction dominates, route Sprint 53 to app-shell polish.
 - If the repeat pass shows render/proposal/commit latency, route to an editor/render performance sprint.
 - If the duplicated-screen observation persists with screenshot/repro, choose a visual/UI state bug sprint.
 - Repeat visual renderer QA only when a new export/layout defect appears; Sprint 40 established the current PDF/PNG baseline.
@@ -764,6 +779,7 @@ Current authority:
 - `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`: Sprint 49 flat-root candidate availability and bounded-repeat setup.
 - `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`: Sprint 50 post-stroke responsiveness and bounded-repeat setup.
 - `docs/smart-chart-sprint-51-real-life-polish-2026-05-26.md`: Sprint 51 real-life polish and product-flow evidence routing.
+- `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`: Sprint 52 chord confirmation and local user correction loop.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.
