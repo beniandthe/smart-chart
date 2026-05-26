@@ -21,7 +21,7 @@ final class PDFRendererVisualQATests: XCTestCase {
             VisualQACase(
                 label: "bounded-ink-product-proof",
                 chart: productProofChart,
-                expectedText: ["Renderer Product Proof"] + productProofExpectedText
+                expectedText: ["RENDERER PRODUCT PROOF"] + productProofExpectedText
             )
         ]
 
@@ -84,7 +84,7 @@ final class PDFRendererVisualQATests: XCTestCase {
         return VisualQACase(
             label: label,
             chart: chart,
-            expectedText: [chart.title] + expectedChordText
+            expectedText: [chart.title.uppercased()] + expectedChordText
         )
     }
 

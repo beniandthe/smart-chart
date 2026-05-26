@@ -53,7 +53,8 @@ final class RendererProductProofTests: XCTestCase {
         let exportedURL = try await exporter.exportPDF(for: chart)
         let documentText = try XCTUnwrap(PDFDocument(url: exportedURL)?.string)
 
-        XCTAssertTrue(documentText.contains("Renderer Product Proof"))
+        XCTAssertTrue(documentText.contains("RENDERER PRODUCT PROOF"))
+        XCTAssertFalse(documentText.contains("M1"))
         XCTAssertFalse(documentText.contains("Tap the measure in the editor"))
         for expectedDisplayText in expectedDisplayTexts {
             XCTAssertTrue(

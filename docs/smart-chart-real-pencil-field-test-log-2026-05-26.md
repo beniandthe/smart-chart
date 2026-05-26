@@ -1,6 +1,6 @@
 # Smart Chart Real Pencil Field Test Log
 
-Status: Sprint 43 field-test evidence captured; follow-up decision pending
+Status: Sprint 43 field-test evidence captured; Sprint 44 renderer/export follow-up selected
 Date: 2026-05-26
 Protocol: `docs/smart-chart-real-life-testing-readiness-2026-05-25.md`
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
@@ -108,7 +108,7 @@ Choose the next sprint from the observed product friction:
 - [ ] Pencil/input feel sprint
 - [ ] recognition trust routing sprint
 - [ ] correction UX sprint
-- [ ] renderer/export sprint
+- [x] renderer/export sprint
 - [ ] beta/readiness polish sprint
 - [ ] no code change; repeat field test with another writer/device
 

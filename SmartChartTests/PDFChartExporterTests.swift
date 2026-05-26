@@ -41,5 +41,26 @@ final class PDFChartExporterTests: XCTestCase {
 
         XCTAssertFalse(documentText.contains("Tap the measure in the editor"))
     }
+
+    func testExportPDFUsesLeadSheetPageLayoutInsteadOfMeasureCards() async throws {
+        let exportDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let exporter = PDFChartExporter(exportDirectory: exportDirectory)
+
+        defer {
+            try? FileManager.default.removeItem(at: exportDirectory)
+        }
+
+        let exportedURL = try await exporter.exportPDF(for: ChartSamples.straightAheadSwing)
+        let document = try XCTUnwrap(PDFDocument(url: exportedURL))
+        let documentText = document.string ?? ""
+        let pageBounds = try XCTUnwrap(document.page(at: 0)?.bounds(for: .mediaBox))
+
+        XCTAssertTrue(documentText.contains(ChartSamples.straightAheadSwing.title.uppercased()))
+        XCTAssertFalse(documentText.contains("Page 1"))
+        XCTAssertFalse(documentText.contains("M1"))
+        XCTAssertFalse(documentText.contains("M2"))
+        XCTAssertGreaterThan(pageBounds.height, pageBounds.width)
+    }
 }
 #endif

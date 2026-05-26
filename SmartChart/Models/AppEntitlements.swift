@@ -89,6 +89,7 @@ extension EntitledFeature: Identifiable {
 struct AppEntitlements: Codable, Hashable {
     static let recommendedFreeChartLimit = 5
     static let free = AppEntitlements(activePlan: .free)
+    static let pdfExportAvailableBeforeStoreKit = true
 
     var activePlan: SmartChartPlan
 
@@ -104,7 +105,21 @@ struct AppEntitlements: Codable, Hashable {
     func includes(_ feature: EntitledFeature) -> Bool {
         switch activePlan {
         case .free:
-            return false
+            switch feature {
+            case .pdfExport:
+                return Self.pdfExportAvailableBeforeStoreKit
+            case .unlimitedLocalCharts,
+                 .documentTransposition,
+                 .fontPresets,
+                 .roadmapNotationTools,
+                 .advancedRhythmEditing,
+                 .syncedChartOrganization,
+                 .cloudBackup,
+                 .sharedBandLibraries,
+                 .setlistsAndVersionHistory,
+                 .aiRecognitionCleanup:
+                return false
+            }
         case .proLifetime:
             switch feature {
             case .unlimitedLocalCharts,
@@ -147,7 +162,7 @@ struct AppEntitlements: Codable, Hashable {
             let remainingSlots = remainingLocalChartSlots(currentChartCount: currentChartCount) ?? 0
 
             if remainingSlots == 0 {
-                return "Free limit reached: \(localChartLimit) local charts. Pro removes the cap and adds export."
+                return "Free limit reached: \(localChartLimit) local charts. Pro removes the cap."
             }
 
             return "\(remainingSlots) of \(localChartLimit) free chart slots left."

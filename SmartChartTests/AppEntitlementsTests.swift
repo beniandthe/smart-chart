@@ -2,13 +2,13 @@ import XCTest
 @testable import SmartChart
 
 final class AppEntitlementsTests: XCTestCase {
-    func testFreePlanCapsLocalChartsAndLocksPremiumFeatures() {
+    func testFreePlanCapsLocalChartsAndKeepsExportReachableBeforeStoreKit() {
         let entitlements = AppEntitlements.free
 
         XCTAssertEqual(entitlements.localChartLimit, 5)
         XCTAssertTrue(entitlements.canCreateChart(currentChartCount: 4))
         XCTAssertFalse(entitlements.canCreateChart(currentChartCount: 5))
-        XCTAssertFalse(entitlements.includes(.pdfExport))
+        XCTAssertTrue(entitlements.includes(.pdfExport))
         XCTAssertFalse(entitlements.includes(.documentTransposition))
     }
 

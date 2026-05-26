@@ -13,14 +13,16 @@ struct LeadSheetNotationRenderer {
         )
     }
 
-    func drawPaper(_ frame: CGRect, in context: CGContext) {
-        context.saveGState()
-        let shadowColor = UIColor.black.withAlphaComponent(0.12).cgColor
-        context.setShadow(offset: CGSize(width: 0, height: 8), blur: 24, color: shadowColor)
-        let shadowPath = UIBezierPath(roundedRect: frame, cornerRadius: 4)
-        UIColor.white.setFill()
-        shadowPath.fill()
-        context.restoreGState()
+    func drawPaper(_ frame: CGRect, in context: CGContext, showsShadow: Bool = true) {
+        if showsShadow {
+            context.saveGState()
+            let shadowColor = UIColor.black.withAlphaComponent(0.12).cgColor
+            context.setShadow(offset: CGSize(width: 0, height: 8), blur: 24, color: shadowColor)
+            let shadowPath = UIBezierPath(roundedRect: frame, cornerRadius: 4)
+            UIColor.white.setFill()
+            shadowPath.fill()
+            context.restoreGState()
+        }
 
         let paperPath = UIBezierPath(rect: frame)
         style.paperFillColor.setFill()
