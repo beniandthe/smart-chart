@@ -131,7 +131,7 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ### Sprint 43: Real Pencil Product Loop Field Test
 
-Status: set up for manual field test after Sprint 42 GitHub verification.
+Status: field-test evidence capture started after Sprint 42 GitHub verification.
 
 Goal: run the short real Pencil validation protocol from `docs/smart-chart-real-life-testing-readiness-2026-05-25.md` against `open -> write -> recognize -> snap -> fix -> export`. This is a product-readiness field test, not a recognition-training loop.
 
@@ -173,6 +173,7 @@ Current state:
 - Sprint 41 centralized the writing-to-render commit rule in the chart model: successful chord-ink commits append a structured chord with source ink evidence and clear the active chord ink pass; failed commits keep the ink available.
 - Sprint 42 added a bounded writing-to-render readiness harness that centralizes the three product-proof fixtures, asserts live trust routing, enforces a conservative recognition-latency budget, proves default live recognition skips symbol-ledger diagnostics, runs renderer product proof through the live trust/commit contract, and documents the real Pencil field-test protocol.
 - Sprint 43 setup added a field-test log template so real Pencil observations can be captured as product evidence and routed into the correct next sprint without expanding a personal handwriting corpus.
+- Sprint 43 field-test evidence capture has started: the user reported the pass was completed and exported to Preview, and the exported PDF artifact renders as a legible one-page chart with `C`, `G/B`, and `Db7(b9)` visible. Tester notes on physical device identity, live Pencil feel, recognition route trust, correction friction, and ink lifecycle still need to be recorded before Sprint 43 can close.
 - The user has approved continuing one scoped cleanup sprint at a time until the current audit/cleanup plan reaches a necessary approval point or is complete.
 
 Candidate Sprint 43 directions:
