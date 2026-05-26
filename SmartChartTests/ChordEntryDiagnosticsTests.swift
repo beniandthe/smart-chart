@@ -77,6 +77,40 @@ final class ChordEntryDiagnosticsTests: XCTestCase {
         XCTAssertEqual(try recorder.loadEvents(), [])
     }
 
+    func testRecorderPersistsTimingEvidence() throws {
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let recorder = ChordEntryDiagnosticsRecorder(
+            url: temporaryDirectory.appendingPathComponent("chord-entry-diagnostics.jsonl")
+        )
+        var event = diagnosticEvent(
+            chart: Chart.blank(title: "Chord Writing Test Chart", key: .cMajor),
+            measureID: UUID(),
+            chordEventID: UUID(),
+            acceptedText: "C",
+            renderedDisplayText: "C",
+            resolution: .autoRendered
+        )
+        event.timingEvidence = ChordEntryTimingEvidence(
+            requestedDelayMilliseconds: 850,
+            idleMilliseconds: 912,
+            recognitionMilliseconds: 2,
+            recognitionTotalMilliseconds: 914,
+            proposalDecisionMilliseconds: 1,
+            commitMutationMilliseconds: 3,
+            renderHandoffMilliseconds: 16
+        )
+
+        defer {
+            try? FileManager.default.removeItem(at: temporaryDirectory)
+        }
+
+        try recorder.append(event)
+
+        let loadedEvent = try XCTUnwrap(try recorder.loadEvents().first)
+        XCTAssertEqual(loadedEvent.timingEvidence, event.timingEvidence)
+    }
+
     func testCoverageReportFindsMissingChordEntryDiagnostics() throws {
         var chart = Chart.blank(title: "Chord Writing Test Chart", key: .cMajor, measureCount: 1)
         let measureID = try XCTUnwrap(chart.measures.first?.id)

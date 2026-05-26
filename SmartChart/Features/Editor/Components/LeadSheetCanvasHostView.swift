@@ -12,7 +12,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     var onTimeSignatureTargetRequested: ((UUID) -> Void)? = nil
     var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)? = nil
     var onRhythmicNotationValidationError: ((String) -> Void)? = nil
-    var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?) -> Void)? = nil
+    var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?, ChordInkRecognitionTiming) -> Void)? = nil
     var onChordCorrectionRequested: ((UUID) -> Void)? = nil
     var onNoteSelectionChanged: ((LeadSheetNoteSelection?) -> Void)? = nil
 
@@ -133,7 +133,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     var onTimeSignatureTargetRequested: ((UUID) -> Void)?
     var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)?
     var onRhythmicNotationValidationError: ((String) -> Void)?
-    var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?) -> Void)?
+    var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?, ChordInkRecognitionTiming) -> Void)?
     var onChordCorrectionRequested: ((UUID) -> Void)?
     var onNoteSelectionChanged: ((LeadSheetNoteSelection?) -> Void)?
 
@@ -925,7 +925,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             payload.target.measureID,
             payload.result,
             payload.drawingData,
-            payload.target.fraction
+            payload.target.fraction,
+            payload.timing
         )
     }
 

@@ -2,11 +2,12 @@
 """Summarize Smart Chart chord timing console logs.
 
 The parser is intentionally small and tolerant of Xcode/device-log prefixes. It
-looks only for the three Sprint 47 debug labels:
+looks only for the Sprint 47/Sprint 48 debug labels:
 
 - SmartChart chord timing
 - SmartChart chord proposal
 - SmartChart chord commit
+- SmartChart chord render
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ PREFIXES = {
     "SmartChart chord timing:": "timing",
     "SmartChart chord proposal:": "proposal",
     "SmartChart chord commit:": "commit",
+    "SmartChart chord render:": "render",
 }
 
 
@@ -33,6 +35,7 @@ class Attempt:
     timing: dict[str, str] = field(default_factory=dict)
     proposal: dict[str, str] = field(default_factory=dict)
     commit: dict[str, str] = field(default_factory=dict)
+    render: dict[str, str] = field(default_factory=dict)
 
 
 def parse_args() -> argparse.Namespace:
@@ -102,6 +105,12 @@ def parse_logs(paths: Iterable[Path]) -> list[Attempt]:
                         attempt = Attempt(line_no=line_no)
                         attempts.append(attempt)
                     attempt.commit = fields
+                elif kind == "render":
+                    attempt = latest_without(attempts, "render")
+                    if attempt is None:
+                        attempt = Attempt(line_no=line_no)
+                        attempts.append(attempt)
+                    attempt.render = fields
 
     return attempts
 
@@ -114,7 +123,7 @@ def latest_without(attempts: list[Attempt], field_name: str) -> Attempt | None:
 
 
 def value(attempt: Attempt, key: str, default: str = "") -> str:
-    for bucket in (attempt.commit, attempt.proposal, attempt.timing):
+    for bucket in (attempt.render, attempt.commit, attempt.proposal, attempt.timing):
         if key in bucket:
             return bucket[key]
     return default
@@ -138,6 +147,7 @@ def row_for_attempt(index: int, attempt: Attempt) -> dict[str, str]:
         "totalMs": value(attempt, "total"),
         "proposalMs": value(attempt, "decisionMs"),
         "commitMs": value(attempt, "commitMs"),
+        "renderHandoffMs": value(attempt, "renderHandoffMs"),
         "ocrCount": value(attempt, "ocr"),
         "ocrMs": value(attempt, "ocrMs"),
         "reason": value(attempt, "reason"),
@@ -170,6 +180,7 @@ def write_markdown(rows: list[dict[str, str]]) -> None:
         "totalMs",
         "proposalMs",
         "commitMs",
+        "renderHandoffMs",
         "ocrCount",
         "ocrMs",
         "reason",
@@ -184,6 +195,7 @@ def write_markdown(rows: list[dict[str, str]]) -> None:
     print("- High delay/idle with low recognition/proposal/commit points at scheduling or waiting policy.")
     print("- High recognitionMs/totalMs points at recognizer compute or candidate conflict.")
     print("- Low recognition/proposal/commit with visible lag points at render/update handoff.")
+    print("- High renderHandoffMs points at SwiftUI update/render handoff after chart mutation.")
     print("- Low confidence plus confirm/ambiguous final action points at trust/ink interpretation.")
 
 

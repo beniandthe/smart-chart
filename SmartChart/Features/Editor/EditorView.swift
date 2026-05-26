@@ -4,6 +4,11 @@ import SwiftUI
 import UIKit
 #endif
 
+private struct PendingChordRenderTimingEvidence {
+    var event: ChordEntryDiagnosticEvent
+    var committedAt: Date
+}
+
 struct EditorView: View {
     private static let supportedTimeSignatureChoices = [
         Meter(numerator: 4, denominator: 4),
@@ -35,6 +40,7 @@ struct EditorView: View {
     @State private var showingNoteEditError = false
     @State private var pendingChordInkConfirmation: PendingChordInkConfirmation?
     @State private var pendingChordCorrection: PendingChordCorrection?
+    @State private var pendingChordRenderTimingEvidence: [UUID: PendingChordRenderTimingEvidence] = [:]
     @State private var chordInkErrorMessage = ""
     @State private var showingChordInkError = false
     @State private var pendingTimeSignatureSourceMeasureID: UUID?
@@ -264,6 +270,9 @@ struct EditorView: View {
         }
         .onChange(of: chart) { _, updatedChart in
             scheduleChordEntryDiagnosticReconciliation(for: updatedChart)
+            #if DEBUG || targetEnvironment(simulator)
+            recordPendingChordRenderHandoff()
+            #endif
         }
         .onDisappear {
             pendingChordDiagnosticReconciliationWorkItem?.cancel()
@@ -756,7 +765,8 @@ struct EditorView: View {
         measureID: UUID,
         result: ChordInkRecognitionResult,
         drawingData: Data,
-        targetFraction: Double?
+        targetFraction: Double?,
+        timing: ChordInkRecognitionTiming
     ) {
         #if DEBUG || targetEnvironment(simulator)
         let proposalReceivedAt = Date()
@@ -771,12 +781,19 @@ struct EditorView: View {
         selectedNoteSelection = nil
         let primaryDecision = ChordInkRecognitionPolicy.decision(for: result)
         let decision = ChordRecognitionTrustArbiter.decision(for: result)
+        #if DEBUG || targetEnvironment(simulator)
+        let proposalDecisionMilliseconds = Date().timeIntervalSince(proposalReceivedAt) * 1_000
+        #else
+        let proposalDecisionMilliseconds: Double? = nil
+        #endif
         let confirmation = PendingChordInkConfirmation(
             measureID: measureID,
             measureIndex: measure.index,
             result: result,
             drawingData: drawingData,
             targetFraction: targetFraction,
+            recognitionTiming: timing,
+            proposalDecisionMilliseconds: proposalDecisionMilliseconds,
             primaryDecision: primaryDecision,
             decision: decision
         )
@@ -786,7 +803,7 @@ struct EditorView: View {
             result: result,
             primaryDecision: primaryDecision,
             decision: decision,
-            receivedAt: proposalReceivedAt
+            decisionMilliseconds: proposalDecisionMilliseconds
         )
         #endif
 
@@ -849,13 +866,17 @@ struct EditorView: View {
         chart = updatedChart
 
         #if DEBUG || targetEnvironment(simulator)
+        let commitMutationMilliseconds = Date().timeIntervalSince(commitStartedAt) * 1_000
+        let commitObservedAt = Date()
         recordChordEntryDiagnostic(
             acceptedText: candidateText,
             match: match,
             confirmation: confirmation,
             resolution: resolution,
             chordEventID: chordEventID,
-            chartSnapshot: updatedChart
+            chartSnapshot: updatedChart,
+            commitMutationMilliseconds: commitMutationMilliseconds,
+            commitObservedAt: commitObservedAt
         )
         #endif
 
@@ -869,7 +890,7 @@ struct EditorView: View {
             acceptedText: candidateText,
             resolution: resolution,
             chordEventID: chordEventID,
-            startedAt: commitStartedAt
+            commitMilliseconds: commitMutationMilliseconds
         )
         #endif
     }
@@ -936,15 +957,14 @@ struct EditorView: View {
         result: ChordInkRecognitionResult,
         primaryDecision: ChordInkRecognitionDecision,
         decision: ChordInkRecognitionDecision,
-        receivedAt: Date
+        decisionMilliseconds: Double?
     ) {
-        let proposalMilliseconds = Date().timeIntervalSince(receivedAt) * 1_000
         let confidenceGap = decision.confidenceGap ?? -1
         let bestRead = result.match?.displayText ?? "none"
         print(
             String(
                 format: "SmartChart chord proposal: decisionMs=%.0f best=%@ confidence=%.2f primaryAction=%@ finalAction=%@ trust=%@ agreement=%@ closeRace=%@ gap=%.2f reason=%@",
-                proposalMilliseconds,
+                decisionMilliseconds ?? -1,
                 bestRead,
                 result.confidence,
                 primaryDecision.action.rawValue,
@@ -962,9 +982,8 @@ struct EditorView: View {
         acceptedText: String,
         resolution: ChordEntryDiagnosticResolution,
         chordEventID: UUID,
-        startedAt: Date
+        commitMilliseconds: Double
     ) {
-        let commitMilliseconds = Date().timeIntervalSince(startedAt) * 1_000
         print(
             String(
                 format: "SmartChart chord commit: commitMs=%.0f accepted=%@ resolution=%@ event=%@",
@@ -982,8 +1001,14 @@ struct EditorView: View {
         confirmation: PendingChordInkConfirmation,
         resolution: ChordEntryDiagnosticResolution,
         chordEventID: UUID,
-        chartSnapshot: Chart
+        chartSnapshot: Chart,
+        commitMutationMilliseconds: Double?,
+        commitObservedAt: Date
     ) {
+        let timingEvidence = confirmation.recognitionTiming?.diagnosticEvidence(
+            proposalDecisionMilliseconds: confirmation.proposalDecisionMilliseconds,
+            commitMutationMilliseconds: commitMutationMilliseconds
+        )
         let event = ChordEntryDiagnosticEvent(
             timestamp: .now,
             chartID: chartSnapshot.id,
@@ -1019,7 +1044,13 @@ struct EditorView: View {
             symbolLedgerAssessment: confirmation.result.symbolLedger?.assessment(
                 primaryDisplayText: match.displayText
             ),
-            primarySymbolLedgerAssessment: confirmation.result.symbolLedgerAssessment
+            primarySymbolLedgerAssessment: confirmation.result.symbolLedgerAssessment,
+            timingEvidence: timingEvidence
+        )
+
+        pendingChordRenderTimingEvidence[chordEventID] = PendingChordRenderTimingEvidence(
+            event: event,
+            committedAt: commitObservedAt
         )
 
         do {
@@ -1028,6 +1059,47 @@ struct EditorView: View {
             try recorder.reconcileRenderedChordEvents(for: chartSnapshot)
         } catch {
             print("SmartChart chord diagnostic error: \(error)")
+        }
+    }
+
+    private func recordPendingChordRenderHandoff() {
+        guard !pendingChordRenderTimingEvidence.isEmpty else {
+            return
+        }
+
+        let pendingEvents = pendingChordRenderTimingEvidence
+        pendingChordRenderTimingEvidence.removeAll()
+        let observedAt = Date()
+
+        do {
+            let recorder = ChordEntryDiagnosticsRecorder.live()
+            for (chordEventID, pending) in pendingEvents {
+                var event = pending.event
+                var timingEvidence = event.timingEvidence ?? ChordEntryTimingEvidence(
+                    requestedDelayMilliseconds: nil,
+                    idleMilliseconds: nil,
+                    recognitionMilliseconds: nil,
+                    recognitionTotalMilliseconds: nil,
+                    proposalDecisionMilliseconds: nil,
+                    commitMutationMilliseconds: nil,
+                    renderHandoffMilliseconds: nil
+                )
+                let renderHandoffMilliseconds = observedAt.timeIntervalSince(pending.committedAt) * 1_000
+                timingEvidence.renderHandoffMilliseconds = renderHandoffMilliseconds
+                event.timestamp = observedAt
+                event.timingEvidence = timingEvidence
+                try recorder.append(event)
+                print(
+                    String(
+                        format: "SmartChart chord render: renderHandoffMs=%.0f event=%@ accepted=%@",
+                        renderHandoffMilliseconds,
+                        chordEventID.uuidString,
+                        event.acceptedText
+                    )
+                )
+            }
+        } catch {
+            print("SmartChart chord render diagnostic error: \(error)")
         }
     }
 

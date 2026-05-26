@@ -236,6 +236,27 @@ def format_metrics(metrics: dict[str, Any] | None) -> str:
     )
 
 
+def format_timing_evidence(timing: dict[str, Any] | None) -> str:
+    if not timing:
+        return ""
+
+    def ms(key: str) -> str:
+        value = timing.get(key)
+        return "?" if value is None else f"{value:.0f}ms"
+
+    return (
+        " timing=["
+        f"delay={ms('requestedDelayMilliseconds')}, "
+        f"idle={ms('idleMilliseconds')}, "
+        f"recognition={ms('recognitionMilliseconds')}, "
+        f"total={ms('recognitionTotalMilliseconds')}, "
+        f"proposal={ms('proposalDecisionMilliseconds')}, "
+        f"commit={ms('commitMutationMilliseconds')}, "
+        f"render={ms('renderHandoffMilliseconds')}"
+        "]"
+    )
+
+
 def format_symbol_ledger(ledger: dict[str, Any] | None) -> str:
     if not ledger:
         return ""
@@ -348,6 +369,7 @@ def print_diagnostic_details(chart_diagnostics: list[dict[str, Any]], score_limi
         primary_accepted = short_text(event.get("primaryAcceptedText"), fallback="-")
         score_suffix = format_scores(event.get("candidateScores") or [], score_limit)
         metrics_suffix = format_metrics(event.get("recognitionMetrics"))
+        timing_suffix = format_timing_evidence(event.get("timingEvidence"))
         ledger_suffix = format_symbol_ledger(event.get("symbolLedger"))
         ledger_assessment_suffix = format_symbol_ledger_assessment(
             event.get("symbolLedgerAssessment")
@@ -361,6 +383,7 @@ def print_diagnostic_details(chart_diagnostics: list[dict[str, Any]], score_limi
             f"confidence={confidence} gap={gap} trust={trust} "
             f"agreement={agreement} ocr={ocr} "
             f"primary={primary_action}:{primary_accepted}{score_suffix}{metrics_suffix}"
+            f"{timing_suffix}"
             f"{ledger_suffix}{ledger_assessment_suffix}{primary_ledger_assessment_suffix}"
         )
 
@@ -409,6 +432,7 @@ def fallback_diagnostic_event(
         "primaryWasCloseRace": None,
         "primaryConfidenceGap": None,
         "recognitionMetrics": None,
+        "timingEvidence": None,
         "symbolLedger": None,
         "symbolLedgerAssessment": None,
         "primarySymbolLedgerAssessment": None,

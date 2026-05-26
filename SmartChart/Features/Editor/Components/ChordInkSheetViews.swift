@@ -7,6 +7,8 @@ struct PendingChordInkConfirmation: Identifiable {
     let result: ChordInkRecognitionResult
     let drawingData: Data
     let targetFraction: Double?
+    let recognitionTiming: ChordInkRecognitionTiming?
+    let proposalDecisionMilliseconds: Double?
     let primaryDecision: ChordInkRecognitionDecision
     let decision: ChordInkRecognitionDecision
     let candidateTexts: [String]
@@ -18,6 +20,8 @@ struct PendingChordInkConfirmation: Identifiable {
         result: ChordInkRecognitionResult,
         drawingData: Data,
         targetFraction: Double?,
+        recognitionTiming: ChordInkRecognitionTiming? = nil,
+        proposalDecisionMilliseconds: Double? = nil,
         primaryDecision: ChordInkRecognitionDecision,
         decision: ChordInkRecognitionDecision
     ) {
@@ -26,6 +30,8 @@ struct PendingChordInkConfirmation: Identifiable {
         self.result = result
         self.drawingData = drawingData
         self.targetFraction = targetFraction
+        self.recognitionTiming = recognitionTiming
+        self.proposalDecisionMilliseconds = proposalDecisionMilliseconds
         self.primaryDecision = primaryDecision
         self.decision = decision
 

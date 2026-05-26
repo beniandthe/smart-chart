@@ -42,6 +42,17 @@ struct ChordEntryDiagnosticEvent: Codable, Equatable {
     var symbolLedger: ChordInkSymbolLedgerSnapshot? = nil
     var symbolLedgerAssessment: ChordInkSymbolLedgerAssessment? = nil
     var primarySymbolLedgerAssessment: ChordInkSymbolLedgerAssessment? = nil
+    var timingEvidence: ChordEntryTimingEvidence? = nil
+}
+
+struct ChordEntryTimingEvidence: Codable, Equatable {
+    var requestedDelayMilliseconds: Double?
+    var idleMilliseconds: Double?
+    var recognitionMilliseconds: Double?
+    var recognitionTotalMilliseconds: Double?
+    var proposalDecisionMilliseconds: Double?
+    var commitMutationMilliseconds: Double?
+    var renderHandoffMilliseconds: Double?
 }
 
 struct ChordEntryDiagnosticsRecorder {
@@ -145,7 +156,8 @@ struct ChordEntryDiagnosticsRecorder {
                     primaryRecognitionReason: nil,
                     primaryWasCloseRace: nil,
                     primaryConfidenceGap: nil,
-                    recognitionMetrics: nil
+                    recognitionMetrics: nil,
+                    timingEvidence: nil
                 )
             }
         }
