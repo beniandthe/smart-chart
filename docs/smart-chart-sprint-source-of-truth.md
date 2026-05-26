@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, and Sprint 48 persistent timing telemetry are complete locally; Sprint 49 flat-root candidate availability is active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, and Sprint 49 flat-root candidate availability are complete locally; Sprint 50 post-stroke responsiveness is active
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -40,8 +40,9 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 47 timing capture log: `docs/smart-chart-sprint-47-timing-capture-log-2026-05-26.md`
 - Sprint 48 persistent timing telemetry artifact: `docs/smart-chart-sprint-48-persistent-timing-telemetry-2026-05-26.md`
 - Sprint 49 flat-root candidate availability artifact: `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`
-- latest local verification: Sprint 49 flat-root candidate availability replayed chart `DA226639-62AA-4DD0-8D9A-E5CEC1777F98` and recovered `Db7(b9)` as the primary root-bearing match while `C` and `G/B` remained stable; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint49 --filter StrokeClustererTests/testAttachedFlatModifierSplitsFromRootConstruction` passed; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint49 --filter ChordInkRecognizerTests` passed with `40` tests, `1` skipped, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint49 --filter WritingToRenderPipelineReadinessTests` passed; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint49` passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed for timing/audit/import/watch scripts; `git diff --check` passed.
-- latest GitHub verification: main commit `e984e2a Add sprint 48 persistent timing telemetry` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- Sprint 50 post-stroke responsiveness artifact: `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`
+- latest local verification: Sprint 50 post-stroke responsiveness passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint50 --filter WritingToRenderPipelineReadinessTests` with `1` test, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint50` passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP focused iOS simulator scheduling tests passed with `5` tests, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed for timing/audit/import/watch scripts; `git diff --check` passed.
+- latest GitHub verification: main commit `0d6ba7e Fix sprint 49 flat-root candidate availability` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -136,46 +137,48 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 49: Flat Root Candidate Availability
+### Sprint 50: Post-Stroke Responsiveness
 
-Status: active after Sprint 48 bounded pass showed improved perceived latency but `Db7(b9)` fell into manual correction with no suggestions.
+Status: active after Sprint 49 repeat-pass diagnostics showed all bounded chords auto-rendered correctly, with remaining felt delay mostly in scheduler idle.
 
-Goal: recover root-bearing candidate availability for fused flat-root altered chords without expanding personal handwriting fixtures or retuning recognition scores.
+Goal: make the writing-to-render loop feel a bit quicker after the final ink stroke without changing recognizer scoring, training data, OCR authority, symbol-ledger behavior, export/share, or chord ink clearing.
 
-Trigger: Sprint 48 diagnostics on chart `DA226639-62AA-4DD0-8D9A-E5CEC1777F98` showed `C` and `G/B` felt quicker and had low recognizer/render cost, while `Db7(b9)` produced zero suggestions. Its raw candidates were suffix-only strings like `#7b9`, proving the root prefix was unavailable before trust ranking.
+Trigger: Sprint 49 repeat pass on chart `ED98F246-3A73-493C-BF8A-9106DAE76F04` showed `C`, `G/B`, and `Db7(b9)` all auto-rendered correctly. `Db7(b9)` now had root-bearing suggestions. User feedback said the pass felt smooth but could be slightly faster after the last ink stroke, especially for basic chords.
 
 Current state:
 
-- Sprint 48 achieved its measurement goal: remaining delay for `C` and `G/B` is mostly scheduled idle/waiting, while render/proposal/commit were low.
-- `Db7(b9)` is now the active recognition quality blocker because the written `D` plus root-flat modifier fused into one cluster.
-- The fix should restore candidate availability, not make a one-writer score change.
-- The next evidence artifact is `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`.
+- Sprint 49 closed the empty-suggestion `Db7(b9)` failure.
+- Latest diagnostics show `C` final root-continuation pass at `575ms` scheduled-to-finished with `1ms` recognition and `32ms` render handoff.
+- Latest diagnostics show `G/B` at `890ms` scheduled-to-finished with `2ms` recognition and `12ms` render handoff.
+- Latest diagnostics show `Db7(b9)` at `908ms` scheduled-to-finished with `19ms` recognition and `10ms` render handoff.
+- The next evidence artifact is `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`.
 
-Sprint 49 tasks:
+Sprint 50 tasks:
 
-- Record the Sprint 48 bounded pass evidence.
-- Add replay tooling that can target an exact saved chart ID for diagnostics without importing the pass as fixtures.
-- Split an attached flat modifier away from a fused root-construction cluster when geometry supports that general flat-root interpretation.
-- Verify the saved pass now produces root-bearing `Db7(b9)` candidates and does not regress `C` or `G/B`.
+- Record the Sprint 49 repeat-pass evidence.
+- Reduce the normal chord-ink idle delay conservatively from `0.85s` to `0.75s`.
+- Reduce root-only continuation grace conservatively from `0.55s` to `0.40s`.
+- Keep extension-prefix continuation grace at `1.2s`.
+- Verify scheduler policy, writing-to-render readiness, full SwiftPM, and full iOS simulator scheme tests.
 
-Sprint 49 current evidence:
+Sprint 50 current evidence:
 
-- Before the fix, replay showed `Db7(b9)` as `match=nil`, `confidence=0`, `scores=[]`, with glyph column zero reading as a fused non-root cluster.
-- After the fix, replay shows `Db7(b9)` as the primary match with root-bearing candidates while `C` and `G/B` remain stable.
+- The product blocker is now post-stroke responsiveness, not candidate availability, correction UX, export/share, or render handoff.
+- The scheduler delay can be reduced slightly while keeping extension-prefix safety intact.
 
 Acceptance criteria:
 
-- The saved Sprint 48 pass replays `Db7(b9)` with supported suggestions instead of empty manual correction.
-- Existing compact regression fixtures, recognizer policy tests, writing-to-render readiness, and diagnostics tests pass.
+- `C`, `G/B`, and `Db7(b9)` still auto-render correctly in a bounded repeat pass after checks pass.
+- `C` feels a bit quicker after the last stroke and does not render before the chord is finished.
 - Full SwiftPM and iOS simulator scheme tests pass before closeout.
 - No personal fixture expansion, score retuning from one pass, default OCR expansion, symbol-ledger diagnostics cost, export/share change, or chord ink lifecycle change.
 
-Non-goals for Sprint 49:
+Non-goals for Sprint 50:
 
 - No broad recognition quality retuning.
 - No new handwriting corpus or repeated-pass training loop.
 - No OCR expansion.
-- No recognition-policy change beyond restoring candidate availability.
+- No candidate/ranking policy change.
 
 ## Completed Sprints Log
 
@@ -705,13 +708,23 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: `Db7(b9)` fell into manual correction with zero suggestions because candidate composition only saw suffix-like strings such as `#7b9`; this routed Sprint 49 to flat-root candidate availability rather than latency.
 - next sprint candidate: Sprint 49 flat-root candidate availability.
 
+### Sprint 49: Flat Root Candidate Availability
+
+- status: complete; required GitHub Actions passed
+- flat-root commit: `0d6ba7e Fix sprint 49 flat-root candidate availability`
+- summary: Restored root-bearing candidate availability for fused flat-root altered chords by splitting an attached flat modifier away from a root-construction cluster when geometry supports that general interpretation. Added saved-chart replay diagnostics and a synthetic clusterer test without importing the user's pass as training data.
+- tests and evidence: targeted saved-pass replay recovered `Db7(b9)` as the primary root-bearing match; focused clusterer test passed; focused `ChordInkRecognizerTests` and `WritingToRenderPipelineReadinessTests` passed; full SwiftPM tests passed with `319` tests, `36` skipped, `0` failures; full XcodeBuildMCP iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation and `git diff --check` passed; required GitHub Actions passed. The repeat pass on chart `ED98F246-3A73-493C-BF8A-9106DAE76F04` showed `C`, `G/B`, and `Db7(b9)` all auto-rendered correctly.
+- behavior boundary: no personal handwriting fixture was imported, no recognition score was retuned, no OCR authority changed, no symbol-ledger diagnostics were enabled, and export/share plus chord ink clearing were untouched.
+- unresolved follow-up: the pass felt smooth and correct, but the user observed it could still be a bit faster after the final ink stroke, especially for basic chords. Diagnostics showed the remaining time is mostly intentional scheduler idle rather than recognizer or render cost.
+- next sprint candidate: Sprint 50 post-stroke responsiveness.
+
 ## Next Sprint Backlog
 
-Use this queue for Sprint 50 routing after Sprint 49 flat-root candidate availability and its bounded repeat pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
+Use this queue for Sprint 51 routing after Sprint 50 post-stroke responsiveness and its bounded repeat pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
 
-- If Sprint 49 fixes `Db7(b9)` suggestions and `C`/`G/B` remain quick enough, close the recognition loop and move to broader real-life testing polish.
-- If `Db7(b9)` still needs correction but now has good suggestions, route to correction/confirmation UX rather than recognizer retuning.
-- If the repeat pass shows scheduled idle is still the felt delay for simple/slash chords, consider a narrow continuation/scheduler sprint.
+- If Sprint 50 feels fast and does not render basic roots prematurely, close the writing-to-render responsiveness loop and move to broader real-life testing polish.
+- If Sprint 50 renders too early while a chord is still being written, restore the previous scheduler delay budget.
+- If Sprint 50 still feels slow but diagnostics remain scheduler-bound, stop chasing delay unless the product benefit clearly outweighs premature-render risk.
 - If the repeat pass shows render/proposal/commit latency, route to an editor/render performance sprint.
 - If the duplicated-screen observation persists with screenshot/repro, choose a visual/UI state bug sprint.
 - Repeat visual renderer QA only when a new export/layout defect appears; Sprint 40 established the current PDF/PNG baseline.
@@ -739,6 +752,7 @@ Current authority:
 - `docs/smart-chart-sprint-47-timing-capture-log-2026-05-26.md`: Sprint 47 real-device timing capture gate.
 - `docs/smart-chart-sprint-48-persistent-timing-telemetry-2026-05-26.md`: Sprint 48 persistent timing telemetry and bounded-pass setup.
 - `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`: Sprint 49 flat-root candidate availability and bounded-repeat setup.
+- `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`: Sprint 50 post-stroke responsiveness and bounded-repeat setup.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

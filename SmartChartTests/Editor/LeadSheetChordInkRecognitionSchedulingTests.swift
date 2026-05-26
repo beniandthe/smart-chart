@@ -10,7 +10,7 @@ final class LeadSheetChordInkRecognitionSchedulingTests: XCTestCase {
                 for: PKDrawing(),
                 defaultDelay: LeadSheetChordInkRecognitionScheduling.defaultIdleDelay
             ),
-            0.85
+            0.75
         )
     }
 
@@ -33,8 +33,8 @@ final class LeadSheetChordInkRecognitionSchedulingTests: XCTestCase {
                 result: result
             )
         )
-        XCTAssertEqual(continuationGraceDelay, 0.55, accuracy: 0.001)
-        XCTAssertEqual(idleDelay + continuationGraceDelay, 1.4, accuracy: 0.001)
+        XCTAssertEqual(continuationGraceDelay, 0.4, accuracy: 0.001)
+        XCTAssertEqual(idleDelay + continuationGraceDelay, 1.15, accuracy: 0.001)
     }
 
     func testExtensionPrefixKeepsFullContinuationGrace() throws {

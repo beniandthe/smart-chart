@@ -2,9 +2,9 @@ import Foundation
 import PencilKit
 
 enum LeadSheetChordInkRecognitionScheduling {
-    static let defaultIdleDelay: TimeInterval = 0.85
+    static let defaultIdleDelay: TimeInterval = 0.75
     static let defaultContinuationGraceDelay: TimeInterval = 1.2
-    static let rootOnlyContinuationGraceDelay: TimeInterval = 0.55
+    static let rootOnlyContinuationGraceDelay: TimeInterval = 0.4
 
     static func idleDelay(
         for _: PKDrawing,
