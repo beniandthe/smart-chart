@@ -42,7 +42,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 49 flat-root candidate availability artifact: `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`
 - Sprint 50 post-stroke responsiveness artifact: `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`
 - latest local verification: Sprint 50 post-stroke responsiveness passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint50 --filter WritingToRenderPipelineReadinessTests` with `1` test, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint50` passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP focused iOS simulator scheduling tests passed with `5` tests, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed for timing/audit/import/watch scripts; `git diff --check` passed.
-- latest GitHub verification: main commit `0d6ba7e Fix sprint 49 flat-root candidate availability` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- latest GitHub verification: main commit `a84e397 Tune sprint 50 post-stroke responsiveness` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -139,7 +139,7 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ### Sprint 50: Post-Stroke Responsiveness
 
-Status: active after Sprint 49 repeat-pass diagnostics showed all bounded chords auto-rendered correctly, with remaining felt delay mostly in scheduler idle.
+Status: active with required checks green; awaiting the bounded real iPad/Pencil repeat pass.
 
 Goal: make the writing-to-render loop feel a bit quicker after the final ink stroke without changing recognizer scoring, training data, OCR authority, symbol-ledger behavior, export/share, or chord ink clearing.
 

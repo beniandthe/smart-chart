@@ -1,6 +1,6 @@
 # Smart Chart Sprint 50 Post-Stroke Responsiveness
 
-Status: active implementation
+Status: checks green; awaiting bounded repeat pass
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Prior evidence: `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`
