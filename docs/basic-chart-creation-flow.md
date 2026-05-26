@@ -1,14 +1,17 @@
 # Smart Chart — Basic Chart Creation Flow
 
-Status: Active behavior spec for the most basic authoring flow
+Status: historical baseline behavior spec for the most basic authoring flow
 Date: 2026-04-23
-Source of truth for this flow: `docs/core-design-document.md`
+Product source of truth for this flow: `docs/core-design-document.md`
+Current implementation source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
 ## Purpose
 
 This document defines the exact first-use interaction flow for creating the simplest possible Smart Chart.
 
 This is the minimum flow the app must handle well before more advanced recognition, rhythm entry, roadmap symbols, or polish work matter.
+
+The current app has moved through the recovery sprints and uses the living sprint document for active implementation decisions. Treat this file as the original flow target, not as an override for the current Projects-first shell, recognition-session boundary, writer-agnostic recognition policy, or chord-ink clearing behavior.
 
 ## Scope of this flow
 

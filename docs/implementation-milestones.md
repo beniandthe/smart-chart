@@ -1,11 +1,14 @@
 # Smart Chart — Implementation Milestones
 
-Status: Active for prototype kickoff  
-Source of truth: `docs/core-design-document.md`
+Status: historical prototype kickoff sequence
+Product source of truth: `docs/core-design-document.md`
+Current implementation source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
 ## Purpose
 
 This document turns the design and MVP docs into the first execution sequence.
+
+Current sprint execution has moved beyond this initial milestone list. Use the living sprint source of truth for the active architecture, validation state, and next-sprint decisions.
 
 ## Milestone 0 — Repository and project bootstrap
 

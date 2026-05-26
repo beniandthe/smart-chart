@@ -26,13 +26,14 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, and Sprint 40 visual renderer QA are complete and GitHub-green; Sprint 41 writing-to-render commit contract is complete locally and awaiting GitHub verification
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, and Sprint 41 writing-to-render commit contract are complete and GitHub-green; Sprint 42 writing-to-render readiness QA is complete locally and awaiting GitHub verification
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
 - Sprint 35 design artifact: `docs/smart-chart-recognition-session-boundary-design-2026-05-25.md`
-- latest local verification: Sprint 41 passed focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint41 --filter ChartEditingTests` with `31` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint41-full` passed with `316` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `327` passed, `36` skipped, `0` failures on the configured iPad Pro 13-inch (M5) simulator; `git diff --check` passed.
-- latest GitHub verification: main commit `536d49d Add renderer visual QA proof` passed required GitHub Actions on 2026-05-25, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Sprint 41 closeout commit is pending GitHub verification after push; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- Sprint 42 readiness artifact: `docs/smart-chart-real-life-testing-readiness-2026-05-25.md`
+- latest local verification: Sprint 42 passed focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint42 --filter WritingToRenderPipelineReadinessTests` with `1` test, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint42-full` passed with `317` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `328` passed, `36` skipped, `0` failures on the configured iPad Pro 13-inch (M5) simulator while writing renderer QA artifacts to `/tmp/SmartChartRendererQA-sprint42`; generated PDFs were rendered to PNG via `sips` and visually inspected under `/tmp/SmartChartRendererQA-sprint42/png`; `git diff --check` passed.
+- latest GitHub verification: main commit `a1254f0 Centralize chord ink commit contract` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Sprint 42 closeout commit is pending GitHub verification after push; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -60,6 +61,7 @@ Known drift after Sprint 8:
 - Sprint 39 added a bounded renderer product-proof test using exactly three fixed ink fixtures (`C`, `Db7(b9)`, and `G/B`) to prove ink strokes can recognize into structured chords, clear page chord ink after commit, and appear in exported PDF text. This is product proof, not corpus expansion or training authority.
 - Sprint 40 added bounded visual renderer QA for representative sample charts plus the Sprint 39 product-proof path, then fixed export-only defects found by that pass: late-measure chord/timing labels now shift left instead of clipping, and exported pages explicitly paint a white background for stable PDF thumbnails and image conversion.
 - Sprint 41 centralized the successful chord-ink commit contract in `Chart.commitRecognizedChordInk`: a supported candidate appends a structured `ChordEvent`, stores the source ink evidence on that event, and clears the active chord ink pass; a failed target lookup leaves the active chord ink intact.
+- Sprint 42 centralized the bounded product-proof cases in test support and made renderer product proof pass through the same live trust decision and commit contract as the editor path. `C` and `G/B` remain expected auto-render cases; `Db7(b9)` remains a supported but confirmation-gated close-race case.
 
 ## Product North Star
 
@@ -126,11 +128,11 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 42: Real Pencil Product Loop Validation Decision
+### Sprint 43: Real Pencil Product Loop Field Test
 
-Status: queued after Sprint 41 GitHub verification.
+Status: queued after Sprint 42 GitHub verification.
 
-Goal: decide whether to run a short real Pencil validation pass against `open -> write -> recognize -> snap -> fix -> export`, or choose another product-evidence sprint if hardware validation is not available. This must remain product proof, not a recognition-training loop.
+Goal: run the short real Pencil validation protocol from `docs/smart-chart-real-life-testing-readiness-2026-05-25.md` against `open -> write -> recognize -> snap -> fix -> export`. This is a product-readiness field test, not a recognition-training loop.
 
 Current state:
 
@@ -166,11 +168,12 @@ Current state:
 - Sprint 39 added bounded renderer product proof with three fixed ink fixtures that cross recognition, structured chord commit, chord ink clearing, and PDF export text.
 - Sprint 40 added visual renderer QA for two representative structured charts and the bounded ink product-proof path, fixed late-measure PDF label clipping, and made exported PDF pages paint an explicit white background for stable raster/thumbnail previews.
 - Sprint 41 centralized the writing-to-render commit rule in the chart model: successful chord-ink commits append a structured chord with source ink evidence and clear the active chord ink pass; failed commits keep the ink available.
+- Sprint 42 added a bounded writing-to-render readiness harness that centralizes the three product-proof fixtures, asserts live trust routing, enforces a conservative recognition-latency budget, proves default live recognition skips symbol-ledger diagnostics, runs renderer product proof through the live trust/commit contract, and documents the real Pencil field-test protocol.
 - The user has approved continuing one scoped cleanup sprint at a time until the current audit/cleanup plan reaches a necessary approval point or is complete.
 
-Candidate Sprint 42 directions:
+Candidate Sprint 43 directions:
 
-- Real Pencil validation sprint: verify the recovered `open -> write -> recognize -> snap -> fix -> export` loop with a short manual checklist and a small target set. This must measure product behavior and renderer trust; it must not create another one-writer training pass.
+- Real Pencil validation sprint: verify the recovered `open -> write -> recognize -> snap -> fix -> export` loop with the readiness protocol and a small target set. This must measure product behavior and renderer trust; it must not create another one-writer training pass.
 - Product evidence fallback sprint: if real Pencil validation and visual QA must wait, pick a repo-local product surface with direct user value and clear evidence, such as Library organization or correction workflow friction.
 - Recognition-session follow-up sprint: only if new evidence shows a boundary bug or maintenance hotspot, keep any work behavior-preserving and keep policy/UI/commit/chord-ink clearing outside the session.
 - Continue editor surface cleanup with another small modal/subview extraction from `EditorView.swift` only if the bridge file split is higher risk than it looks.
@@ -179,7 +182,7 @@ Candidate Sprint 42 directions:
 - Discuss full fixture archive pruning only as repository/data hygiene, not as recognition training.
 - Repeat visual renderer QA only when a new export/layout defect appears; the baseline Sprint 40 artifacts are already in place.
 
-Non-goals for Sprint 42:
+Non-goals for Sprint 43:
 
 - No recognition score retuning, parser/compendium changes, or fixture deletion.
 - No StoreKit implementation unless explicitly selected.
@@ -631,20 +634,32 @@ Append one entry here after each sprint completes. Each entry must include:
 
 ### Sprint 41: Writing-To-Render Commit Contract
 
-- status: complete locally; required GitHub Actions must be rechecked after push
-- final closeout commit: the commit containing this entry
+- status: complete; required GitHub Actions passed
+- final closeout commit: `a1254f0 Centralize chord ink commit contract`
 - summary: Centralized the successful chord-ink commit rule in `Chart.commitRecognizedChordInk`. The editor now calls one model-level operation that appends a structured `ChordEvent`, stores source ink evidence, and clears the active chord ink pass only after a successful append. If the target measure is unavailable, the operation returns `nil` and keeps the active chord ink available for retry. The bounded renderer proof and visual QA harness now use the same commit contract, so product evidence follows the same write-to-render path as the live editor instead of duplicating append/clear steps in tests.
 - tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint41 --filter ChartEditingTests` passed with `31` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint41-full` passed with `316` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `327` passed, `36` skipped, `0` failures; `git diff --check` passed.
 - behavior boundary: no recognition score, parser, compendium, fixture JSON, PencilKit behavior, OCR authority, auto-render/confirmation policy, diagnostics, StoreKit, export layout, or training policy changed. The chord ink lifecycle rule is unchanged, but is now enforced through one commit helper on success.
-- GitHub evidence: pending after Sprint 41 closeout push. Before this sprint, main commit `536d49d` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-25.
+- GitHub evidence: main commit `a1254f0` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-26. Supabase and Expo suites remained queued with zero check runs and are not treated as current required app health.
 - unresolved follow-up: real Pencil validation still requires human hardware input and should test the same product contract with a small target set; it must not become repeated personal sample capture or recognition retuning.
-- next sprint candidate: Sprint 42 real Pencil product-loop validation decision after Sprint 41 GitHub checks pass.
+- next sprint candidate: Sprint 42 writing-to-render readiness QA after Sprint 41 GitHub checks passed and the user approved continuing architecture readiness through real-life testing prep.
+
+### Sprint 42: Writing-To-Render Readiness QA
+
+- status: complete locally; required GitHub Actions must be rechecked after push
+- final closeout commit: the commit containing this entry
+- summary: Added `docs/smart-chart-real-life-testing-readiness-2026-05-25.md` as the real Pencil field-test handoff and centralized the bounded three-case product-proof fixture set in `WritingToRenderPipelineProof`. Added `WritingToRenderPipelineReadinessTests` to prove the bounded proof cases meet live trust-routing expectations and recognition-latency budgets without enabling symbol-ledger diagnostics. Updated renderer product proof and visual QA so they use the same centralized cases and pass through the live `ChordRecognitionTrustArbiter` decision before committing via `Chart.commitRecognizedChordInk`. Cross-checked sprint movement with README, V1 QA, and older architecture/milestone/basic-flow docs so older plans no longer read as current implementation authority.
+- tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint42 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint42-full` passed with `317` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `328` passed, `36` skipped, `0` failures while writing renderer QA artifacts to `/tmp/SmartChartRendererQA-sprint42`; `git diff --check` passed.
+- visual evidence: generated `/tmp/SmartChartRendererQA-sprint42/late-night-pocket-concert.pdf`, `/tmp/SmartChartRendererQA-sprint42/turnaround-study-concert.pdf`, and `/tmp/SmartChartRendererQA-sprint42/renderer-product-proof-concert.pdf`; rendered them to PNGs under `/tmp/SmartChartRendererQA-sprint42/png` using `sips`; visually inspected all three. The final images show white page backgrounds, readable headers, intact representative chords including `Eb△7`, `Ab7(#11)`, `Db-9`, `G13`, `C7(b9)`, `Bb△7`, `G-7`, `C7`, `C`, `Db7(b9)`, and `G/B`, and no editor placeholder text.
+- behavior boundary: no recognition score, parser, compendium, fixture JSON, PencilKit behavior, OCR authority, auto-render/confirmation policy, diagnostics, StoreKit, export layout, or chord ink lifecycle changed. The product-proof tests now use the live trust/commit contract, but production runtime behavior is unchanged.
+- GitHub evidence: pending after Sprint 42 closeout push. Before this sprint, main commit `a1254f0` passed SwiftPM tests, iOS simulator tests, and Analyze Swift on 2026-05-26.
+- unresolved follow-up: real Pencil validation still requires human hardware input. The next pass should follow the readiness protocol and record product observations, not expand fixtures or retune recognition from one writer.
+- next sprint candidate: Sprint 43 real Pencil product-loop field test after Sprint 42 GitHub checks pass.
 
 ## Next Sprint Backlog
 
-Use this queue for Sprint 42 after Sprint 41 GitHub checks pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
+Use this queue for Sprint 43 after Sprint 42 GitHub checks pass. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
 
-- Run a short real Pencil validation sprint against the recovered `open -> write -> recognize -> snap -> fix -> export` loop before recognition tuning.
+- Run the short real Pencil validation protocol from `docs/smart-chart-real-life-testing-readiness-2026-05-25.md` against the recovered `open -> write -> recognize -> snap -> fix -> export` loop before recognition tuning.
 - Repeat visual renderer QA only when a new export/layout defect appears; Sprint 40 established the current PDF/PNG baseline.
 - If real Pencil validation and renderer QA must wait, choose a repo-local product-evidence sprint with direct user value, such as Library organization or correction workflow friction.
 - Inspect any remaining `ChordInkRecognitionSession` follow-up only if new evidence shows a boundary bug or maintenance hotspot, keeping UI, chart mutation, diagnostics, continuation grace, and chord ink clearing outside the session.
@@ -661,6 +676,7 @@ Current authority:
 - `docs/smart-chart-post-merge-app-audit-2026-05-23.md`: Sprint 12 written and visual post-merge app/architecture audit.
 - `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`: Sprint 34 audit of the remaining editor-to-recognition execution boundary.
 - `docs/smart-chart-recognition-session-boundary-design-2026-05-25.md`: Sprint 35 design for a future behavior-preserving recognition-session boundary.
+- `docs/smart-chart-real-life-testing-readiness-2026-05-25.md`: Sprint 42 handoff from automated writing-to-render QA into real Pencil product validation.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

@@ -114,6 +114,7 @@ Current implementation authority:
 
 - [`docs/smart-chart-sprint-source-of-truth.md`](docs/smart-chart-sprint-source-of-truth.md) — active living sprint plan, recovery baseline, and current implementation authority
 - [`docs/smart-chart-post-merge-app-audit-2026-05-23.md`](docs/smart-chart-post-merge-app-audit-2026-05-23.md) — post-merge written/visual app audit and Sprint 13-15 planning evidence
+- [`docs/smart-chart-real-life-testing-readiness-2026-05-25.md`](docs/smart-chart-real-life-testing-readiness-2026-05-25.md) — Sprint 42 writing-to-render readiness handoff for real Pencil validation
 - [`docs/core-design-document.md`](docs/core-design-document.md) — enforced product and design rules
 - [`docs/developer-mvp-spec.md`](docs/developer-mvp-spec.md) — buildable MVP scope and behaviors
 - [`docs/repo-github-recognition-audit-2026-05-20.md`](docs/repo-github-recognition-audit-2026-05-20.md) — current recognition architecture and GitHub audit evidence for the recovery plan
@@ -155,4 +156,4 @@ The first meaningful prototype succeeds if a musician can:
 
 ## Status
 
-Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprint 12-14 app audit, local hygiene, and first editor boundary cleanup are complete; Sprint 15 awaits the next priority decision.
+Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-42 restored the streamlined writer-agnostic recognition/editor pipeline and added bounded writing-to-render readiness QA for real Apple Pencil validation. Current sprint status lives in the source-of-truth doc.

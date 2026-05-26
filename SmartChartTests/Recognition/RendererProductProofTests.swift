@@ -5,24 +5,8 @@ import XCTest
 @testable import SmartChart
 
 final class RendererProductProofTests: XCTestCase {
-    private struct ProductProofCase {
-        var fixtureName: String
-        var measureIndex: Int
-        var targetFraction: Double
-    }
-
-    private let productProofCases = [
-        ProductProofCase(fixtureName: "C", measureIndex: 0, targetFraction: 0.05),
-        ProductProofCase(fixtureName: "Db7b9", measureIndex: 1, targetFraction: 0.30),
-        ProductProofCase(fixtureName: "GSlashB", measureIndex: 2, targetFraction: 0.55)
-    ]
-
     func testBoundedInkProductProofRendersRecognizedChordsInExport() async throws {
-        XCTAssertLessThanOrEqual(
-            productProofCases.count,
-            3,
-            "Keep renderer product proof bounded; this is not a personal handwriting training loop."
-        )
+        WritingToRenderPipelineProof.assertCaseSetIsBounded()
 
         let recognizer = ChordInkRecognizer()
         var chart = Chart.blank(
@@ -32,19 +16,21 @@ final class RendererProductProofTests: XCTestCase {
         )
         var expectedDisplayTexts: [String] = []
 
-        for proofCase in productProofCases {
+        for proofCase in WritingToRenderPipelineProof.cases {
             let fixture = try InkFixtureLoader.load(proofCase.fixtureName, file: #filePath)
             let result = recognizer.recognize(strokes: fixture.strokes)
-            let match = try XCTUnwrap(result.match, fixture.name)
+            let acceptedDecision = try WritingToRenderPipelineProof.acceptedDecision(
+                for: result,
+                proofCase: proofCase
+            )
             let measureID = chart.measures[proofCase.measureIndex].id
             let fixtureData = try JSONEncoder().encode(fixture)
 
-            XCTAssertEqual(match.displayText, fixture.expectedDisplayText, fixture.name)
             XCTAssertTrue(chart.setPageHandwrittenChordDrawing(fixtureData), fixture.name)
             XCTAssertNotNil(
                 chart.commitRecognizedChordInk(
-                    match.symbol,
-                    rawInput: fixture.name,
+                    acceptedDecision.match.symbol,
+                    rawInput: acceptedDecision.acceptedText,
                     to: measureID,
                     atFraction: proofCase.targetFraction,
                     sourceInkData: fixtureData
@@ -53,7 +39,7 @@ final class RendererProductProofTests: XCTestCase {
             )
             XCTAssertNil(chart.pageHandwrittenChordData, fixture.name)
 
-            expectedDisplayTexts.append(fixture.expectedDisplayText)
+            expectedDisplayTexts.append(proofCase.expectedDisplayText)
         }
 
         let exportDirectory = FileManager.default.temporaryDirectory
