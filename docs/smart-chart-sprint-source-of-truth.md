@@ -34,7 +34,8 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 42 readiness artifact: `docs/smart-chart-real-life-testing-readiness-2026-05-25.md`
 - Sprint 43 field-test log: `docs/smart-chart-real-pencil-field-test-log-2026-05-26.md`
 - Sprint 45 post-export field-test log: `docs/smart-chart-post-export-field-test-log-2026-05-26.md`
-- latest local verification: Sprint 45 is field-test evidence/doc routing only; `git diff --check` passed locally before the Sprint 45 closeout push. Sprint 44 passed full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint44` with `317` tests, `36` skipped, `0` failures; `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py scripts/import_chord_fixture.py scripts/watch_simulator_chord_fixtures.py` passed; `xcodegen generate` completed; XcodeBuildMCP focused iOS simulator export tests passed with `4` passed, `0` failures while writing `/tmp/SmartChartRendererQA-sprint44`; XcodeBuildMCP full iOS simulator `SmartChart` scheme passed with `329` passed, `36` skipped, `0` failures while writing `/tmp/SmartChartRendererQA-sprint44-full`; generated Sprint 44 PDFs were rendered to PNG via `sips` and visually inspected under `/tmp/SmartChartRendererQA-sprint44/png`; `git diff --check` passed.
+- Sprint 46 latency triage artifact: `docs/smart-chart-recognition-latency-triage-2026-05-26.md`
+- latest local verification: Sprint 46 evidence gathering passed XcodeBuildMCP focused iOS simulator `SmartChartTests/LeadSheetChordInkRecognitionSchedulingTests` with `4` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures and bounded recognizer/readiness runtime of `0.187s`; `xcodegen generate` completed after adding the app-target scheduling test; `git diff --check` passed. Sprint 44 passed full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint44` with `317` tests, `36` skipped, `0` failures; Python script compilation, focused/full iOS simulator export tests, and visual PDF/PNG inspection also passed before the field-test repeat.
 - latest GitHub verification: main commit `2501fdf Close sprint 44 export page rendering` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -144,12 +145,13 @@ Current state:
 - Sprint 44 fixed the export blockers locally: `PDFChartExporter` now renders through `LeadSheetPageLayoutEngine` and `LeadSheetNotationRenderer`, and PDF export is temporarily reachable before StoreKit through `AppEntitlements.pdfExportAvailableBeforeStoreKit`.
 - Sprint 44 GitHub verification passed on main commit `2501fdf`.
 - Sprint 45 confirmed the post-export field-test pass: export worked as expected, the chart exported as PDF to Preview, `C` and `G/B` still auto-rendered slowly after a couple seconds, `Db7(b9)` needed confirmation and was good, no stroke breaks reproduced, and accepted chord ink cleared.
+- Sprint 46 initial evidence is recorded in `docs/smart-chart-recognition-latency-triage-2026-05-26.md`: clear `C` can pay the normal `1.2s` idle delay plus a `1.2s` continuation-grace recheck before proposal; `G/B` and `Db7(b9)` do not use that simple-continuation path; bounded recognizer compute remains well below the product-loop latency budget.
 
 Sprint 46 tasks:
 
 - Separate intentional scheduling/idle delay from recognizer compute time using existing timing helpers before changing thresholds or policy.
 - Inspect the live path through `LeadSheetChordInkRecognitionScheduling`, `LeadSheetChordInkRecognitionTiming`, `ChordInkRecognitionSession`, `ChordInkRecognizer`, OCR gating, and trust arbitration.
-- Add or tighten timing evidence for clear primary cases so the app can prove where the couple-second wait is spent.
+- Add or tighten timing evidence for clear primary cases so the app can prove where the couple-second wait is spent. The first evidence test is `LeadSheetChordInkRecognitionSchedulingTests`.
 - If the delay is mostly scheduler/debounce policy, tune only the clear-case waiting behavior while preserving continuation grace and native writing feel.
 - If the delay is recognizer-side compute, target the narrow expensive step without enabling diagnostics sidecars by default.
 - Preserve `Db7(b9)` as confirmation-gated unless evidence proves a general trust improvement, not a personal handwriting-specific read.
@@ -691,6 +693,7 @@ Current authority:
 - `docs/smart-chart-real-life-testing-readiness-2026-05-25.md`: Sprint 42 handoff from automated writing-to-render QA into real Pencil product validation.
 - `docs/smart-chart-real-pencil-field-test-log-2026-05-26.md`: Sprint 43 real Pencil field-test evidence log.
 - `docs/smart-chart-post-export-field-test-log-2026-05-26.md`: Sprint 45 post-export real Pencil validation log.
+- `docs/smart-chart-recognition-latency-triage-2026-05-26.md`: Sprint 46 recognition latency evidence.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.
