@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, and Sprint 45 post-export field-test validation are complete locally; Sprint 46 recognition latency/trust triage is active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, and Sprint 46 recognition latency/trust triage are complete locally; Sprint 47 confidence/performance split triage is active
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -36,6 +36,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 45 post-export field-test log: `docs/smart-chart-post-export-field-test-log-2026-05-26.md`
 - Sprint 46 latency triage artifact: `docs/smart-chart-recognition-latency-triage-2026-05-26.md`
 - Sprint 46 latency repeat log: `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`
+- Sprint 47 confidence/performance triage artifact: `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`
 - latest local verification: Sprint 46 scheduler tuning passed XcodeBuildMCP focused iOS simulator `SmartChartTests/LeadSheetChordInkRecognitionSchedulingTests` with `5` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures and bounded recognizer/readiness runtime of `0.131s`; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46` passed with `317` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `334` tests, `36` skipped, `0` failures; `xcodegen generate`, Python script compilation, and `git diff --check` passed.
 - latest GitHub verification: main commit `72e6d91 Tune sprint 46 chord recognition scheduling` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
@@ -132,45 +133,44 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 46: Recognition Latency And Trust Triage
+### Sprint 47: Confidence And Performance Split Triage
 
-Status: active after Sprint 45 field-test evidence.
+Status: active after Sprint 46 real iPad/Pencil repeat evidence.
 
-Goal: reduce or explain the couple-second delay after clear chord ink for `C` and `G/B`, while preserving writer-agnostic recognition, `Db7(b9)` confirmation routing, export behavior, and chord ink lifecycle.
+Goal: separate confidence/ink accuracy from conflict/performance/render time so the next recognition change is measured, writer-agnostic, and not a score tweak from one tester's handwriting.
 
-Trigger: Sprint 45 confirmed export/share now works from iPad to Preview, the full-page PDF renderer is acceptable, `Db7(b9)` needed confirmation and was good, no stroke breaks reproduced, and accepted ink cleared. The remaining lead blocker is clear-case auto-render latency for `C` and `G/B`.
+Trigger: Sprint 46 improved one scheduler-policy delay source, but the real iPad/Pencil repeat showed `C` and `G/B` still became low-confidence paths and took time. `Db7(b9)` was extremely quick, and PDF export worked without issues.
 
 Current state:
 
-- Sprint 43 proved the real iPad/Pencil writing-to-render loop works in principle: native writing feel was acceptable overall, `C` and `G/B` auto-rendered, `Db7(b9)` exposed altered-extension recognition friction, accepted chord ink cleared, and the old export path was blocked/unfaithful on iPad.
-- Sprint 44 fixed the export blockers locally: `PDFChartExporter` now renders through `LeadSheetPageLayoutEngine` and `LeadSheetNotationRenderer`, and PDF export is temporarily reachable before StoreKit through `AppEntitlements.pdfExportAvailableBeforeStoreKit`.
-- Sprint 44 GitHub verification passed on main commit `2501fdf`.
-- Sprint 45 confirmed the post-export field-test pass: export worked as expected, the chart exported as PDF to Preview, `C` and `G/B` still auto-rendered slowly after a couple seconds, `Db7(b9)` needed confirmation and was good, no stroke breaks reproduced, and accepted chord ink cleared.
-- Sprint 46 evidence and tuning are recorded in `docs/smart-chart-recognition-latency-triage-2026-05-26.md`: clear `C` could previously pay the normal `1.2s` idle delay plus a `1.2s` continuation-grace recheck before proposal; bounded recognizer compute remains well below the product-loop latency budget; scheduler tuning now uses a `0.85s` idle delay and a `0.55s` root-only continuation grace while preserving full `1.2s` grace for extension prefixes and no grace for `G/B` or `Db7(b9)`. GitHub is green on `72e6d91`, and the current decision gate is the bounded real iPad/Pencil repeat in `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`.
+- Scheduler-only tuning is not enough to close the product concern.
+- `C` and `G/B` now point at low-confidence handling, candidate conflict, trust routing, proposal/commit handoff, or render timing.
+- `Db7(b9)` is a useful control case because it was extremely quick while remaining in the intended confirmation/trust lane.
+- Export/share is not the active blocker.
+- The next evidence artifact is `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`.
 
-Sprint 46 tasks:
+Sprint 47 tasks:
 
-- Separate intentional scheduling/idle delay from recognizer compute time using existing timing helpers before changing thresholds or policy.
-- Inspect the live path through `LeadSheetChordInkRecognitionScheduling`, `LeadSheetChordInkRecognitionTiming`, `ChordInkRecognitionSession`, `ChordInkRecognizer`, OCR gating, and trust arbitration.
-- Add or tighten timing evidence for clear primary cases so the app can prove where the couple-second wait is spent. The first evidence test is `LeadSheetChordInkRecognitionSchedulingTests`.
-- If the delay is mostly scheduler/debounce policy, tune only the clear-case waiting behavior while preserving continuation grace and native writing feel.
-- If the delay is recognizer-side compute, target the narrow expensive step without enabling diagnostics sidecars by default.
-- Preserve `Db7(b9)` as confirmation-gated unless evidence proves a general trust improvement, not a personal handwriting-specific read.
+- Inspect the live timing/logging surface for low-confidence decisions and identify what already records delay, recognition time, OCR time, candidate confidence, decision route, and best candidate.
+- Separate recognizer compute from trust routing, proposal UI, structured commit, ink clearing, and render handoff.
+- Audit the `C` and `G/B` route through `ChordInkRecognitionPolicy`, `ChordRecognitionTrustArbiter`, proposal routing, `Chart.commitRecognizedChordInk`, and page re-render.
+- Keep `Db7(b9)` as the fast confirmation-gated control case.
+- Add repo-local instrumentation or tests only when they protect a writer-agnostic behavior or expose a general timing boundary.
 
 Acceptance criteria:
 
-- Sprint 46 identifies the dominant source of clear-case latency: scheduler/idle policy, recognition compute, OCR sidecar, trust arbitration, or UI commit/render handoff.
-- Clear auto-render cases get a measurable improvement or a documented reason they cannot safely improve yet.
-- `Db7(b9)` still routes through confirmation instead of blind auto-render.
-- No new personal handwriting fixtures, no score retuning from one writer's pass, and no default symbol-ledger/OCR diagnostics cost.
-- Export/share, full-page PDF rendering, chord ink clearing, and native writing feel remain unchanged.
+- Sprint 47 identifies whether the remaining delay is primarily confidence/trust routing, candidate conflict, recognizer compute, UI proposal/commit, ink clearing, or render handoff.
+- Any code change is backed by timing evidence and preserves writer-agnostic recognition.
+- `Db7(b9)` remains confirmation-gated and quick.
+- Export/share remains unchanged and working.
+- No personal fixture expansion, score retuning from one pass, default OCR expansion, or symbol-ledger diagnostics cost.
 
-Non-goals for Sprint 46:
+Non-goals for Sprint 47:
 
 - No broad recognition quality retuning.
-- No fixture expansion, fixture-count goals, hidden training loop, or tuning from one writer's repeated chord passes.
-- No StoreKit, export renderer, Library, or correction UX work unless the latency investigation proves those are involved.
-- No change to the current chord ink lifecycle rule: accepted/rendered chord ink is consumed and cleared.
+- No new handwriting corpus or repeated-pass training loop.
+- No StoreKit/export sprint unless a fresh export regression appears.
+- No attempt to make all low-confidence reads auto-render; correction trust remains more important than guessing fast.
 
 ## Completed Sprints Log
 
@@ -659,22 +659,33 @@ Append one entry here after each sprint completes. Each entry must include:
 
 ### Sprint 45: Post-Export Field-Test Validation
 
-- status: complete locally; GitHub verification pending after push
-- final evidence commit: Sprint 45 closeout commit containing this entry
+- status: complete; required GitHub Actions passed
+- final evidence commit: `f25641a Record sprint 45 field test results`
 - summary: Recorded the bounded post-export iPad/Pencil pass in `docs/smart-chart-post-export-field-test-log-2026-05-26.md`. The pass confirmed the Sprint 44 export fix: export/share worked as expected, the chart exported as PDF to Preview, full-page export fidelity was acceptable, accepted chord ink cleared, `Db7(b9)` needed confirmation and then was good, and stroke breaks did not reproduce. The pass also confirmed the remaining lead blocker: clear auto-render cases `C` and `G/B` still take a couple seconds after ink.
-- tests and evidence: user-reported real iPad/Pencil field-test evidence, with ink metadata present but not imported as fixtures/training data; `git diff --check` passed locally for the doc closeout. The previous app-code verification remains Sprint 44: full SwiftPM tests, Python script compilation, focused/full iOS simulator tests, and visual PDF/PNG inspection passed before the field-test repeat.
+- tests and evidence: user-reported real iPad/Pencil field-test evidence, with ink metadata present but not imported as fixtures/training data; `git diff --check` passed locally for the doc closeout; required GitHub Actions passed on main commit `f25641a`. The previous app-code verification remains Sprint 44: full SwiftPM tests, Python script compilation, focused/full iOS simulator tests, and visual PDF/PNG inspection passed before the field-test repeat.
 - behavior boundary: no production code, recognition score, parser, compendium, fixture JSON, PencilKit behavior, export implementation, StoreKit behavior, chord ink lifecycle, OCR authority, symbol-ledger policy, or training policy changed. The on-screen duplicated-state comment from the pass is recorded as a visual observation requiring screenshot/repro if it persists, not as the current primary blocker.
 - unresolved follow-up: investigate the live recognition latency path for clear cases before any trust/score retuning. Keep `Db7(b9)` confirmation-gated unless future general evidence justifies a policy change.
 - next sprint candidate: Sprint 46 recognition latency and trust triage.
 
+### Sprint 46: Recognition Latency And Trust Triage
+
+- status: complete locally; GitHub verification pending after closeout push
+- code commit: `72e6d91 Tune sprint 46 chord recognition scheduling`
+- repeat-gate commit: `c2ac660 Set up sprint 46 latency repeat gate`
+- summary: Measured and reduced one intentional scheduler-delay source without changing recognition scores or expanding handwriting fixtures. The default chord-ink idle delay moved from `1.2s` to `0.85s`, root-only continuation grace moved from `1.2s` to `0.55s`, extension prefixes kept full `1.2s` grace, and slash/altered chords stayed outside continuation grace. The repeat pass then showed the remaining slow cases are low-confidence `C` and `G/B`, while `Db7(b9)` was extremely quick and export worked.
+- tests and evidence: focused XcodeBuildMCP scheduling tests passed with `5` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures and bounded recognizer/readiness runtime of `0.131s`; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46` passed with `317` tests, `36` skipped, `0` failures; full XcodeBuildMCP iOS simulator `SmartChart` scheme passed with `334` tests, `36` skipped, `0` failures; GitHub Actions passed on `72e6d91` and `c2ac660`; the real iPad/Pencil repeat is recorded in `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`.
+- behavior boundary: no personal fixture expansion, score retuning, default OCR expansion, symbol-ledger diagnostics cost, export/share change, or chord ink lifecycle change.
+- unresolved follow-up: determine whether the remaining delay is confidence/trust routing, candidate conflict, recognizer compute, UI proposal/commit, ink clearing, or render handoff.
+- next sprint candidate: Sprint 47 confidence and performance split triage.
+
 ## Next Sprint Backlog
 
-Use this queue for Sprint 47 routing after Sprint 46 latency/trust triage. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
+Use this queue for Sprint 48 routing after Sprint 47 confidence/performance triage. The user has approved continuing through the current audit/cleanup plan one scoped sprint at a time until a necessary approval/input point or plan completion.
 
-- If the Sprint 46 real iPad/Pencil repeat confirms the scheduler improvement, close Sprint 46 and choose the Sprint 47 product route.
-- If the Sprint 46 repeat still feels slow, inspect live timing logs before making any further scheduler, trust, or recognition changes.
-- If Sprint 46 finds recognizer compute latency, target the narrow expensive step without enabling diagnostics sidecars or personal fixture expansion.
-- If Sprint 46 cannot safely improve latency, document the remaining tradeoff and choose correction UX or broader beta/readiness polish.
+- If Sprint 47 finds low-confidence delay is mostly trust/candidate conflict routing, implement the smallest writer-agnostic trust/proposal improvement.
+- If Sprint 47 finds recognizer compute latency, target the narrow expensive step without enabling diagnostics sidecars or personal fixture expansion.
+- If Sprint 47 finds UI proposal/commit/render handoff latency, route to an editor/render performance sprint.
+- If Sprint 47 cannot safely improve latency, document the remaining tradeoff and choose correction UX or broader beta/readiness polish.
 - If the duplicated-screen observation persists with screenshot/repro, choose a visual/UI state bug sprint.
 - Repeat visual renderer QA only when a new export/layout defect appears; Sprint 40 established the current PDF/PNG baseline.
 - If real Pencil validation and renderer QA must wait, choose a repo-local product-evidence sprint with direct user value, such as Library organization or correction workflow friction.
@@ -697,6 +708,7 @@ Current authority:
 - `docs/smart-chart-post-export-field-test-log-2026-05-26.md`: Sprint 45 post-export real Pencil validation log.
 - `docs/smart-chart-recognition-latency-triage-2026-05-26.md`: Sprint 46 recognition latency evidence.
 - `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`: Sprint 46 real Pencil latency repeat gate.
+- `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`: Sprint 47 confidence/performance split triage.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

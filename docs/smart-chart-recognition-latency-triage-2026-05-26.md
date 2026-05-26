@@ -1,6 +1,6 @@
 # Smart Chart Recognition Latency Triage
 
-Status: Sprint 46 scheduler tuning implemented; local and GitHub verification complete; awaiting real iPad/Pencil latency repeat
+Status: Sprint 46 repeat complete; scheduler latency improved but low-confidence clear cases remain
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Trigger evidence: `docs/smart-chart-post-export-field-test-log-2026-05-26.md`
@@ -80,14 +80,29 @@ Expected product impact:
 
 ## Next Evidence To Gather
 
-- Repeat the bounded real iPad/Pencil pass using `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md` to confirm the perceived delay improves without premature root-only auto-render.
+- Use Sprint 47 to split the remaining product issue into confidence/ink accuracy and conflict/performance/render time.
 - Inspect existing debug timing logs from a live/simulator pass if available:
   - `delay`
   - `idle`
   - `recognition`
   - `ocrMs`
   - `best`
-- Only after measuring, choose whether Sprint 46 should tune scheduler/debounce behavior or leave latency as a product tradeoff.
+- Only after measuring in Sprint 47, choose whether the fix belongs in trust/confidence policy, ink interpretation, or UI/render handoff.
+
+## Real iPad/Pencil Repeat Result
+
+The post-tuning repeat pass is recorded in `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`.
+
+Results:
+
+- `C` and `G/B` were low confidence and still took time.
+- `Db7(b9)` was extremely quick.
+- PDF export completed without issues.
+
+Conclusion:
+
+- Sprint 46 isolated and improved one scheduler-policy source of delay, but the remaining product hurdle is no longer pure debounce.
+- The next work should measure low-confidence/conflict routing and render/commit handoff separately before any recognition scoring, fixture, or trust-policy change.
 
 ## Guardrails
 
