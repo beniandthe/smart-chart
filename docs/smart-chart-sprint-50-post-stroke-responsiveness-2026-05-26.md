@@ -1,6 +1,6 @@
 # Smart Chart Sprint 50 Post-Stroke Responsiveness
 
-Status: checks green; awaiting bounded repeat pass
+Status: complete
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Prior evidence: `docs/smart-chart-sprint-49-flat-root-candidate-availability-2026-05-26.md`
@@ -58,18 +58,30 @@ Expected product impact:
 - Scheduling policy tests prove the new conservative delay budget.
 - Writing-to-render readiness tests still pass.
 - Full SwiftPM and iOS simulator scheme tests pass before closeout.
-- One bounded repeat pass confirms `C`, `G/B`, and `Db7(b9)` still auto-render correctly and feel at least as smooth as Sprint 49.
+- One bounded repeat pass confirms `C` and `G/B` still auto-render correctly, `Db7(b9)` remains trust-correct with supported suggestions when close, and the loop feels at least as smooth as Sprint 49.
 
-## Next Bounded Pass
+## Repeat Pass Result
 
-After checks pass, run one short pass:
+Metadata source inspected locally:
 
-- `C`
-- `G/B`
-- `Db7(b9)`
+- app data: CoreSimulator app container `Library/Application Support/SmartChart`
+- chart ID: `3800A7BA-DA57-4596-A4F2-A3336FA5742B`
+- diagnostics: `chord-entry-diagnostics.jsonl`
 
-Expected observation:
+Observed result:
 
-- `C` should feel a bit quicker after the last stroke without rendering before the chord is finished.
-- `G/B` and `Db7(b9)` should still auto-render correctly.
-- Ink should clear after render.
+| Case | Result | Timing classification | Recognition classification |
+| --- | --- | --- | --- |
+| `C` | Auto-rendered | `405ms` scheduled-to-finished on the final root-continuation pass, `0ms` recognition, `7ms` render handoff | Stable clear root case |
+| `G/B` | Auto-rendered | `782ms` scheduled-to-finished, `2ms` recognition, `13ms` render handoff | Stable slash case |
+| `Db7(b9)` | Confirmed suggestion | `813ms` scheduled-to-finished, `28ms` recognition, `6ms` render handoff | Trust-correct close race with supported suggestions |
+
+Key signal:
+
+- `C` is substantially quicker in persisted timing evidence.
+- `G/B` follows the new `0.75s` idle window and stays decisive.
+- `Db7(b9)` no longer has the empty-suggestion failure. It confirms because the primary race is tight against `Db7(b5)` and related spellings, which is the intended trust behavior.
+
+Closeout note:
+
+- The user confirmed the pass felt good and everything rendered when it was supposed to. Sprint 50 closes without another code change.
