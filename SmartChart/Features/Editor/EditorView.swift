@@ -758,6 +758,9 @@ struct EditorView: View {
         drawingData: Data,
         targetFraction: Double?
     ) {
+        #if DEBUG || targetEnvironment(simulator)
+        let proposalReceivedAt = Date()
+        #endif
         guard canvasMode == .chordEntry,
               pendingChordInkConfirmation == nil,
               let measure = chart.measure(id: measureID) else {
@@ -777,6 +780,15 @@ struct EditorView: View {
             primaryDecision: primaryDecision,
             decision: decision
         )
+
+        #if DEBUG || targetEnvironment(simulator)
+        logChordInkProposalTiming(
+            result: result,
+            primaryDecision: primaryDecision,
+            decision: decision,
+            receivedAt: proposalReceivedAt
+        )
+        #endif
 
         if decision.action == .autoRender,
            let acceptedText = decision.acceptedText {
@@ -812,6 +824,9 @@ struct EditorView: View {
         confirmation: PendingChordInkConfirmation,
         resolution: ChordEntryDiagnosticResolution
     ) {
+        #if DEBUG || targetEnvironment(simulator)
+        let commitStartedAt = Date()
+        #endif
         guard let match = ChordRecognitionCompendium.match(candidateText) else {
             chordInkErrorMessage = "That chord candidate is not supported yet. Try another candidate or edit the text."
             showingChordInkError = true
@@ -848,6 +863,15 @@ struct EditorView: View {
         selectedNoteSelection = nil
         canvasMode = .chordEntry
         pendingChordInkConfirmation = nil
+
+        #if DEBUG || targetEnvironment(simulator)
+        logChordInkCommitTiming(
+            acceptedText: candidateText,
+            resolution: resolution,
+            chordEventID: chordEventID,
+            startedAt: commitStartedAt
+        )
+        #endif
     }
 
     private func handleChordCorrectionRequested(_ chordEventID: UUID) {
@@ -908,6 +932,50 @@ struct EditorView: View {
     }
 
     #if DEBUG || targetEnvironment(simulator)
+    private func logChordInkProposalTiming(
+        result: ChordInkRecognitionResult,
+        primaryDecision: ChordInkRecognitionDecision,
+        decision: ChordInkRecognitionDecision,
+        receivedAt: Date
+    ) {
+        let proposalMilliseconds = Date().timeIntervalSince(receivedAt) * 1_000
+        let confidenceGap = decision.confidenceGap ?? -1
+        let bestRead = result.match?.displayText ?? "none"
+        print(
+            String(
+                format: "SmartChart chord proposal: decisionMs=%.0f best=%@ confidence=%.2f primaryAction=%@ finalAction=%@ trust=%@ agreement=%@ closeRace=%@ gap=%.2f reason=%@",
+                proposalMilliseconds,
+                bestRead,
+                result.confidence,
+                primaryDecision.action.rawValue,
+                decision.action.rawValue,
+                decision.trustSource.rawValue,
+                decision.agreementLevel.rawValue,
+                decision.isCloseRace ? "yes" : "no",
+                confidenceGap,
+                decision.reason
+            )
+        )
+    }
+
+    private func logChordInkCommitTiming(
+        acceptedText: String,
+        resolution: ChordEntryDiagnosticResolution,
+        chordEventID: UUID,
+        startedAt: Date
+    ) {
+        let commitMilliseconds = Date().timeIntervalSince(startedAt) * 1_000
+        print(
+            String(
+                format: "SmartChart chord commit: commitMs=%.0f accepted=%@ resolution=%@ event=%@",
+                commitMilliseconds,
+                acceptedText,
+                resolution.rawValue,
+                chordEventID.uuidString
+            )
+        )
+    }
+
     private func recordChordEntryDiagnostic(
         acceptedText: String,
         match: ChordRecognitionMatch,

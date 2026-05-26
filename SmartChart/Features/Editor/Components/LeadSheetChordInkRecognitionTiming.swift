@@ -19,11 +19,14 @@ enum LeadSheetChordInkRecognitionTimingLogger {
         let recognitionMilliseconds = timing.recognitionFinishedAt.timeIntervalSince(timing.recognitionStartedAt) * 1_000
         let totalMilliseconds = timing.recognitionFinishedAt.timeIntervalSince(timing.scheduledAt) * 1_000
         let bestRead = result.match?.displayText ?? "none"
+        let primaryDecision = ChordInkRecognitionPolicy.decision(for: result)
+        let trustDecision = ChordRecognitionTrustArbiter.decision(for: result)
+        let confidenceGap = trustDecision.confidenceGap ?? -1
         let metrics = result.metrics
         let composition = metrics.compositionMetrics
         print(
             String(
-                format: "SmartChart chord timing: delay=%.0fms idle=%.0fms recognition=%.0fms total=%.0fms cluster=%.0fms glyph=%.0fms context=%.0fms compose=%.0fms semantic=%.0fms match=%.0fms ocrMs=%.0fms strokes=%d clusters=%d candidates=%d sequences=%d/%d limit=%@ ocr=%d best=%@",
+                format: "SmartChart chord timing: delay=%.0fms idle=%.0fms recognition=%.0fms total=%.0fms cluster=%.0fms glyph=%.0fms context=%.0fms compose=%.0fms semantic=%.0fms match=%.0fms ocrMs=%.0fms strokes=%d clusters=%d candidates=%d sequences=%d/%d limit=%@ ocr=%d best=%@ confidence=%.2f primaryAction=%@ finalAction=%@ trust=%@ agreement=%@ closeRace=%@ gap=%.2f reason=%@",
                 timing.requestedDelay * 1_000,
                 idleMilliseconds,
                 recognitionMilliseconds,
@@ -42,7 +45,15 @@ enum LeadSheetChordInkRecognitionTimingLogger {
                 composition.maxGeneratedSequences,
                 composition.hitGeneratedSequenceLimit ? "yes" : "no",
                 timing.ocrCandidateCount,
-                bestRead
+                bestRead,
+                result.confidence,
+                primaryDecision.action.rawValue,
+                trustDecision.action.rawValue,
+                trustDecision.trustSource.rawValue,
+                trustDecision.agreementLevel.rawValue,
+                trustDecision.isCloseRace ? "yes" : "no",
+                confidenceGap,
+                trustDecision.reason
             )
         )
         #endif

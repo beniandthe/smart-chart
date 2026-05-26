@@ -39,6 +39,36 @@ This means the scheduler-only fix is not the whole answer. The next bottleneck i
 - Keep `Db7(b9)` as a fast confirmation-gated control case.
 - Use repo-local, writer-agnostic fixtures only for regression protection if a general bug is found. Do not import the latest iPad metadata as training data.
 
+## Initial Measurement Surface
+
+Current code already captures:
+
+- scheduler delay and idle time in `ChordInkRecognitionTiming`
+- recognizer phase timing: cluster, glyph, contextual glyph, compose, semantic, match, OCR, and total recognizer time
+- stroke count, cluster count, raw candidate count, generated sequence count, sequence limit status, OCR candidate count, and best matched chord
+- persisted diagnostic details after a committed chord: candidate scores, confidence, reason, close-race state, confidence gap, OCR evidence, trust source, agreement level, primary decision, metrics, and optional symbol-ledger data
+
+Current gaps before Sprint 47 instrumentation:
+
+- the console timing line did not include the final trust action, trust source, agreement level, close-race state, confidence gap, or reason
+- the live editor path did not print proposal decision time or commit mutation time
+- SwiftUI render completion is still not directly measured; if commit time is low but visual delay remains high, the next target is render/update instrumentation
+
+## Sprint 47 Instrumentation
+
+Sprint 47 added debug-only measurement labels without changing runtime recognition behavior:
+
+- `SmartChart chord timing` now includes confidence, primary action, final action, trust source, agreement level, close-race marker, confidence gap, and final reason.
+- `SmartChart chord proposal` records editor proposal decision time after a recognition payload reaches `EditorView`.
+- `SmartChart chord commit` records structured chart commit mutation time after a chord candidate is accepted or auto-rendered.
+
+Expected use on the next real-device pass:
+
+- If recognition time and proposal/commit time are low but the UI still feels slow, inspect render/update handoff next.
+- If final action is `confirm` with low confidence for `C` or `G/B`, investigate confidence/ink interpretation before changing debounce.
+- If OCR appears for clear `C` or `G/B`, verify it was requested only because the primary decision needed ambiguity evidence.
+- If `Db7(b9)` stays quick, keep it as the confirmation-gated control case.
+
 ## Acceptance Criteria
 
 - Sprint 47 identifies whether the remaining delay is primarily confidence/trust routing, candidate conflict, recognizer compute, UI proposal/commit, ink clearing, or render handoff.

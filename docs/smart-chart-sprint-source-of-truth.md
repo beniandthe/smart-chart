@@ -37,8 +37,8 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 46 latency triage artifact: `docs/smart-chart-recognition-latency-triage-2026-05-26.md`
 - Sprint 46 latency repeat log: `docs/smart-chart-sprint-46-latency-repeat-log-2026-05-26.md`
 - Sprint 47 confidence/performance triage artifact: `docs/smart-chart-sprint-47-confidence-performance-triage-2026-05-26.md`
-- latest local verification: Sprint 46 scheduler tuning passed XcodeBuildMCP focused iOS simulator `SmartChartTests/LeadSheetChordInkRecognitionSchedulingTests` with `5` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46 --filter WritingToRenderPipelineReadinessTests` passed with `1` test, `0` failures and bounded recognizer/readiness runtime of `0.131s`; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint46` passed with `317` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `334` tests, `36` skipped, `0` failures; `xcodegen generate`, Python script compilation, and `git diff --check` passed.
-- latest GitHub verification: main commit `72e6d91 Tune sprint 46 chord recognition scheduling` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
+- latest local verification: Sprint 47 instrumentation passed `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint47 --filter ChordRecognitionTrustArbiterTests` with `8` tests, `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint47` passed with `317` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator test for scheme `SmartChart` passed with `334` tests, `36` skipped, `0` failures; `git diff --check` passed.
+- latest GitHub verification: main commit `bb85460 Record sprint 46 repeat and open sprint 47` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health; PR [#4](https://github.com/beniandthe/smart-chart/pull/4) had Dependency Review, SwiftPM, iOS simulator, Analyze Swift, and CodeQL passing on `66dc5d2`; the review thread was answered/resolved by product decision, and the PR merged into `main` as `1b792df` on 2026-05-23
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -156,6 +156,12 @@ Sprint 47 tasks:
 - Audit the `C` and `G/B` route through `ChordInkRecognitionPolicy`, `ChordRecognitionTrustArbiter`, proposal routing, `Chart.commitRecognizedChordInk`, and page re-render.
 - Keep `Db7(b9)` as the fast confirmation-gated control case.
 - Add repo-local instrumentation or tests only when they protect a writer-agnostic behavior or expose a general timing boundary.
+
+Sprint 47 current evidence:
+
+- Existing recognizer timing already captures scheduler idle, recognition phases, OCR time, counts, and best read.
+- Existing committed-chord diagnostics already preserve confidence, candidate scores, trust source, agreement level, OCR evidence, and primary/final decision details after a chord is accepted.
+- Sprint 47 added debug-only console labels for final trust action/reason plus proposal and commit mutation timing. Recognition behavior is unchanged.
 
 Acceptance criteria:
 
