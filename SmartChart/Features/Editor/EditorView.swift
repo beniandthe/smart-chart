@@ -1149,6 +1149,8 @@ struct EditorView: View {
                 primaryDisplayText: match.displayText
             ),
             primarySymbolLedgerAssessment: confirmation.result.symbolLedgerAssessment,
+            placementEvidence: chartSnapshot.chordEvent(id: chordEventID)
+                .map(ChordEntryPlacementEvidence.init(chordEvent:)),
             timingEvidence: timingEvidence
         )
 
@@ -1232,7 +1234,9 @@ struct EditorView: View {
             recognitionReason: "Rendered chord correction.",
             wasCloseRace: false,
             confidenceGap: nil,
-            targetFraction: nil
+            targetFraction: nil,
+            placementEvidence: chartSnapshot.chordEvent(id: correction.chordEventID)
+                .map(ChordEntryPlacementEvidence.init(chordEvent:))
         )
 
         do {

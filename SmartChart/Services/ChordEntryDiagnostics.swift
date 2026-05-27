@@ -43,7 +43,15 @@ struct ChordEntryDiagnosticEvent: Codable, Equatable {
     var symbolLedger: ChordInkSymbolLedgerSnapshot? = nil
     var symbolLedgerAssessment: ChordInkSymbolLedgerAssessment? = nil
     var primarySymbolLedgerAssessment: ChordInkSymbolLedgerAssessment? = nil
+    var placementEvidence: ChordEntryPlacementEvidence? = nil
     var timingEvidence: ChordEntryTimingEvidence? = nil
+}
+
+struct ChordEntryPlacementEvidence: Codable, Equatable {
+    var startPositionText: String
+    var durationText: String
+    var rhythmPlacement: RhythmPlacement
+    var mappedRhythmSlotIndex: Int?
 }
 
 struct ChordEntryTimingEvidence: Codable, Equatable {
@@ -202,6 +210,7 @@ struct ChordEntryDiagnosticsRecorder {
                     primaryWasCloseRace: nil,
                     primaryConfidenceGap: nil,
                     recognitionMetrics: nil,
+                    placementEvidence: ChordEntryPlacementEvidence(chordEvent: chordEvent),
                     timingEvidence: nil
                 )
             }
@@ -251,4 +260,15 @@ private extension ChordEntryDiagnosticsRecorder {
         decoder.dateDecodingStrategy = .iso8601
         return decoder
     }()
+}
+
+extension ChordEntryPlacementEvidence {
+    init(chordEvent: ChordEvent) {
+        self.init(
+            startPositionText: chordEvent.startPosition.displayText,
+            durationText: chordEvent.duration.displayText,
+            rhythmPlacement: chordEvent.rhythmPlacement,
+            mappedRhythmSlotIndex: chordEvent.mappedRhythmSlotIndex
+        )
+    }
 }
