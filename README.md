@@ -121,6 +121,10 @@ Current implementation authority:
 - [`docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`](docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md) — Sprint 52 chord confirmation and local user correction loop
 - [`docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`](docs/smart-chart-sprint-53-validation-speed-2026-05-26.md) — Sprint 53 validation-speed policy and workflow cleanup
 - [`docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`](docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md) — Sprint 54 confirmation and correction sheet UX polish
+- [`docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md`](docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md) — Sprint 55 chord-first product polish
+- [`docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md`](docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md) — Sprint 56 bounded real-device chord validation
+- [`docs/smart-chart-sprint-56-repeat-validation-log-2026-05-27.md`](docs/smart-chart-sprint-56-repeat-validation-log-2026-05-27.md) — Sprint 56 repeat validation gate
+- [`docs/smart-chart-chord-first-side-sprints-2026-05-27.md`](docs/smart-chart-chord-first-side-sprints-2026-05-27.md) — active chord-first side-sprint route map
 - [`docs/core-design-document.md`](docs/core-design-document.md) — enforced product and design rules
 - [`docs/developer-mvp-spec.md`](docs/developer-mvp-spec.md) — buildable MVP scope and behaviors
 - [`docs/repo-github-recognition-audit-2026-05-20.md`](docs/repo-github-recognition-audit-2026-05-20.md) — current recognition architecture and GitHub audit evidence for the recovery plan
@@ -162,4 +166,4 @@ The first meaningful prototype succeeds if a musician can:
 
 ## Status
 
-Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-53 restored the streamlined writer-agnostic recognition/editor pipeline, validated the writing-to-render loop with real app passes, added the first local chord-correction UX loop, and shortened routine sprint validation. Current sprint status lives in the source-of-truth doc.
+Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-56 restored the streamlined writer-agnostic recognition/editor pipeline, validated the writing-to-render loop with real app passes, added local chord-correction UX, shortened routine sprint validation, and closed the first chord field-validation loop. Sprint 57 starts the chord-first side-sprint lane. Current sprint status lives in the source-of-truth doc.

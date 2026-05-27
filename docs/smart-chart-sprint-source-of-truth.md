@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, and Sprint 55 chord-first product polish are complete; Sprint 56 chord field validation is active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, Sprint 55 chord-first product polish, and Sprint 56 chord field validation are complete; Sprint 57 chord placement/edit loop is active as the first chord-first side sprint
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -47,8 +47,10 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 54 confirmation UX polish artifact: `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`
 - Sprint 55 chord-first product polish artifact: `docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md`
 - Sprint 56 chord field validation artifact: `docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md`
-- latest local verification: Sprint 55 Pencil-only real-device chord input policy XcodeBuildMCP focused iOS simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `2` tests and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed and launched `com.smartchart.app` on the iPad simulator; `git diff --check` passed. Sprint 55 fast-writing chord-ink ownership update `xcodegen generate` passed; focused policy test and simulator launch passed. Earlier Sprint 55 `Absus` compact-suspended verification remains: `ChordInkCandidateComposerTests` passed with `51` tests and `0` failures; `ChordInkRecognizerTests` passed with `40` tests, `1` skipped, and `0` failures; saved-state replay showed the three `Absus` rows now matching `Absus` through confirmation. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
-- latest GitHub verification: main commit `1eebe00 Require Pencil for device chord entry` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
+- Sprint 56 repeat validation log: `docs/smart-chart-sprint-56-repeat-validation-log-2026-05-27.md`
+- chord-first side-sprint lane: `docs/smart-chart-chord-first-side-sprints-2026-05-27.md`
+- latest local verification: Sprint 56 parser/confirmation authority fix `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint56-compendium` passed with `330` tests, `36` skipped, and `0` failures; focused XcodeBuildMCP iOS simulator recognition tests passed with `53` tests and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed for the Sprint 56 repeat setup; `git diff --check` passed. The bounded Sprint 56 repeat pass was reported by the user as "all golden"; treat that as product evidence, not training data.
+- latest GitHub verification: main commit `1fb2670 Set up sprint 56 repeat validation` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -143,40 +145,42 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 56: Chord Field Validation
+### Sprint 57: Chord Placement And Edit Loop
 
-Status: active; parser/confirmation authority fix is green, ready for bounded repeat pass.
+Status: active side sprint; setup and first implementation slice.
 
-Goal: validate the Sprint 55 chord-first improvements on real hardware before starting another architecture or recognition implementation sprint.
+Goal: improve the post-render chord placement/edit loop while preserving the working write -> recognize -> auto-render or confirm -> clear ink -> export flow.
 
 Current state:
 
-- Sprint 55 closed the current chord-first polish lane: rhythm-aware placement snapping, placement/timing diagnostics, `Absus` candidate availability, fast-writing PencilKit ownership, and real-device Pencil-only chord entry.
-- Required GitHub Actions are green for `1ef7980 Restore supported altered extensions`.
-- Simulator chord input remains `.anyInput` for automation; real iPad/device chord entry uses `.pencilOnly`.
-- The first Sprint 56 report showed simulator/shared-input lag after manually hiding the pointer. Treat that as simulator evidence only, not as proof of native real-device Pencil lag.
-- The first Sprint 56 report also showed an unsupported confirmation suggestion (`Db(b9)(b9)`). The narrow authority-boundary fix is green at `1ef7980 Restore supported altered extensions`.
-- The repeat pass should use `docs/smart-chart-sprint-56-repeat-validation-log-2026-05-27.md`.
+- Sprint 56 field validation is complete by user report: the repeat pass was "all golden" after the parser/confirmation authority fix and Pencil-only device-input policy.
+- The app is ready to move from validation loops into chord-first product work.
+- The side-sprint queue lives in `docs/smart-chart-chord-first-side-sprints-2026-05-27.md`.
+- Placement/timing diagnostics already exist from Sprint 55 and should drive the first slice.
 
-Sprint 56 tasks:
+Sprint 57 tasks:
 
-- Run the bounded repeat pass defined in `docs/smart-chart-sprint-56-repeat-validation-log-2026-05-27.md`.
-- Validate fast writing feel on real iPad with Apple Pencil.
-- Confirm mouse/trackpad/pointer input no longer contaminates real-device chord ink.
-- Validate supported chord usability for `C`, `G/B`, `Db7(b9)`, and `Absus`.
-- Keep confirmation suggestions compendium/parser-approved only; raw recognizer strings must remain diagnostics, not user-facing chord suggestions.
-- Review placement/snapping with at least one clear later-beat or longer-slot placement.
-- Export the resulting chart to PDF/Preview and confirm full-page fidelity.
-- Use pass metadata and diagnostics to pick the next implementation lane.
+- Audit the current rendered-chord placement/edit path in `MeasureRhythmMapping`, `LeadSheetPageLayout`, `EditorView`, and related editor interaction code.
+- Identify whether the first product gap is snap selection, visible placement feedback, post-render repositioning, or correction affordance.
+- Implement one bounded placement/edit improvement before broader layout or recognition work.
+- Preserve native `PKCanvasView` writing feel, accepted-chord ink clearing, export behavior, and writer-agnostic recognition.
+- Keep suggestions and accepted chords compendium/parser-approved only.
+- Update the side-sprint document and completed log when the slice closes.
+
+Non-goals:
+
+- No personal handwriting fixture expansion.
+- No recognition score retuning from one writer's pass.
+- No default OCR expansion or symbol-ledger diagnostics cost.
+- No broad editor cleanup unless it is directly required for the placement/edit slice.
 
 Acceptance criteria:
 
-- Real device chord entry accepts Apple Pencil input without pointer/mouse contamination.
-- Fast writing does not feel like the app is fighting the active stroke.
-- `C`, `G/B`, `Db7(b9)`, and `Absus` remain usable without personal-fixture expansion.
-- Placement evidence can be reviewed from diagnostics after the pass.
-- Export still produces the full chart page.
-- The next implementation sprint is chosen from pass evidence: placement/snapping, render/update handoff, candidate availability, confirmation/correction, or export fidelity.
+- Existing recognized chords still commit as structured `ChordEvent`s and clear the chord ink pass.
+- Existing placement tests still pass, with focused new coverage if placement behavior changes.
+- The rendered chord's beat/slot target is easier to understand or correct.
+- Export remains unchanged unless the slice explicitly touches export.
+- The next side sprint is chosen from the chord-first queue rather than reopening the full audit plan.
 
 ## Completed Sprints Log
 
@@ -779,9 +783,30 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: the fast-writing/Pencil-only changes still need one bounded real iPad/Pencil pass before more architecture work. The pass should determine whether the next implementation lane is placement/snapping, render/update handoff, candidate availability, confirmation/correction, or export fidelity.
 - next sprint candidate: Sprint 56 chord field validation.
 
+### Sprint 56: Chord Field Validation
+
+- status: complete; required GitHub Actions passed and the bounded repeat pass was reported as golden
+- commit range: `db52d7d` through `1fb2670`
+- summary: Validated the Sprint 55 chord-first field path and tightened the parser/confirmation authority boundary. Real device chord entry remains Pencil-only, simulator builds keep pointer input for automation, unsupported confirmation suggestions such as `Db(b9)(b9)` are gated out before reaching the user, supported altered extensions remain available, and the repeat-pass setup captured the final validation contract.
+- tests and evidence: Sprint 56 parser/confirmation authority fix `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint56-compendium` passed with `330` tests, `36` skipped, and `0` failures; focused XcodeBuildMCP iOS simulator recognition tests passed with `53` tests and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed for the repeat setup; `git diff --check` passed; required GitHub Actions passed on `1fb2670`. The user reported the repeat pass was "all golden."
+- behavior boundary: no personal handwriting fixture expansion, no score retuning from one user's pass, no default OCR expansion, no symbol-ledger diagnostics cost, no export behavior change, and no change to accepted-chord ink clearing.
+- unresolved follow-up: the recovery/audit arc is no longer the blocker. Continue through scoped chord-first side sprints, starting with placement/edit behavior, and keep validation proportional.
+- next sprint candidate: Sprint 57 chord placement and edit loop.
+
+## Chord-First Side Sprint Queue
+
+Use this queue for chord-specific product work after Sprint 56. `docs/smart-chart-chord-first-side-sprints-2026-05-27.md` is the supporting route map; this file remains the active sprint authority.
+
+- Sprint 57: Chord Placement And Edit Loop.
+- Sprint 58: Wrong Render Recovery And Replace UX.
+- Sprint 59: Confirmation And Direct Input Polish.
+- Sprint 60: General Candidate Availability Hardening.
+- Sprint 61: Raster/Render Handoff Polish.
+- Sprint 62: Chord-First Release Candidate Pass.
+
 ## Next Sprint Backlog
 
-Use this queue for routing after Sprint 56 field validation. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
+Use this queue for routing after the active chord-first side-sprint lane. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
 
 - If the full flow feels good, close the recovery/audit arc and move to feature prioritization.
 - If correction friction returns after Sprint 52, route a future sprint to confirmation sheet interaction polish or direct-input affordances.
@@ -822,6 +847,8 @@ Current authority:
 - `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`: Sprint 54 confirmation UX polish.
 - `docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md`: Sprint 55 chord-first product polish.
 - `docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md`: Sprint 56 bounded real-device chord validation.
+- `docs/smart-chart-sprint-56-repeat-validation-log-2026-05-27.md`: Sprint 56 repeat validation gate and final field-pass checklist.
+- `docs/smart-chart-chord-first-side-sprints-2026-05-27.md`: active chord-first side-sprint route map.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

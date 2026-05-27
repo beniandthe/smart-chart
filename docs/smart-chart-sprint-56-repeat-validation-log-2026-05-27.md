@@ -1,8 +1,8 @@
 # Smart Chart Sprint 56 Repeat Validation Log
 
-Status: ready
+Status: complete by user report
 Date: 2026-05-27
-Baseline commit: `1ef7980 Restore supported altered extensions`
+Baseline commit: `1fb2670 Set up sprint 56 repeat validation`
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
 ## Purpose
@@ -45,12 +45,20 @@ For each chord, record:
 
 Global checks:
 
-- [ ] Pencil writing feels native on the device path.
-- [ ] No mouse/pointer contamination appears in chord ink.
-- [ ] Confirmation suggestions are all valid supported chord display text.
-- [ ] `Db7(b9)` remains available and does not disappear because of the parser fix.
-- [ ] Accepted chord ink clears.
-- [ ] Export to PDF/Preview still works.
+- [x] Pencil writing feels native on the device path.
+- [x] No mouse/pointer contamination appears in chord ink.
+- [x] Confirmation suggestions are all valid supported chord display text.
+- [x] `Db7(b9)` remains available and does not disappear because of the parser fix.
+- [x] Accepted chord ink clears.
+- [x] Export to PDF/Preview still works.
+
+## Result
+
+The user reported the bounded repeat pass as "all golden" after the Sprint 56 parser/confirmation authority fix and real-device Pencil-only input policy.
+
+Treat this as product validation evidence only. Do not convert the pass into a new personal handwriting fixture/training loop unless a future sprint identifies a transferable regression that needs explicit test coverage.
+
+The next active lane is the chord-first side-sprint queue, starting with placement/edit behavior.
 
 ## Decision Rules
 
