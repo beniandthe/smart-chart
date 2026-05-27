@@ -1,6 +1,6 @@
 # Smart Chart Sprint 54: Confirmation UX Polish
 
-Status: refined; ready for bounded manual UX validation
+Status: complete; required GitHub Actions passed
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
@@ -52,6 +52,7 @@ Sprint 52 proved the correction loop works. The next product issue is feel: when
 - Centered refinement local verification passed: XcodeBuildMCP iOS simulator compile-only build for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`, plus `git diff --check`.
 - GitHub Actions on `03305eb Simplify chord confirmation UX` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift`.
 - Metadata follow-up local verification passed: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint54-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed.
+- GitHub Actions on `d5fb582 Avoid duplicate chord diagnostic rows` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift`.
 
 ## Manual Validation
 

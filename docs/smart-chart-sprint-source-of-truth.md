@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, and Sprint 53 validation speed are complete locally; Sprint 54 confirmation UX polish is refined locally and ready for bounded manual validation
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, and Sprint 54 confirmation UX polish are complete; Sprint 55 product prioritization is the active decision gate
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -46,7 +46,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 53 validation speed artifact: `docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`
 - Sprint 54 confirmation UX polish artifact: `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`
 - latest local verification: Sprint 54 metadata follow-up focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint54-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed. Sprint 53 workflow YAML parse passed for `.github/workflows/ci.yml` and `.github/workflows/codeql.yml`. Sprint 52 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests` passed with `7` tests, `0` failures; XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
-- latest GitHub verification: main commit `03305eb Simplify chord confirmation UX` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health. Sprint 50 remains the latest broad full-suite local baseline; Sprint 54 is app-CI green and ready for bounded manual UX validation.
+- latest GitHub verification: main commit `d5fb582 Avoid duplicate chord diagnostic rows` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health. Sprint 50 remains the latest broad full-suite local baseline; Sprint 54 is app-CI green and validated.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -141,42 +141,36 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 54: Confirmation UX Polish
+### Sprint 55: Product Prioritization Decision
 
-Status: refined locally; ready for bounded manual UX validation.
+Status: decision gate; do not start another validation loop by default.
 
-Goal: make chord confirmation and rendered-chord correction feel like a polished product flow instead of a demo/debug sheet.
+Goal: choose the next product feature lane now that the recognition recovery, writing-to-render loop, confirmation UX, export path, and sprint validation drag are stable enough to move forward.
 
 Current state:
 
-- Writing-to-render latency is good enough to move forward.
-- Sprint 52 correction UX is validated as working.
-- The correction loop must never trap the user in write -> wrong render -> delete -> rewrite.
-- Sprint 53 shortened direct-main validation by deferring CodeQL to PR/schedule/manual runs and by skipping app test suites for docs/config-only passes.
-- The first Sprint 54 polish pass worked well in a real user pass, but the sheet still felt too information-heavy.
-- The confirmation sheet is now narrowed to a centered product chooser: selected chord, top three candidates, one manual input box, and compact Accept/Keep Ink/Rewrite actions.
-- Simulator validation says the centered sheet feels much better; the remaining Sprint 54 follow-up is metadata hygiene for duplicate diagnostic rows caused by render-handoff timing appends.
+- Writing-to-render is usable for bounded real-life validation.
+- Chord confirmation now feels cleaner: centered selected chord, top-three suggestions, manual entry, and compact Accept/Keep Ink/Rewrite actions.
+- Chord-entry metadata now keeps one diagnostic row per chord event when render-handoff timing arrives.
+- Export/share worked in the last iPad pass.
+- Direct-main validation is faster for docs/config-only work, while app-impacting changes still run required SwiftPM and iOS simulator checks.
+- The recovery/audit arc can close unless a new blocker appears in real use.
 
-Sprint 54 tasks:
+Sprint 55 tasks:
 
-- Polish `ChordInkConfirmationSheetView` hierarchy and copy.
-- Make suggestions feel like clear top-three product choices without debug-style explanation.
-- Make manual entry feel like a first-class escape hatch.
-- Keep Keep Ink and Rewrite secondary but visible.
-- Polish `ChordCorrectionSheetView` so rendered-chord correction matches the same UX family.
-- Keep chord-entry metadata to one diagnostic row per chord event when render-handoff timing arrives.
-- Preserve recognition/trust/correction-memory behavior.
+- Pick one next product lane before editing runtime code.
+- Candidate lane A: Library organization and chart management.
+- Candidate lane B: chart placement/snapping polish.
+- Candidate lane C: visual design system polish for editor controls and sheets.
+- Candidate lane D: export/share polish beyond the current working PDF path.
+- Candidate lane E: broader feature planning now that the first writing-to-render loop is usable.
 
 Acceptance criteria:
 
-- Confirmation feels positive, intentional, centered, and concise.
-- The selected chord is always visually obvious.
-- The top three suggestions are easy to choose from.
-- Suggestion selection updates the selected chord clearly.
-- Manual entry can submit via the keyboard return key.
-- Keep Ink and Rewrite still route correctly.
-- Pass metadata does not duplicate a chord event when render-handoff timing is added.
-- No recognition score, trust, parser, correction-memory, PencilKit, export, or chart mutation behavior changes.
+- The next sprint has one clear product goal and a narrow acceptance checklist.
+- The sprint avoids handwriting-training loops and personal fixture expansion.
+- Verification remains proportional to the touched surface.
+- Any recognition work must be triggered by transferable evidence, not one-off handwriting drift.
 
 ## Completed Sprints Log
 
@@ -758,9 +752,20 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: verify the docs/config-only no-op path on the next source-of-truth-only push; keep real CodeQL on PR/schedule/manual runs.
 - next sprint candidate: Sprint 54 product polish decision.
 
+### Sprint 54: Confirmation UX Polish
+
+- status: complete; required GitHub Actions passed and simulator validation improved the sheet feel
+- polish commit: `03305eb Simplify chord confirmation UX`
+- metadata follow-up commit: `d5fb582 Avoid duplicate chord diagnostic rows`
+- summary: Simplified the chord confirmation sheet into a centered product chooser with selected chord, top-three suggestions, one manual input box, and compact Accept/Keep Ink/Rewrite actions. The user validated that the lighter sheet felt much better. A metadata follow-up changed render-handoff timing evidence to replace the matching commit diagnostic instead of appending a duplicate row for the same chord event.
+- tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint54-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed; required GitHub Actions passed on `03305eb`, `74781ce`, and `d5fb582`.
+- behavior boundary: no recognition score, trust policy, parser authority, correction-memory policy, PencilKit capture behavior, export behavior, fixture corpus, OCR authority, symbol-ledger diagnostics cost, or chart mutation behavior changed.
+- unresolved follow-up: do not continue redundant confirmation passes unless real use shows new friction. The next move should be a product-prioritization decision.
+- next sprint candidate: Sprint 55 product prioritization.
+
 ## Next Sprint Backlog
 
-Use this queue for Sprint 54 routing after Sprint 53 validation-speed cleanup. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
+Use this queue for Sprint 55 routing after Sprint 54 confirmation polish. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
 
 - If the full flow feels good, close the recovery/audit arc and move to feature prioritization.
 - If correction friction returns after Sprint 52, route a future sprint to confirmation sheet interaction polish or direct-input affordances.
