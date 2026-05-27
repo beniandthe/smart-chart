@@ -40,7 +40,7 @@ struct PendingChordInkConfirmation: Identifiable {
         let primaryCandidateTexts = [result.match?.displayText].compactMap { $0 }
         let ocrCandidateTexts = result.ocrCandidates?.compactMap(\.displayText) ?? []
         let userFacingCandidateTexts = ChordRecognitionCompendium.userFacingCandidateTexts(
-            from: rankedCandidateTexts + primaryCandidateTexts + result.rawCandidates + ocrCandidateTexts
+            from: rankedCandidateTexts + primaryCandidateTexts + ocrCandidateTexts
         )
         self.candidateTexts = userFacingCandidateTexts
         self.bestCandidateText = result.match?.displayText ?? userFacingCandidateTexts.first

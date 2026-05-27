@@ -1,6 +1,6 @@
 # Smart Chart Sprint 56: Chord Field Validation
 
-Status: setup
+Status: active
 Date: 2026-05-27
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
@@ -94,3 +94,16 @@ Also record:
 - If placement is wrong, inspect placement/snapping and rhythm-map evidence.
 - If suggestions are wrong or missing, inspect candidate availability before score tuning.
 - If export is wrong, route to renderer/export fidelity.
+
+## Pass Finding: Simulator Shared Input And Confirmation Authority
+
+The first Sprint 56 report exposed two separate issues:
+
+- When the tester manually removed the visible mouse cursor from simulator sharing on iPad, active ink felt much laggier. Treat this as simulator/shared-input evidence only. The current app policy keeps simulator chord entry on `.anyInput` for automation and shared-pointer testing, while real iPad/device chord entry uses `.pencilOnly`. Native real-device Pencil feel still needs to be validated separately from simulator sharing.
+- The confirmation sheet surfaced unsupported raw chord text such as `Db(b9)(b9)`. This is a hard authority-boundary bug: confirmation suggestions must come only from compendium/parser-approved display text.
+
+Sprint 56 follow-up:
+
+- Reject repeated alterations and root-only altered suffixes such as `Db(b9)` / `Db(b9)(b9)` at the parser/compendium boundary.
+- Keep `Db7(b9)` valid and supported.
+- Build confirmation suggestions from ranked supported scores, the primary match, and supported OCR display text only; do not promote raw recognizer strings into the user-facing top-three list.

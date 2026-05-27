@@ -145,7 +145,7 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ### Sprint 56: Chord Field Validation
 
-Status: active; setup complete, awaiting bounded real iPad/Pencil pass evidence.
+Status: active; first pass produced a confirmation-authority fix and a simulator-input caveat.
 
 Goal: validate the Sprint 55 chord-first improvements on real hardware before starting another architecture or recognition implementation sprint.
 
@@ -154,7 +154,8 @@ Current state:
 - Sprint 55 closed the current chord-first polish lane: rhythm-aware placement snapping, placement/timing diagnostics, `Absus` candidate availability, fast-writing PencilKit ownership, and real-device Pencil-only chord entry.
 - Required GitHub Actions are green for `1eebe00 Require Pencil for device chord entry`.
 - Simulator chord input remains `.anyInput` for automation; real iPad/device chord entry uses `.pencilOnly`.
-- The next decision should come from one bounded pass, not another broad tuning loop.
+- The first Sprint 56 report showed simulator/shared-input lag after manually hiding the pointer. Treat that as simulator evidence only, not as proof of native real-device Pencil lag.
+- The first Sprint 56 report also showed an unsupported confirmation suggestion (`Db(b9)(b9)`). This routes a narrow authority-boundary fix before any broader recognition tuning.
 
 Sprint 56 tasks:
 
@@ -162,6 +163,7 @@ Sprint 56 tasks:
 - Validate fast writing feel on real iPad with Apple Pencil.
 - Confirm mouse/trackpad/pointer input no longer contaminates real-device chord ink.
 - Validate supported chord usability for `C`, `G/B`, `Db7(b9)`, and `Absus`.
+- Keep confirmation suggestions compendium/parser-approved only; raw recognizer strings must remain diagnostics, not user-facing chord suggestions.
 - Review placement/snapping with at least one clear later-beat or longer-slot placement.
 - Export the resulting chart to PDF/Preview and confirm full-page fidelity.
 - Use pass metadata and diagnostics to pick the next implementation lane.
