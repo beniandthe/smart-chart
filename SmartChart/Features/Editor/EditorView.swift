@@ -499,6 +499,7 @@ struct EditorView: View {
             onRhythmicNotationValidationError: handleRhythmicNotationValidationError,
             onChordInkRecognitionProposal: handleChordInkRecognitionProposal,
             onChordCorrectionRequested: handleChordCorrectionRequested,
+            onChordDeleted: handleChordDeleted,
             onNoteSelectionChanged: handleNoteSelectionChanged
         )
     }
@@ -788,7 +789,19 @@ struct EditorView: View {
         selectedMeasureID = nil
         selectedNoteSelection = nil
         let primaryDecision = ChordInkRecognitionPolicy.decision(for: result)
-        let decision = ChordRecognitionTrustArbiter.decision(for: result)
+        var decision = ChordRecognitionTrustArbiter.decision(for: result)
+        if decision.action == .autoRender,
+           let acceptedText = decision.acceptedText,
+           chordInkUserCorrectionMemory.shouldBlockAutoRender(
+               acceptedText: acceptedText,
+               drawingData: drawingData
+           ) {
+            decision.action = .confirm
+            decision.reason = "This ink previously rendered as \(acceptedText) and was deleted. Choose the intended chord, or type it in."
+            decision.isCloseRace = false
+            decision.competingCandidateText = nil
+            decision.confidenceGap = nil
+        }
         #if DEBUG || targetEnvironment(simulator)
         let proposalDecisionMilliseconds = Date().timeIntervalSince(proposalReceivedAt) * 1_000
         #else
@@ -988,6 +1001,20 @@ struct EditorView: View {
             currentText: chordEvent.symbol.displayText,
             rawInput: chordEvent.rawInput
         )
+    }
+
+    private func handleChordDeleted(_ chordEvent: ChordEvent) {
+        guard let sourceInkData = chordEvent.sourceInkData else {
+            return
+        }
+
+        let acceptedText = chordEvent.rawInput ?? chordEvent.symbol.displayText
+        if chordInkUserCorrectionMemory.recordRejectedAutoRender(
+            acceptedText: acceptedText,
+            drawingData: sourceInkData
+        ) {
+            persistChordInkUserCorrectionMemory()
+        }
     }
 
     private func handleChordCorrectionAccepted(

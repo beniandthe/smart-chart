@@ -111,6 +111,64 @@ final class ChordInkUserCorrectionMemoryTests: XCTestCase {
         )
     }
 
+    func testDeletedInkChordBlocksSameAutoRenderDigestOnly() {
+        var memory = ChordInkUserCorrectionMemory()
+        let rejectedDrawing = Data("wrong auto render".utf8)
+        let differentDrawing = Data("different drawing".utf8)
+
+        XCTAssertFalse(
+            memory.shouldBlockAutoRender(
+                acceptedText: "Db7(b9)",
+                drawingData: rejectedDrawing
+            )
+        )
+
+        XCTAssertTrue(
+            memory.recordRejectedAutoRender(
+                acceptedText: "Db7(b9)",
+                drawingData: rejectedDrawing,
+                now: Date(timeIntervalSinceReferenceDate: 25)
+            )
+        )
+
+        XCTAssertTrue(
+            memory.shouldBlockAutoRender(
+                acceptedText: "Db7(b9)",
+                drawingData: rejectedDrawing
+            )
+        )
+        XCTAssertFalse(
+            memory.shouldBlockAutoRender(
+                acceptedText: "Db7(b9)",
+                drawingData: differentDrawing
+            )
+        )
+        XCTAssertFalse(
+            memory.shouldBlockAutoRender(
+                acceptedText: "G/B",
+                drawingData: rejectedDrawing
+            )
+        )
+    }
+
+    func testStoreLoadsOlderCorrectionMemoryWithoutRejectedAutoRenderRules() throws {
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let store = ChordInkUserCorrectionMemoryStore(
+            url: temporaryDirectory.appendingPathComponent("chord-ink-user-correction-memory.json")
+        )
+        let legacyJSON = #"{"correctionRules":[],"suggestionExclusions":[]}"#
+
+        defer {
+            try? FileManager.default.removeItem(at: temporaryDirectory)
+        }
+
+        try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+        try Data(legacyJSON.utf8).write(to: store.url)
+
+        XCTAssertEqual(try store.load(), ChordInkUserCorrectionMemory())
+    }
+
     func testStorePersistsUserCorrectionMemoryWhenPathContainsSpaces() throws {
         let temporaryDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -126,6 +184,13 @@ final class ChordInkUserCorrectionMemoryTests: XCTestCase {
                 candidateTexts: ["C", "G/B", "Db7(b9)"],
                 decision: closeRaceDecision(gap: 0.03),
                 now: Date(timeIntervalSinceReferenceDate: 30)
+            )
+        )
+        XCTAssertTrue(
+            memory.recordRejectedAutoRender(
+                acceptedText: "Db7(b9)",
+                drawingData: Data("stored rejection".utf8),
+                now: Date(timeIntervalSinceReferenceDate: 31)
             )
         )
 

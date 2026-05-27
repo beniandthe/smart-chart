@@ -25,6 +25,7 @@ write -> auto-render when trusted -> confirm when close -> direct input when fai
 - A selected suggestion may create a local user correction rule only when the race is close but not extremely tight.
 - Extremely tight races do not create user rules because the competing chords are too close to safely bias later behavior.
 - Manual entry after wrong suggestions creates a local exclusion for that top-three suggestion signature.
+- Deleting an ink-origin rendered chord with the x control records a local rejection against that rendered chord for that exact ink symbol, so the same ink/chord pair does not silently auto-render again.
 
 ## Architecture Boundary
 
@@ -45,6 +46,7 @@ This is product personalization, not recognizer training.
 - Persist a local user rule when a confirmed suggestion came from a non-extremely-tight close race.
 - Persist a local exclusion when the user manually enters a supported chord that was not among the suggestions.
 - Apply a learned local rule only when the current race has the same top-three supported candidate signature, is not extremely tight, and has no exclusion.
+- Record a rejected auto-render rule when the user deletes an ink-origin rendered chord, then downgrade that same ink/chord pair from auto-render to confirmation on future attempts.
 
 ## Acceptance Criteria
 
@@ -54,6 +56,7 @@ This is product personalization, not recognizer training.
 - Confirming a non-extremely-tight close-race suggestion creates a local user correction rule.
 - Confirming an extremely tight race does not create a local user correction rule.
 - Manual entry outside the suggestions records an exclusion and prevents local auto-rule application for that signature.
+- Deleting an ink-origin rendered chord prevents that same ink digest from auto-rendering as that same chord again.
 - Existing compendium/parser validation still gates every accepted chord.
 
 ## Verification Plan
@@ -66,9 +69,9 @@ This is product personalization, not recognizer training.
 
 ## Verification Evidence
 
-- local `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests`: passed with `5` tests, `0` failures
+- local `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests`: passed with `7` tests, `0` failures after adding deleted-chord rejection coverage
 - local `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests`: passed with `7` tests, `0` failures
-- XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests`: passed with `5` tests, `0` failures
+- XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests`: passed with `7` tests, `0` failures after adding deleted-chord rejection coverage
 - `git diff --check`: passed
 - GitHub Actions on `0a59588 Add sprint 52 chord confirmation user loop`: SwiftPM tests, iOS simulator tests, and Analyze Swift passed
 

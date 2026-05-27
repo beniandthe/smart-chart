@@ -68,9 +68,58 @@ struct ChordInkUserCorrectionExclusion: Codable, Equatable, Identifiable {
     var count: Int
 }
 
+struct ChordInkRejectedAutoRenderRule: Codable, Equatable, Identifiable {
+    var id: UUID
+    var acceptedText: String
+    var inkDigests: [String]
+    var createdAt: Date
+    var updatedAt: Date
+    var count: Int
+}
+
 struct ChordInkUserCorrectionMemory: Codable, Equatable {
     var correctionRules: [ChordInkUserCorrectionRule] = []
     var suggestionExclusions: [ChordInkUserCorrectionExclusion] = []
+    var rejectedAutoRenderRules: [ChordInkRejectedAutoRenderRule] = []
+
+    private enum CodingKeys: String, CodingKey {
+        case correctionRules
+        case suggestionExclusions
+        case rejectedAutoRenderRules
+    }
+
+    init(
+        correctionRules: [ChordInkUserCorrectionRule] = [],
+        suggestionExclusions: [ChordInkUserCorrectionExclusion] = [],
+        rejectedAutoRenderRules: [ChordInkRejectedAutoRenderRule] = []
+    ) {
+        self.correctionRules = correctionRules
+        self.suggestionExclusions = suggestionExclusions
+        self.rejectedAutoRenderRules = rejectedAutoRenderRules
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        correctionRules = try container.decodeIfPresent(
+            [ChordInkUserCorrectionRule].self,
+            forKey: .correctionRules
+        ) ?? []
+        suggestionExclusions = try container.decodeIfPresent(
+            [ChordInkUserCorrectionExclusion].self,
+            forKey: .suggestionExclusions
+        ) ?? []
+        rejectedAutoRenderRules = try container.decodeIfPresent(
+            [ChordInkRejectedAutoRenderRule].self,
+            forKey: .rejectedAutoRenderRules
+        ) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(correctionRules, forKey: .correctionRules)
+        try container.encode(suggestionExclusions, forKey: .suggestionExclusions)
+        try container.encode(rejectedAutoRenderRules, forKey: .rejectedAutoRenderRules)
+    }
 
     func preferredCandidate(
         for candidateTexts: [String],
@@ -99,6 +148,20 @@ struct ChordInkUserCorrectionMemory: Codable, Equatable {
             }
             .first?
             .acceptedText
+    }
+
+    func shouldBlockAutoRender(
+        acceptedText: String,
+        drawingData: Data
+    ) -> Bool {
+        guard let match = ChordRecognitionCompendium.match(acceptedText) else {
+            return false
+        }
+
+        let digest = ChordInkUserCorrectionMemoryPolicy.inkDigest(for: drawingData)
+        return rejectedAutoRenderRules.contains { rule in
+            rule.acceptedText == match.displayText && rule.inkDigests.contains(digest)
+        }
     }
 
     @discardableResult
@@ -193,6 +256,37 @@ struct ChordInkUserCorrectionMemory: Codable, Equatable {
         return true
     }
 
+    @discardableResult
+    mutating func recordRejectedAutoRender(
+        acceptedText: String,
+        drawingData: Data,
+        now: Date = .now
+    ) -> Bool {
+        guard let match = ChordRecognitionCompendium.match(acceptedText) else {
+            return false
+        }
+
+        let digest = ChordInkUserCorrectionMemoryPolicy.inkDigest(for: drawingData)
+        if let index = rejectedAutoRenderRules.firstIndex(where: { $0.acceptedText == match.displayText }) {
+            rejectedAutoRenderRules[index].updatedAt = now
+            rejectedAutoRenderRules[index].count += 1
+            appendDigest(digest, toRejectedAutoRenderAt: index)
+        } else {
+            rejectedAutoRenderRules.append(
+                ChordInkRejectedAutoRenderRule(
+                    id: UUID(),
+                    acceptedText: match.displayText,
+                    inkDigests: [digest],
+                    createdAt: now,
+                    updatedAt: now,
+                    count: 1
+                )
+            )
+        }
+
+        return true
+    }
+
     mutating func recordRuleApplication(
         acceptedText: String,
         candidateTexts: [String],
@@ -228,6 +322,14 @@ struct ChordInkUserCorrectionMemory: Codable, Equatable {
         }
 
         suggestionExclusions[index].inkDigests.append(digest)
+    }
+
+    private mutating func appendDigest(_ digest: String, toRejectedAutoRenderAt index: Int) {
+        guard !rejectedAutoRenderRules[index].inkDigests.contains(digest) else {
+            return
+        }
+
+        rejectedAutoRenderRules[index].inkDigests.append(digest)
     }
 }
 

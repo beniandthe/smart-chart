@@ -14,6 +14,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     var onRhythmicNotationValidationError: ((String) -> Void)? = nil
     var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?, ChordInkRecognitionTiming) -> Void)? = nil
     var onChordCorrectionRequested: ((UUID) -> Void)? = nil
+    var onChordDeleted: ((ChordEvent) -> Void)? = nil
     var onNoteSelectionChanged: ((LeadSheetNoteSelection?) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
@@ -54,6 +55,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         view.onRhythmicNotationValidationError = onRhythmicNotationValidationError
         view.onChordInkRecognitionProposal = onChordInkRecognitionProposal
         view.onChordCorrectionRequested = onChordCorrectionRequested
+        view.onChordDeleted = onChordDeleted
     }
 
     final class Coordinator {
@@ -135,6 +137,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     var onRhythmicNotationValidationError: ((String) -> Void)?
     var onChordInkRecognitionProposal: ((UUID, ChordInkRecognitionResult, Data, Double?, ChordInkRecognitionTiming) -> Void)?
     var onChordCorrectionRequested: ((UUID) -> Void)?
+    var onChordDeleted: ((ChordEvent) -> Void)?
     var onNoteSelectionChanged: ((LeadSheetNoteSelection?) -> Void)?
 
     private var pageLayout: LeadSheetPageLayout?
@@ -630,6 +633,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func deleteChordEvent(_ chordID: UUID) {
+        guard let deletedChord = chart.chordEvent(id: chordID) else {
+            return
+        }
+
         var updatedChart = chart
         guard updatedChart.deleteChordEvent(chordID) else {
             return
@@ -637,6 +644,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         chart = updatedChart
         onChartChanged?(updatedChart)
+        onChordDeleted?(deletedChord)
         setNeedsDisplay()
     }
 

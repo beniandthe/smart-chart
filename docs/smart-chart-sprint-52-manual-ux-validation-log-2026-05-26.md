@@ -84,6 +84,22 @@ Expected:
 - no unnecessary confirmation
 - no new latency or ink-clearing regression
 
+5. Wrong auto-render deletion path
+
+If a chord auto-renders incorrectly, delete it with the x control, then write the same shape again.
+
+Expected:
+
+- the deleted ink-origin chord records local negative feedback
+- the same ink/chord pair does not silently auto-render as the same wrong chord again
+- the app should route back to confirmation/direct input so the user can choose or type the intended chord
+
+Record:
+
+- What chord auto-rendered incorrectly?
+- What did you intend?
+- Did deleting it prevent the same wrong auto-render on the next attempt?
+
 ## Results
 
 Fill this section after the pass.
@@ -95,6 +111,7 @@ Fill this section after the pass.
 - Visible suggestions:
 - Selected or typed chord:
 - Auto-render sanity chord:
+- Wrong auto-render deleted:
 - Overall feel:
 
 ## Routing
@@ -102,4 +119,5 @@ Fill this section after the pass.
 - If this feels right, close Sprint 52 and route Sprint 53 to the next product polish lane.
 - If complete-fail clearing is too aggressive, tune the failure loop UX before adding more correction memory.
 - If top-three suggestions are not useful, improve candidate presentation before changing recognizer scoring.
+- If deleting a wrong auto-render does not prevent the repeat, fix local negative-memory application before touching global recognition.
 - If local memory over-applies, tighten rule application further; do not retune global scores.

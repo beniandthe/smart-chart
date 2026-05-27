@@ -43,7 +43,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 50 post-stroke responsiveness artifact: `docs/smart-chart-sprint-50-post-stroke-responsiveness-2026-05-26.md`
 - Sprint 51 real-life polish artifact: `docs/smart-chart-sprint-51-real-life-polish-2026-05-26.md`
 - Sprint 52 chord confirmation/user loop artifact: `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`
-- latest local verification: Sprint 52 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests` passed with `5` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests` passed with `7` tests, `0` failures; XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests` passed with `5` tests, `0` failures; `git diff --check` passed. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
+- latest local verification: Sprint 52 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests` passed with `7` tests, `0` failures; XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures; `git diff --check` passed. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
 - latest GitHub verification: main commit `0a59588 Add sprint 52 chord confirmation user loop` passed required GitHub Actions on 2026-05-26, with SwiftPM tests, iOS simulator tests, and Analyze Swift passing; Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health. Sprint 50 remains the latest broad full-suite local baseline; Sprint 52 is focused green plus CI green.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -163,10 +163,11 @@ Sprint 52 tasks:
 - Persist a local rule when the user confirms a non-extremely-tight close-race suggestion.
 - Avoid creating rules for extremely tight races.
 - Persist a local exclusion when the user manually enters a supported chord outside the suggestions.
+- Record local negative feedback when the user deletes an ink-origin rendered chord with the x control, so the same ink/chord pair cannot silently auto-render again.
 
 Sprint 52 current evidence:
 
-- Focused SwiftPM and XcodeBuildMCP iOS simulator tests cover the new correction-memory policy, complete-failure cap, non-extremely-tight rule creation, extremely-tight no-rule behavior, manual exclusion behavior, and persistence.
+- Focused SwiftPM and XcodeBuildMCP iOS simulator tests cover the new correction-memory policy, complete-failure cap, non-extremely-tight rule creation, extremely-tight no-rule behavior, manual exclusion behavior, deleted-chord auto-render rejection, backward-compatible memory loading, and persistence.
 - Required GitHub Actions passed on `0a59588`.
 - The remaining Sprint 52 gate is one bounded manual UX validation pass for the new confirmation loop.
 
@@ -177,6 +178,7 @@ Acceptance criteria:
 - Close-race confirmation presents top-three supported candidates.
 - Learned local rules apply only to matching top-three candidate signatures that are not extremely tight and have no exclusion.
 - Manual correction outside the suggestions records an exclusion.
+- Deleting an ink-origin rendered chord blocks that exact ink digest from auto-rendering as that same chord again.
 - No fixture expansion, score retuning from one user's pass, default OCR expansion, or symbol-ledger diagnostics cost.
 
 Non-goals for Sprint 52:
