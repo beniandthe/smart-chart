@@ -796,6 +796,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
     private func schedulePersistActiveInk() {
         if interactionMode.allowsChordInkEditing {
+            persistActiveInkIfNeeded(cancelPendingRecognition: false)
             scheduleChordInkRecognition()
             return
         }
@@ -834,10 +835,12 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         DispatchQueue.main.asyncAfter(deadline: .now() + requestedDelay, execute: workItem)
     }
 
-    private func persistActiveInkIfNeeded() {
-        pendingInkPersistWorkItem?.cancel()
-        pendingInkPersistWorkItem = nil
-        chordInkRecognitionRequestState.cancelPendingRequest()
+    private func persistActiveInkIfNeeded(cancelPendingRecognition: Bool = true) {
+        if cancelPendingRecognition {
+            pendingInkPersistWorkItem?.cancel()
+            pendingInkPersistWorkItem = nil
+            chordInkRecognitionRequestState.cancelPendingRequest()
+        }
 
         guard let activeInkScope = activeInkScope() else {
             return

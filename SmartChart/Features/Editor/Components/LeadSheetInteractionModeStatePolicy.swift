@@ -44,9 +44,9 @@ struct LeadSheetInteractionModeStatePolicy {
 
         if interactionMode.allowsChordInkEditing {
             return PKInkingTool(
-                .monoline,
+                .pen,
                 color: UIColor(red: 0.04, green: 0.05, blue: 0.06, alpha: 1),
-                width: 2.8
+                width: 2.5
             )
         }
 
