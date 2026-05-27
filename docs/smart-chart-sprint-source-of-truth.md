@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, and Sprint 54 confirmation UX polish are complete; Sprint 55 chord-first product polish is active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, and Sprint 55 chord-first product polish are complete; Sprint 56 chord field validation is active
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -46,8 +46,9 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 53 validation speed artifact: `docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`
 - Sprint 54 confirmation UX polish artifact: `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`
 - Sprint 55 chord-first product polish artifact: `docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md`
+- Sprint 56 chord field validation artifact: `docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md`
 - latest local verification: Sprint 55 Pencil-only real-device chord input policy XcodeBuildMCP focused iOS simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `2` tests and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed and launched `com.smartchart.app` on the iPad simulator; `git diff --check` passed. Sprint 55 fast-writing chord-ink ownership update `xcodegen generate` passed; focused policy test and simulator launch passed. Earlier Sprint 55 `Absus` compact-suspended verification remains: `ChordInkCandidateComposerTests` passed with `51` tests and `0` failures; `ChordInkRecognizerTests` passed with `40` tests, `1` skipped, and `0` failures; saved-state replay showed the three `Absus` rows now matching `Absus` through confirmation. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
-- latest GitHub verification: main commit `e05ac28 Improve chord ink persistence` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. That commit was superseded locally by the corrected fast-writing implementation, which restores the original pen weight, keeps active strokes owned by `PKCanvasView`, blocks stale chart-data reloads while chord ink is unpersisted, syncs the chart snapshot at the idle recognition boundary, and makes chord entry Pencil-only on real device builds while preserving simulator pointer automation. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
+- latest GitHub verification: main commit `1eebe00 Require Pencil for device chord entry` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -142,58 +143,37 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 55: Chord-First Product Polish
+### Sprint 56: Chord Field Validation
 
-Status: active; placement/snapping is the first implementation slice.
+Status: active; setup complete, awaiting bounded real iPad/Pencil pass evidence.
 
-Goal: continue only through chord-related product features, because chord writing, placement, recognition confidence, render speed, correction, and export fidelity are the core app value.
+Goal: validate the Sprint 55 chord-first improvements on real hardware before starting another architecture or recognition implementation sprint.
 
 Current state:
 
-- Writing-to-render is usable for bounded real-life validation.
-- Chord confirmation now feels cleaner: centered selected chord, top-three suggestions, manual entry, and compact Accept/Keep Ink/Rewrite actions.
-- Chord-entry metadata now keeps one diagnostic row per chord event when render-handoff timing arrives.
-- Export/share worked in the last iPad pass.
-- Direct-main validation is faster for docs/config-only work, while app-impacting changes still run required SwiftPM and iOS simulator checks.
-- The recovery/audit arc is closed unless a new blocker appears in real use.
-- The user has chosen chord-related work over Library/app-shell work for the next sequence.
-- Placement evidence is now included in chord-entry diagnostics so future passes can audit where chords actually snapped.
-- The diagnostic audit script now prints placement evidence in pass metadata.
-- The diagnostic audit script now reports missing or mismatched placement evidence against the current rendered chart.
-- The diagnostic audit script now summarizes available timing evidence for render/performance triage.
-- A larger real-use pass felt good overall, but exposed a transferable `Absus` candidate-availability gap: compact suspended suffixes could fall out of suggestions or lose to slash-bass lookalikes.
-- The follow-up pass confirmed `Absus` recognition is much better; the remaining issue is live chord-ink persistence for small `s` curves, not early render timing or stroke thickness.
+- Sprint 55 closed the current chord-first polish lane: rhythm-aware placement snapping, placement/timing diagnostics, `Absus` candidate availability, fast-writing PencilKit ownership, and real-device Pencil-only chord entry.
+- Required GitHub Actions are green for `1eebe00 Require Pencil for device chord entry`.
+- Simulator chord input remains `.anyInput` for automation; real iPad/device chord entry uses `.pencilOnly`.
+- The next decision should come from one bounded pass, not another broad tuning loop.
 
-Sprint 55 tasks:
+Sprint 56 tasks:
 
-- Preserve the chord-first roadmap: placement/snapping, raster/render time, accuracy/confidence, confirmation/correction loop, and export fidelity.
-- Start with placement/snapping because recognized chords must land where the writer expects before further confidence work can be judged cleanly.
-- Fix transferable snapping issues without using personal handwriting samples as training data.
-- Rhythm-map snapping now chooses the nearest playable slot attack/start position instead of the slot midpoint, so long-duration slots can catch near-start chord writes.
-- Chord-entry diagnostics now record committed placement evidence: start position, duration, rhythm placement, and mapped rhythm-slot index when available.
-- Diagnostic metadata review should surface placement evidence in the audit script details output.
-- Diagnostic metadata review should flag whether placement evidence is missing or no longer matches the active rendered chart.
-- Diagnostic metadata review should summarize available timing evidence before any render/performance change.
-- Compact suspended-chord recognition should keep `Absus` and neighboring suspended candidates available for confirmation without tuning around one writer's samples.
-- Slash-bass candidates should be softened when the slash column also carries suspended-`s` evidence, so `sus` lookalikes can compete instead of silently stealing the render.
-- Chord-entry ink should keep active fast-writing strokes owned by `PKCanvasView`, prevent stale chart-data reloads while chord ink is unpersisted, and sync the chart snapshot at the idle recognition boundary.
-- Chord-entry ink should reject non-Pencil pointer input on real iPad/device builds; simulator builds may keep pointer input for automation.
-- Keep confidence and accuracy work measurement-first; do not retune scores from one writer's pass.
-- Keep render/raster work evidence-based using existing timing and renderer QA lanes.
+- Run the bounded pass defined in `docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md`.
+- Validate fast writing feel on real iPad with Apple Pencil.
+- Confirm mouse/trackpad/pointer input no longer contaminates real-device chord ink.
+- Validate supported chord usability for `C`, `G/B`, `Db7(b9)`, and `Absus`.
+- Review placement/snapping with at least one clear later-beat or longer-slot placement.
+- Export the resulting chart to PDF/Preview and confirm full-page fidelity.
+- Use pass metadata and diagnostics to pick the next implementation lane.
 
 Acceptance criteria:
 
-- Chord placement/snapping behavior improves for a general rhythm-aware case.
-- Diagnostic metadata identifies the final structured placement for auto-rendered, corrected, and reconciled chord events.
-- The diagnostic audit script exposes that placement evidence during bounded pass review.
-- The diagnostic audit script flags missing or mismatched placement evidence.
-- The diagnostic audit script summarizes available timing evidence for render/performance triage.
-- `Absus` remains available as a supported candidate for compact suspended suffix evidence and stays confirmation-routed when root/suffix evidence is ambiguous.
-- Chord-entry ink no longer pushes every point update through SwiftUI; it preserves the original pen tool and stroke weight while syncing the chart snapshot at the idle recognition boundary, without changing recognition scores, OCR, correction memory, or scheduling.
-- Chord-entry uses Pencil-only input on real device builds and `.anyInput` only on simulator builds.
-- The sprint avoids handwriting-training loops and personal fixture expansion.
-- Verification remains proportional to the touched surface.
-- Any recognition work must be triggered by transferable evidence, not one-off handwriting drift.
+- Real device chord entry accepts Apple Pencil input without pointer/mouse contamination.
+- Fast writing does not feel like the app is fighting the active stroke.
+- `C`, `G/B`, `Db7(b9)`, and `Absus` remain usable without personal-fixture expansion.
+- Placement evidence can be reviewed from diagnostics after the pass.
+- Export still produces the full chart page.
+- The next implementation sprint is chosen from pass evidence: placement/snapping, render/update handoff, candidate availability, confirmation/correction, or export fidelity.
 
 ## Completed Sprints Log
 
@@ -786,9 +766,19 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: do not continue redundant confirmation passes unless real use shows new friction. The next move should be a product-prioritization decision.
 - next sprint candidate: Sprint 55 product prioritization.
 
+### Sprint 55: Chord-First Product Polish
+
+- status: complete; required GitHub Actions passed on final commit `1eebe00`
+- commit range: `7740a3f` through `1eebe00`
+- summary: Kept the roadmap centered on chord work. Rhythm-aware chord insertion now snaps to the nearest playable rhythm-slot attack/start position; chord-entry diagnostics record placement evidence and timing summaries; the audit script surfaces placement, drift, and timing evidence; compact suspended-chord recognition keeps `Absus` available without handwriting-specific fixtures; live chord writing keeps active strokes owned by `PKCanvasView`; and real iPad/device chord entry is Pencil-only while simulator builds keep pointer input for automation.
+- tests and evidence: focused `MeasureRhythmMappingTests` passed with `15` tests and `0` failures; focused `ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; focused `ChordInkCandidateComposerTests` passed with `51` tests and `0` failures; focused `ChordInkRecognizerTests` passed with `40` tests, `1` skipped, and `0` failures; saved-state replay showed the three `Absus` rows matching `Absus` through confirmation; focused XcodeBuildMCP `LeadSheetInteractionModeStatePolicyTests` passed with `2` tests and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed; `xcodegen generate`, Python compile checks, and `git diff --check` passed; required GitHub Actions passed on the final commit.
+- behavior boundary: no personal handwriting fixture expansion, no score retuning, no default OCR expansion, no symbol-ledger diagnostics cost, no export behavior change, and no change to the current accepted-chord ink clearing rule.
+- unresolved follow-up: the fast-writing/Pencil-only changes still need one bounded real iPad/Pencil pass before more architecture work. The pass should determine whether the next implementation lane is placement/snapping, render/update handoff, candidate availability, confirmation/correction, or export fidelity.
+- next sprint candidate: Sprint 56 chord field validation.
+
 ## Next Sprint Backlog
 
-Use this queue for Sprint 55 routing after Sprint 54 confirmation polish. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
+Use this queue for routing after Sprint 56 field validation. The user has approved continuing through scoped product polish work, but verification should stay proportional unless a sprint touches broad recognition, editor, export, or project configuration surfaces.
 
 - If the full flow feels good, close the recovery/audit arc and move to feature prioritization.
 - If correction friction returns after Sprint 52, route a future sprint to confirmation sheet interaction polish or direct-input affordances.
@@ -826,6 +816,9 @@ Current authority:
 - `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`: Sprint 52 chord confirmation and local user correction loop.
 - `docs/smart-chart-sprint-52-manual-ux-validation-log-2026-05-26.md`: Sprint 52 bounded manual UX validation gate.
 - `docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`: Sprint 53 validation-speed policy and workflow cleanup.
+- `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`: Sprint 54 confirmation UX polish.
+- `docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md`: Sprint 55 chord-first product polish.
+- `docs/smart-chart-sprint-56-chord-field-validation-2026-05-27.md`: Sprint 56 bounded real-device chord validation.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

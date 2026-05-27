@@ -1,6 +1,6 @@
 # Smart Chart Sprint 55: Chord-First Product Polish
 
-Status: implemented locally; placement/snapping, placement-evidence diagnostics, and audit-tooling slices ready for CI
+Status: complete
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
@@ -82,6 +82,7 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - `xcodegen generate` passed after the fast-writing ownership change.
 - XcodeBuildMCP focused iOS simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `2` tests and `0` failures after adding the real-device Pencil-only chord input policy.
 - XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed and launched `com.smartchart.app` on the iPad simulator after the Pencil-only device policy; simulator chord input remains `.anyInput` for automation.
+- GitHub Actions for `1eebe00 Require Pencil for device chord entry` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27.
 
 ## Acceptance Criteria
 
