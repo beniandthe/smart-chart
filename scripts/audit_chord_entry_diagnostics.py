@@ -145,8 +145,8 @@ def chord_events(chart: dict[str, Any]) -> list[dict[str, Any]]:
 def event_label(event: dict[str, Any]) -> str:
     raw_input = event.get("rawInput") or "?"
     measure_index = event.get("_measureIndex")
-    beat = event.get("startPosition", {}).get("beat")
-    return f"{event.get('id')} measure={measure_index} beat={beat} raw={raw_input}"
+    placement = format_compact_placement(placement_evidence_for_chord_event(event))
+    return f"{event.get('id')} measure={measure_index} placement={placement} raw={raw_input}"
 
 
 def diagnostic_sort_key(event: dict[str, Any]) -> tuple[int, str, str]:
@@ -261,19 +261,19 @@ def format_placement_evidence(placement: dict[str, Any] | None) -> str:
     if not placement:
         return ""
 
+    return " placement=[" + format_compact_placement(placement) + "]"
+
+
+def format_compact_placement(placement: dict[str, Any] | None) -> str:
+    if not placement:
+        return "start=?, duration=?, rhythm=-, slot=-"
+
     start = short_text(placement.get("startPositionText"), fallback="?")
     duration = short_text(placement.get("durationText"), fallback="?")
     rhythm_placement = short_text(placement.get("rhythmPlacement"), fallback="-")
     slot_index = placement.get("mappedRhythmSlotIndex")
     slot = slot_index + 1 if isinstance(slot_index, int) else "-"
-    return (
-        " placement=["
-        f"start={start}, "
-        f"duration={duration}, "
-        f"rhythm={rhythm_placement}, "
-        f"slot={slot}"
-        "]"
-    )
+    return f"start={start}, duration={duration}, rhythm={rhythm_placement}, slot={slot}"
 
 
 def format_symbol_ledger(ledger: dict[str, Any] | None) -> str:
@@ -504,6 +504,37 @@ def placement_evidence_for_chord_event(chord_event: dict[str, Any]) -> dict[str,
     }
 
 
+def placement_evidence_status(
+    chart_diagnostics: list[dict[str, Any]],
+    rendered_by_id: dict[str, dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[tuple[dict[str, Any], dict[str, Any], dict[str, Any]]]]:
+    missing: list[dict[str, Any]] = []
+    mismatched: list[tuple[dict[str, Any], dict[str, Any], dict[str, Any]]] = []
+
+    for event in chart_diagnostics:
+        chord_event_id = event.get("chordEventID")
+        chord_event = rendered_by_id.get(chord_event_id)
+        if not chord_event:
+            continue
+
+        actual = event.get("placementEvidence")
+        if not actual:
+            missing.append(event)
+            continue
+
+        expected = placement_evidence_for_chord_event(chord_event)
+        comparable_actual = {
+            "startPositionText": actual.get("startPositionText"),
+            "durationText": actual.get("durationText"),
+            "rhythmPlacement": actual.get("rhythmPlacement"),
+            "mappedRhythmSlotIndex": actual.get("mappedRhythmSlotIndex"),
+        }
+        if comparable_actual != expected:
+            mismatched.append((event, comparable_actual, expected))
+
+    return missing, mismatched
+
+
 def main() -> int:
     args = parse_args()
     try:
@@ -557,6 +588,7 @@ def main() -> int:
         if chord_event_id and chord_event_id not in logged_ids:
             logged_ids.append(chord_event_id)
     logged_id_set = set(logged_ids)
+    rendered_by_id = {event.get("id"): event for event in rendered_events}
     missing_ids = [event_id for event_id in rendered_ids if event_id not in logged_id_set]
     stale_ids = [
         event.get("chordEventID") for event in chart_diagnostics
@@ -564,6 +596,10 @@ def main() -> int:
     ]
     stale_ids = list(dict.fromkeys(stale_ids))
     resolutions = Counter(event.get("resolution", "unknown") for event in latest_active_chart_diagnostics)
+    missing_placement_events, placement_mismatches = placement_evidence_status(
+        latest_active_chart_diagnostics,
+        rendered_by_id,
+    )
 
     print(f"App data: {app_data}")
     print(f"Chart: {chart_title} ({chart_id})")
@@ -578,20 +614,32 @@ def main() -> int:
     if stale_title_diagnostics:
         print(f"Stale diagnostics with same chart title: {len(stale_title_diagnostics)}")
     print("Resolution counts: " + (", ".join(f"{key}={value}" for key, value in sorted(resolutions.items())) or "none"))
+    print(
+        "Placement evidence: "
+        f"missing={len(missing_placement_events)}, mismatched={len(placement_mismatches)}"
+    )
 
     if args.details:
         print_diagnostic_details(latest_active_chart_diagnostics, args.scores)
+        if placement_mismatches:
+            print("\nPlacement evidence mismatches:")
+            for event, actual, expected in placement_mismatches:
+                chord_event_id = event.get("chordEventID") or "?"
+                rendered = short_text(event.get("renderedDisplayText"), fallback="?")
+                print(
+                    f"  - {chord_event_id} rendered={rendered} "
+                    f"diagnostic=[{format_compact_placement(actual)}] "
+                    f"chart=[{format_compact_placement(expected)}]"
+                )
 
     if missing_ids:
         print("\nMissing diagnostics:")
-        rendered_by_id = {event.get("id"): event for event in rendered_events}
         for event_id in missing_ids:
             print(f"  - {event_label(rendered_by_id[event_id])}")
     else:
         print("\nMissing diagnostics: none")
 
     if args.reconcile_missing and missing_ids:
-        rendered_by_id = {event.get("id"): event for event in rendered_events}
         fallback_events = [
             fallback_diagnostic_event(chart, rendered_by_id[event_id])
             for event_id in missing_ids
