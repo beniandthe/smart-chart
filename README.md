@@ -120,6 +120,7 @@ Current implementation authority:
 - [`docs/smart-chart-recognition-latency-triage-2026-05-26.md`](docs/smart-chart-recognition-latency-triage-2026-05-26.md) — Sprint 46 recognition latency evidence
 - [`docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`](docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md) — Sprint 52 chord confirmation and local user correction loop
 - [`docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`](docs/smart-chart-sprint-53-validation-speed-2026-05-26.md) — Sprint 53 validation-speed policy and workflow cleanup
+- [`docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`](docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md) — Sprint 54 confirmation and correction sheet UX polish
 - [`docs/core-design-document.md`](docs/core-design-document.md) — enforced product and design rules
 - [`docs/developer-mvp-spec.md`](docs/developer-mvp-spec.md) — buildable MVP scope and behaviors
 - [`docs/repo-github-recognition-audit-2026-05-20.md`](docs/repo-github-recognition-audit-2026-05-20.md) — current recognition architecture and GitHub audit evidence for the recovery plan

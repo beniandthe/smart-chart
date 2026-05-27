@@ -143,7 +143,7 @@ struct ChordInkConfirmationSheetView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 18) {
                     header
                     candidateChips
                     manualEntry
@@ -152,9 +152,10 @@ struct ChordInkConfirmationSheetView: View {
                         captureActions
                     }
                 }
-                .padding(20)
+                .padding(22)
             }
-            .navigationTitle(confirmation.requiresDirectEntry ? "Enter Chord" : "Confirm Chord")
+            .background(Color(uiColor: .systemGroupedBackground))
+            .navigationTitle(confirmation.requiresDirectEntry ? "Enter Chord" : "Choose Chord")
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium, .large])
@@ -172,63 +173,217 @@ struct ChordInkConfirmationSheetView: View {
         manualCandidateText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Measure \(confirmation.displayMeasureNumber)")
-                .font(.title3.weight(.bold))
+    private var statusTitle: String {
+        if confirmation.requiresDirectEntry {
+            return "Needs a chord"
+        }
 
-            Text(confirmation.decision.reason)
+        if confirmation.decision.reason.localizedCaseInsensitiveContains("previously rendered") {
+            return "Try a different read"
+        }
+
+        if confirmation.decision.isCloseRace {
+            return "Close read"
+        }
+
+        return "Confirm the read"
+    }
+
+    private var statusMessage: String {
+        if confirmation.requiresDirectEntry {
+            return "Type the chord you meant and keep moving."
+        }
+
+        if confirmation.decision.reason.localizedCaseInsensitiveContains("previously rendered") {
+            return "That result was deleted once, so it will not auto-render again without your say."
+        }
+
+        if confirmation.decision.isCloseRace {
+            return "Two reads are close. Pick the one that belongs on the chart."
+        }
+
+        return "This read needs one quick check before it becomes chart text."
+    }
+
+    private var statusIconName: String {
+        if confirmation.requiresDirectEntry {
+            return "keyboard"
+        }
+
+        if confirmation.decision.reason.localizedCaseInsensitiveContains("previously rendered") {
+            return "arrow.triangle.2.circlepath"
+        }
+
+        if confirmation.decision.isCloseRace {
+            return "questionmark.circle.fill"
+        }
+
+        return "checkmark.circle.fill"
+    }
+
+    private var statusTint: Color {
+        if confirmation.requiresDirectEntry {
+            return .orange
+        }
+
+        if confirmation.decision.reason.localizedCaseInsensitiveContains("previously rendered") {
+            return .purple
+        }
+
+        if confirmation.decision.isCloseRace {
+            return .blue
+        }
+
+        return .green
+    }
+
+    private var primaryActionTitle: String {
+        trimmedCandidateText.isEmpty ? "Use Chord" : "Use \(trimmedCandidateText)"
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: statusIconName)
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(statusTint)
+                    .frame(width: 34, height: 34)
+                    .background(statusTint.opacity(0.12), in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(statusTitle)
+                        .font(.title3.weight(.semibold))
+
+                    Text("Measure \(confirmation.displayMeasureNumber)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            Text(statusMessage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let match = confirmation.result.match {
-                Text("Best read: \(match.displayText)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.blue)
+            Divider()
 
-                if confirmation.decision.isCloseRace,
-                   let competingCandidateText = confirmation.decision.competingCandidateText {
-                    Text("Also close: \(competingCandidateText)")
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Selected")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.secondary)
+
+                    Text(trimmedCandidateText.isEmpty ? "Type chord" : trimmedCandidateText)
+                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
                 }
-            } else {
-                Text("Type the intended chord below.")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.orange)
+
+                Spacer(minLength: 12)
+
+                if let match = confirmation.result.match {
+                    VStack(alignment: .trailing, spacing: 5) {
+                        Text("Best read")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        Text(match.displayText)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.blue)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.65)
+                    }
+                } else {
+                    Image(systemName: "text.cursor")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
             }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(statusTint.opacity(0.18), lineWidth: 1)
         }
     }
 
     private var candidateChips: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Suggestions")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Suggestions", systemImage: "list.number")
+                    .font(.headline.weight(.semibold))
+
+                Spacer()
+
+                if !confirmation.visibleCandidateTexts.isEmpty {
+                    Text("Top \(confirmation.visibleCandidateTexts.count)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             let candidates = confirmation.visibleCandidateTexts
             if candidates.isEmpty {
-                Text("No candidates yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    Image(systemName: "pencil.and.scribble")
+                        .foregroundStyle(.orange)
+
+                    Text("No useful suggestions this time.")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             } else {
-                FlowLayout(spacing: 8) {
-                    ForEach(candidates, id: \.self) { candidate in
+                VStack(spacing: 8) {
+                    ForEach(Array(candidates.enumerated()), id: \.element) { index, candidate in
                         Button {
                             manualCandidateText = candidate
                             fixtureCopyStatus = nil
                         } label: {
-                            Text(candidate)
-                                .font(.subheadline.weight(.semibold))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(
-                                    Capsule()
-                                        .fill(candidate == trimmedCandidateText ? Color.blue.opacity(0.14) : Color(.secondarySystemBackground))
-                                )
+                            HStack(spacing: 12) {
+                                Text("\(index + 1)")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(candidate == trimmedCandidateText ? Color.white : Color.secondary)
+                                    .frame(width: 24, height: 24)
+                                    .background(
+                                        Circle()
+                                            .fill(candidate == trimmedCandidateText ? Color.blue : Color(uiColor: .tertiarySystemFill))
+                                    )
+
+                                Text(candidate)
+                                    .font(.title3.weight(.semibold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.65)
+
+                                Spacer(minLength: 8)
+
+                                if candidate == trimmedCandidateText {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(candidate == trimmedCandidateText ? Color.blue.opacity(0.11) : Color(uiColor: .secondarySystemGroupedBackground))
+                            )
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(candidate == trimmedCandidateText ? Color.blue.opacity(0.42) : Color.black.opacity(0.06), lineWidth: 1)
+                            }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Suggestion \(index + 1), \(candidate)")
                     }
                 }
             }
@@ -236,32 +391,51 @@ struct ChordInkConfirmationSheetView: View {
     }
 
     private var manualEntry: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Chord")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                Label("Type instead", systemImage: "keyboard")
+                    .font(.headline.weight(.semibold))
 
                 Spacer()
 
-                Button("Edit") {
+                Button {
                     isManualEntryFocused = true
+                } label: {
+                    Image(systemName: "cursorarrow.rays")
                 }
-                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Focus chord entry")
             }
 
-            TextField("Example: C, Bb, F#, C-, C-△7, C△7, Calt, C7alt, Db7(b9), G/B", text: $manualCandidateText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .textFieldStyle(.roundedBorder)
-                .focused($isManualEntryFocused)
-                .submitLabel(.done)
-                .animation(nil, value: manualCandidateText)
-                .onChange(of: manualCandidateText) { _, _ in
-                    if fixtureCopyStatus != nil {
-                        fixtureCopyStatus = nil
+            HStack(spacing: 10) {
+                TextField("C, Bb, Db7(b9), G/B", text: $manualCandidateText)
+                    .font(.title3.weight(.semibold))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .focused($isManualEntryFocused)
+                    .submitLabel(.done)
+                    .animation(nil, value: manualCandidateText)
+                    .onSubmit {
+                        acceptTrimmedCandidate()
                     }
-                }
+                    .onChange(of: manualCandidateText) { _, _ in
+                        if fixtureCopyStatus != nil {
+                            fixtureCopyStatus = nil
+                        }
+                    }
+
+                Image(systemName: "return")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isManualEntryFocused ? Color.blue.opacity(0.45) : Color.black.opacity(0.06), lineWidth: 1)
+            }
         }
     }
 
@@ -300,30 +474,40 @@ struct ChordInkConfirmationSheetView: View {
     private var chartActions: some View {
         VStack(alignment: .leading, spacing: 10) {
             Button {
-                onAcceptCandidate(trimmedCandidateText)
+                acceptTrimmedCandidate()
             } label: {
-                Text("Use This Chord")
+                Label(primaryActionTitle, systemImage: "checkmark.circle.fill")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .disabled(trimmedCandidateText.isEmpty)
 
-            Button {
-                onKeepInk()
-            } label: {
-                Text("Keep Raw Ink")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
+            HStack(spacing: 10) {
+                Button {
+                    onKeepInk()
+                } label: {
+                    Label("Keep Ink", systemImage: "pencil.tip")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
 
-            Button(role: .destructive) {
-                onClearAndRewrite()
-            } label: {
-                Text("Clear & Rewrite")
-                    .frame(maxWidth: .infinity)
+                Button(role: .destructive) {
+                    onClearAndRewrite()
+                } label: {
+                    Label("Rewrite", systemImage: "eraser")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         }
+    }
+
+    private func acceptTrimmedCandidate() {
+        guard !trimmedCandidateText.isEmpty else {
+            return
+        }
+
+        onAcceptCandidate(trimmedCandidateText)
     }
 }
 
@@ -347,91 +531,196 @@ struct ChordCorrectionSheetView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Measure \(correction.displayMeasureNumber)")
-                        .font(.title3.weight(.bold))
-
-                    Text("Correct this rendered chord without collecting a new handwriting sample.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text("Current: \(correction.currentText)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.blue)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    correctionHeader
+                    correctionCandidates
+                    correctionEntry
+                    correctionActions
                 }
-
-                if !correction.candidateTexts.isEmpty {
-                    FlowLayout(spacing: 8) {
-                        ForEach(correction.candidateTexts, id: \.self) { candidate in
-                            Button {
-                                candidateText = candidate
-                            } label: {
-                                Text(candidate)
-                                    .font(.subheadline.weight(.semibold))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        Capsule()
-                                            .fill(candidate == trimmedCandidateText ? Color.blue.opacity(0.14) : Color(.secondarySystemBackground))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Chord")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        Spacer()
-
-                        Button("Edit") {
-                            isCandidateFocused = true
-                        }
-                        .font(.caption.weight(.semibold))
-                    }
-
-                    TextField("Example: C, Bb, F#, C-△7, Db7(b9), G/B", text: $candidateText)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .textFieldStyle(.roundedBorder)
-                        .focused($isCandidateFocused)
-                        .submitLabel(.done)
-                        .animation(nil, value: candidateText)
-                }
-
-                Button {
-                    onAcceptCandidate(trimmedCandidateText)
-                } label: {
-                    Text("Update Chord")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(trimmedCandidateText.isEmpty)
-
-                Button {
-                    onCancel()
-                } label: {
-                    Text("Cancel")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Spacer(minLength: 0)
+                .padding(22)
             }
-            .padding(20)
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Correct Chord")
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium])
+        .task {
+            isCandidateFocused = true
+        }
+    }
+
+    private var correctionHeader: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "square.and.pencil")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 34, height: 34)
+                    .background(Color.blue.opacity(0.12), in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Update the chord")
+                        .font(.title3.weight(.semibold))
+
+                    Text("Measure \(correction.displayMeasureNumber)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            Text("Make this rendered chord match the chart.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Divider()
+
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Current")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text(correction.currentText)
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                }
+
+                Spacer(minLength: 12)
+
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text("New")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text(trimmedCandidateText.isEmpty ? "Type chord" : trimmedCandidateText)
+                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.blue.opacity(0.18), lineWidth: 1)
+        }
+    }
+
+    private var correctionCandidates: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Quick choices", systemImage: "list.bullet")
+                .font(.headline.weight(.semibold))
+
+            FlowLayout(spacing: 8, rowSpacing: 8) {
+                ForEach(correction.candidateTexts, id: \.self) { candidate in
+                    Button {
+                        candidateText = candidate
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(candidate)
+                                .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+
+                            if candidate == trimmedCandidateText {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.caption.weight(.semibold))
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(candidate == trimmedCandidateText ? Color.blue.opacity(0.14) : Color(uiColor: .secondarySystemGroupedBackground))
+                        )
+                        .foregroundStyle(candidate == trimmedCandidateText ? Color.blue : Color.primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var correctionEntry: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Chord", systemImage: "keyboard")
+                    .font(.headline.weight(.semibold))
+
+                Spacer()
+
+                Button {
+                    isCandidateFocused = true
+                } label: {
+                    Image(systemName: "cursorarrow.rays")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Focus chord entry")
+            }
+
+            HStack(spacing: 10) {
+                TextField("C, Bb, Db7(b9), G/B", text: $candidateText)
+                    .font(.title3.weight(.semibold))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .focused($isCandidateFocused)
+                    .submitLabel(.done)
+                    .animation(nil, value: candidateText)
+                    .onSubmit {
+                        acceptTrimmedCandidate()
+                    }
+
+                Image(systemName: "return")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isCandidateFocused ? Color.blue.opacity(0.45) : Color.black.opacity(0.06), lineWidth: 1)
+            }
+        }
+    }
+
+    private var correctionActions: some View {
+        VStack(spacing: 10) {
+            Button {
+                acceptTrimmedCandidate()
+            } label: {
+                Label(trimmedCandidateText.isEmpty ? "Update Chord" : "Update to \(trimmedCandidateText)", systemImage: "checkmark.circle.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(trimmedCandidateText.isEmpty)
+
+            Button {
+                onCancel()
+            } label: {
+                Label("Cancel", systemImage: "xmark")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+        }
     }
 
     private var trimmedCandidateText: String {
         candidateText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func acceptTrimmedCandidate() {
+        guard !trimmedCandidateText.isEmpty else {
+            return
+        }
+
+        onAcceptCandidate(trimmedCandidateText)
     }
 }
