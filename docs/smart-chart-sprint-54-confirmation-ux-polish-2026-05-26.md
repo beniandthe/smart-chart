@@ -35,6 +35,14 @@ Sprint 52 proved the correction loop works. The next product issue is feel: when
 - The first polish pass worked well in a real pass.
 - The confirmation sheet still felt too information-heavy for the actual product flow.
 - The next iteration should stay centered and concise: top three candidates, one manual input box, and clear accept/decline ink actions.
+- The centered sheet felt much better in simulator validation.
+- The pass metadata exposed duplicate diagnostic rows for the same confirmed chord because render-handoff timing appended a second copy of the original commit diagnostic.
+
+## Metadata Follow-Up
+
+- Updated render-handoff diagnostics to replace the matching commit diagnostic instead of appending a duplicate row.
+- Kept one diagnostic row per chord event with the final render timing evidence filled in.
+- Kept recognition, scoring, candidate ordering, confirmation rules, correction memory, and chart mutation behavior unchanged.
 
 ## Verification Evidence
 
@@ -43,6 +51,7 @@ Sprint 52 proved the correction loop works. The next product issue is feel: when
 - GitHub Actions on `6133621 Polish chord confirmation UX` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift`.
 - Centered refinement local verification passed: XcodeBuildMCP iOS simulator compile-only build for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`, plus `git diff --check`.
 - GitHub Actions on `03305eb Simplify chord confirmation UX` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift`.
+- Metadata follow-up local verification passed: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint54-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed.
 
 ## Manual Validation
 

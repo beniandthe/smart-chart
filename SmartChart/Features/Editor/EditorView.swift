@@ -1192,7 +1192,7 @@ struct EditorView: View {
                 timingEvidence.renderHandoffMilliseconds = renderHandoffMilliseconds
                 event.timestamp = observedAt
                 event.timingEvidence = timingEvidence
-                try recorder.append(event)
+                try recorder.replaceLatestMatchingEvent(with: event)
                 print(
                     String(
                         format: "SmartChart chord render: renderHandoffMs=%.0f event=%@ accepted=%@",

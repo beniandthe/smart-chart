@@ -45,7 +45,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 52 chord confirmation/user loop artifact: `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`
 - Sprint 53 validation speed artifact: `docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`
 - Sprint 54 confirmation UX polish artifact: `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`
-- latest local verification: Sprint 54 centered confirmation refinement XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed. Sprint 53 workflow YAML parse passed for `.github/workflows/ci.yml` and `.github/workflows/codeql.yml`. Sprint 52 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests` passed with `7` tests, `0` failures; XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
+- latest local verification: Sprint 54 metadata follow-up focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint54-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed. Sprint 53 workflow YAML parse passed for `.github/workflows/ci.yml` and `.github/workflows/codeql.yml`. Sprint 52 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint52 --filter ChordEntryDiagnosticsTests` passed with `7` tests, `0` failures; XcodeBuildMCP iOS simulator focused test `-only-testing:SmartChartTests/ChordInkUserCorrectionMemoryTests` passed with `7` tests, `0` failures. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
 - latest GitHub verification: main commit `03305eb Simplify chord confirmation UX` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health. Sprint 50 remains the latest broad full-suite local baseline; Sprint 54 is app-CI green and ready for bounded manual UX validation.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -155,6 +155,7 @@ Current state:
 - Sprint 53 shortened direct-main validation by deferring CodeQL to PR/schedule/manual runs and by skipping app test suites for docs/config-only passes.
 - The first Sprint 54 polish pass worked well in a real user pass, but the sheet still felt too information-heavy.
 - The confirmation sheet is now narrowed to a centered product chooser: selected chord, top three candidates, one manual input box, and compact Accept/Keep Ink/Rewrite actions.
+- Simulator validation says the centered sheet feels much better; the remaining Sprint 54 follow-up is metadata hygiene for duplicate diagnostic rows caused by render-handoff timing appends.
 
 Sprint 54 tasks:
 
@@ -163,6 +164,7 @@ Sprint 54 tasks:
 - Make manual entry feel like a first-class escape hatch.
 - Keep Keep Ink and Rewrite secondary but visible.
 - Polish `ChordCorrectionSheetView` so rendered-chord correction matches the same UX family.
+- Keep chord-entry metadata to one diagnostic row per chord event when render-handoff timing arrives.
 - Preserve recognition/trust/correction-memory behavior.
 
 Acceptance criteria:
@@ -173,6 +175,7 @@ Acceptance criteria:
 - Suggestion selection updates the selected chord clearly.
 - Manual entry can submit via the keyboard return key.
 - Keep Ink and Rewrite still route correctly.
+- Pass metadata does not duplicate a chord event when render-handoff timing is added.
 - No recognition score, trust, parser, correction-memory, PencilKit, export, or chart mutation behavior changes.
 
 ## Completed Sprints Log
