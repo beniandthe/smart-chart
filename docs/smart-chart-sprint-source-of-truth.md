@@ -54,7 +54,8 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 59 confirmation/direct-input polish artifact: `docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md`
 - Sprint 60 general candidate availability artifact: `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`
 - Sprint 61 raster/render handoff polish artifact: `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`
-- latest local verification: Sprint 61 timing capture showed render handoff stayed small at `15-28ms`; scheduler/continuation wait and complex-chord trust/OCR dominated perceived delay. XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and a screenshot verified app launch; `python3 scripts/audit_chord_entry_diagnostics.py --app-data "$APP_DATA" --chart-id 57C55F1B-3860-43D1-9622-5FCF7D9EC403 --details --scores 8` confirmed `7` active diagnostics with timing evidence; `python3 scripts/analyze_chord_timing_logs.py` parsed the runtime log; `git diff --check` passed. Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures.
+- Sprint 62 chord-first release-candidate pass artifact: `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`
+- latest local verification: Sprint 62 release-candidate pass gate was documented; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and screenshot verification passed; `git diff --check` passed. Sprint 61 timing capture showed render handoff stayed small at `15-28ms`; scheduler/continuation wait and complex-chord trust/OCR dominated perceived delay. Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures.
 - latest GitHub verification: main commit `899f690 Backfill supported chord candidate scores` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -168,6 +169,7 @@ Sprint 62 tasks:
 
 - Run one bounded chord-first pass through write -> recognize -> auto-render or confirm -> clear ink -> edit if needed -> export.
 - Include basic, slash, suspended, altered-extension, and one correction/rewrite case.
+- Use `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md` as the pass checklist.
 - Record whether any issue belongs to placement/snapping, recognition/candidate availability, confidence/trust, confirmation/direct input, render handoff, or export.
 - Keep validation proportional; capture summary evidence unless a real bug needs diagnostics.
 - Preserve deleted-render rejection memory, confirmation/direct-input behavior, supported-candidate backfill, accepted-chord ink clearing, export behavior, and native `PKCanvasView` writing feel.

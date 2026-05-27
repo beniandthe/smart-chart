@@ -113,6 +113,6 @@ Goal: close the chord-first lane with one bounded real chart pass.
 
 Candidate work:
 
-- Validate write -> recognize -> auto-render or confirm -> clear ink -> edit if needed -> export.
+- Validate write -> recognize -> auto-render or confirm -> clear ink -> edit if needed -> export using `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`.
 - Capture only summary evidence unless a new bug needs diagnostics.
 - Move remaining non-chord polish back to the normal backlog.
