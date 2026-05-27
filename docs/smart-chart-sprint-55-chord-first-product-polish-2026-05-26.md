@@ -1,6 +1,6 @@
 # Smart Chart Sprint 55: Chord-First Product Polish
 
-Status: implemented locally; placement/snapping and placement-evidence diagnostics slices ready for CI
+Status: implemented locally; placement/snapping, placement-evidence diagnostics, and audit-tooling slices ready for CI
 Date: 2026-05-26
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
@@ -30,12 +30,14 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - This improves long-slot cases such as quarter, quarter, half where a chord written near beat 3 should snap to the half-note slot at beat 3 instead of the previous quarter slot.
 - Record chord placement evidence in chord-entry diagnostics: start position, duration, rhythm placement, and mapped rhythm-slot index when available.
 - Placement evidence lets the next real pass audit where a chord actually landed without expanding the handwriting fixture corpus or retuning recognition scores.
+- Surface placement evidence in `scripts/audit_chord_entry_diagnostics.py --details` so pass review can see each rendered chord's final start, duration, rhythm placement, and one-based rhythm slot.
 - Preserve recognition, trust, parser, correction-memory, PencilKit, fixture corpus, OCR, export, and chart mutation authority.
 
 ## Verification Plan
 
 - Focused SwiftPM test: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-placement --filter MeasureRhythmMappingTests`.
 - Focused diagnostics test: `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-diagnostics --filter ChordEntryDiagnosticsTests`.
+- Python compile check for `scripts/audit_chord_entry_diagnostics.py`.
 - `git diff --check`.
 - App-target compile only if the touched model path triggers a SwiftUI/app compile risk.
 - Required GitHub Actions after push.
@@ -49,6 +51,9 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - Focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures.
 - XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO` after the editor diagnostics wiring.
 - `git diff --check` passed after the placement-evidence diagnostics update.
+- GitHub Actions for `28fc6f6 Record chord placement evidence in diagnostics` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26.
+- `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py` passed after the audit-tooling update.
+- `git diff --check` passed after the audit-tooling update.
 
 ## Acceptance Criteria
 
@@ -56,4 +61,5 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - Long-duration rhythm slots no longer lose near-start chord writes to earlier short slots.
 - Existing next-open-slot and explicit move/replace behaviors remain covered.
 - Chord-entry diagnostics include placement evidence for committed, corrected, and reconciled rendered chords.
+- The diagnostic audit script prints placement evidence during metadata review.
 - No personal handwriting fixture expansion or score retuning.

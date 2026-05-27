@@ -257,6 +257,25 @@ def format_timing_evidence(timing: dict[str, Any] | None) -> str:
     )
 
 
+def format_placement_evidence(placement: dict[str, Any] | None) -> str:
+    if not placement:
+        return ""
+
+    start = short_text(placement.get("startPositionText"), fallback="?")
+    duration = short_text(placement.get("durationText"), fallback="?")
+    rhythm_placement = short_text(placement.get("rhythmPlacement"), fallback="-")
+    slot_index = placement.get("mappedRhythmSlotIndex")
+    slot = slot_index + 1 if isinstance(slot_index, int) else "-"
+    return (
+        " placement=["
+        f"start={start}, "
+        f"duration={duration}, "
+        f"rhythm={rhythm_placement}, "
+        f"slot={slot}"
+        "]"
+    )
+
+
 def format_symbol_ledger(ledger: dict[str, Any] | None) -> str:
     if not ledger:
         return ""
@@ -370,6 +389,7 @@ def print_diagnostic_details(chart_diagnostics: list[dict[str, Any]], score_limi
         score_suffix = format_scores(event.get("candidateScores") or [], score_limit)
         metrics_suffix = format_metrics(event.get("recognitionMetrics"))
         timing_suffix = format_timing_evidence(event.get("timingEvidence"))
+        placement_suffix = format_placement_evidence(event.get("placementEvidence"))
         ledger_suffix = format_symbol_ledger(event.get("symbolLedger"))
         ledger_assessment_suffix = format_symbol_ledger_assessment(
             event.get("symbolLedgerAssessment")
@@ -384,6 +404,7 @@ def print_diagnostic_details(chart_diagnostics: list[dict[str, Any]], score_limi
             f"agreement={agreement} ocr={ocr} "
             f"primary={primary_action}:{primary_accepted}{score_suffix}{metrics_suffix}"
             f"{timing_suffix}"
+            f"{placement_suffix}"
             f"{ledger_suffix}{ledger_assessment_suffix}{primary_ledger_assessment_suffix}"
         )
 
@@ -432,10 +453,54 @@ def fallback_diagnostic_event(
         "primaryWasCloseRace": None,
         "primaryConfidenceGap": None,
         "recognitionMetrics": None,
+        "placementEvidence": placement_evidence_for_chord_event(chord_event),
         "timingEvidence": None,
         "symbolLedger": None,
         "symbolLedgerAssessment": None,
         "primarySymbolLedgerAssessment": None,
+    }
+
+
+def beat_position_display_text(position: dict[str, Any] | None) -> str:
+    if not position:
+        return "?"
+
+    beat = position.get("beat")
+    subdivision = position.get("subdivision")
+    if not isinstance(beat, int) or not isinstance(subdivision, int):
+        return "?"
+    if subdivision <= 0:
+        return str(beat)
+
+    markers = ["", "&", "a", "e", "+"]
+    marker = markers[subdivision] if subdivision < len(markers) else f".{subdivision}"
+    return f"{beat}{marker}"
+
+
+def rhythm_value_display_text(value: Any) -> str:
+    labels = {
+        "slash": "slash",
+        "eighth": "eighth",
+        "eighthRest": "eighth rest",
+        "quarter": "quarter",
+        "quarterRest": "quarter rest",
+        "dottedQuarter": "dotted quarter",
+        "half": "half",
+        "halfRest": "half rest",
+        "dottedHalf": "dotted half",
+        "whole": "whole",
+        "wholeRest": "whole rest",
+        "tiedContinuation": "tie",
+    }
+    return labels.get(value, value if isinstance(value, str) and value else "?")
+
+
+def placement_evidence_for_chord_event(chord_event: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "startPositionText": beat_position_display_text(chord_event.get("startPosition")),
+        "durationText": rhythm_value_display_text(chord_event.get("duration")),
+        "rhythmPlacement": chord_event.get("rhythmPlacement") or "?",
+        "mappedRhythmSlotIndex": chord_event.get("mappedRhythmSlotIndex"),
     }
 
 
