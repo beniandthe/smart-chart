@@ -93,7 +93,7 @@ Candidate work:
 
 ### Side Sprint 61: Raster/Render Handoff Polish
 
-Status: complete locally; awaiting GitHub verification.
+Status: complete; later green main commits covered the required checks.
 
 Goal: keep the writing-to-render handoff feeling immediate without premature rendering.
 
@@ -107,13 +107,14 @@ Candidate work:
 
 ### Side Sprint 62: Chord-First Release Candidate Pass
 
-Status: active; export-only verification needed.
+Status: complete.
 
 Goal: close the chord-first lane with one bounded real chart pass.
 
 Candidate work:
 
 - Validate write -> recognize -> auto-render or confirm -> clear ink -> edit if needed -> export using `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`.
-- Current pass metadata committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement and small render handoff; only fresh PDF export evidence is still missing.
+- Pass metadata committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement and small render handoff.
+- Fresh PDF export evidence was verified in Smart Chart's export cache and Preview; the rendered page included all four chords.
 - Capture only summary evidence unless a new bug needs diagnostics.
 - Move remaining non-chord polish back to the normal backlog.

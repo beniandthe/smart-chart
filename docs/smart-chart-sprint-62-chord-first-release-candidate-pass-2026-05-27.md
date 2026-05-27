@@ -1,6 +1,6 @@
 # Smart Chart Sprint 62 Chord First Release Candidate Pass
 
-Status: active export verification gate
+Status: complete
 Date: 2026-05-27
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
@@ -107,7 +107,23 @@ Findings:
 - `Db7(b9)` remained compendium-approved and was recovered through the local correction rule rather than score retuning.
 - Placement evidence was complete and matched for all four active chord events.
 - Render handoff stayed small at `15-40ms`; renderer/raster is not the current blocker.
-- The only simulator PDF cache found was stale: `Library/Caches/SmartChartExports/untitled-chart-concert.pdf` was last modified on `2026-05-26 09:31:58 -0700`, before the current `2026-05-27 11:52:45 -0700` pass. Sprint 62 therefore needs an export-only verification before closeout.
+- The initial simulator PDF cache was stale: `Library/Caches/SmartChartExports/untitled-chart-concert.pdf` was last modified on `2026-05-26 09:31:58 -0700`, before the current `2026-05-27 11:52:45 -0700` pass. This was resolved by the fresh export evidence below.
+
+## Export Evidence: 2026-05-27
+
+Fresh export evidence:
+
+- Smart Chart export cache: `Library/Caches/SmartChartExports/untitled-chart-concert.pdf`
+- Preview document copy: `Documents/untitled-chart-concert-4.pdf`
+- modified: `2026-05-27 12:23:13 -0700`
+- size: `45024`
+- type: PDF 1.3, `1` page
+
+Visual verification:
+
+- QuickLook rendered the fresh PDF successfully.
+- The rendered page showed `C`, `G/B`, `Db7(b9)`, and `Absus`.
+- Export now matches the active chart state for the bounded Sprint 62 pass.
 
 ## Acceptance Criteria
 

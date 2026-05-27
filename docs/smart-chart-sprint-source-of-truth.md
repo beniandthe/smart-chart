@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, Sprint 55 chord-first product polish, Sprint 56 chord field validation, Sprint 57 chord placement/edit loop, Sprint 58 wrong render recovery, Sprint 59 confirmation/direct-input polish, Sprint 60 general candidate availability hardening, and Sprint 61 raster/render handoff polish are complete; Sprint 62 chord-first release-candidate pass is active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, Sprint 55 chord-first product polish, Sprint 56 chord field validation, Sprint 57 chord placement/edit loop, Sprint 58 wrong render recovery, Sprint 59 confirmation/direct-input polish, Sprint 60 general candidate availability hardening, Sprint 61 raster/render handoff polish, and Sprint 62 chord-first release-candidate pass are complete; Sprint 63 product prioritization is the next decision gate
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -55,8 +55,8 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 60 general candidate availability artifact: `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`
 - Sprint 61 raster/render handoff polish artifact: `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`
 - Sprint 62 chord-first release-candidate pass artifact: `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`
-- latest local verification: Sprint 62 pass metadata showed active chart `9F9DD955-91BF-4361-9B02-177B49C48A0C` committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement, structured `ChordEvent`s, and render handoff at `15-40ms`; the only simulator PDF cache was stale from `2026-05-26 09:31:58 -0700`, so Sprint 62 remains at export-only verification. XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and screenshot verification passed; `git diff --check` passed. Sprint 61 timing capture showed render handoff stayed small at `15-28ms`; scheduler/continuation wait and complex-chord trust/OCR dominated perceived delay.
-- latest GitHub verification: main commit `899f690 Backfill supported chord candidate scores` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
+- latest local verification: Sprint 62 pass metadata showed active chart `9F9DD955-91BF-4361-9B02-177B49C48A0C` committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement, structured `ChordEvent`s, and render handoff at `15-40ms`; fresh export evidence at `2026-05-27 12:23:13 -0700` produced a one-page PDF rendered in Preview with all four chords visible. XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and screenshot verification passed; `python3 scripts/audit_chord_entry_diagnostics.py --app-data "$APP_DATA" --chart-id 9F9DD955-91BF-4361-9B02-177B49C48A0C --details --scores 8` passed; QuickLook PDF rendering passed; `git diff --check` passed.
+- latest GitHub verification: main commit `5f9c4c8 Record sprint 62 pass evidence` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -151,49 +151,37 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 62: Chord-First Release Candidate Pass
+### Sprint 63: Product Prioritization Decision
 
-Status: active side sprint; export-only verification needed.
+Status: decision gate.
 
-Goal: close the chord-first side-sprint lane with one bounded real chart pass and route any remaining issues by evidence.
+Goal: choose the next product sprint after the chord-first recovery lane passed its release-candidate check.
 
 Current state:
 
-- Sprint 58 prevents repeated wrong auto-renders by local ink digest or candidate-signature reroute.
-- Sprint 59 made confirmation/direct input calmer and more concise when reroutes, close races, or complete misses need user input.
-- Sprint 60 backfilled supported candidates into candidate-score evidence when raw unsupported noise occupies the top prefix.
-- Sprint 61 showed render handoff stayed small at `15-28ms`; scheduler/continuation waits and complex-chord trust/OCR dominate perceived delay. No renderer/raster rewrite is justified.
-- One Sprint 61 placement evidence mismatch was observed for `Db7(b9)` after a user-rule-applied commit: diagnostic start `3`, current chart start `1`. Treat this as release-candidate observation input, not a render handoff issue.
-- Sprint 62 pass metadata shows `C`, `G/B`, `Db7(b9)`, and `Absus` committed on active chart `9F9DD955-91BF-4361-9B02-177B49C48A0C`. Placement matched, `Db7(b9)` used local correction memory after a close race, and render handoff stayed at `15-40ms`.
-- Sprint 62 export evidence is not current yet: the simulator PDF cache still points to a `2026-05-26` export. The next action is export-only verification, not another recognition pass.
+- The chord-first side-sprint lane from Sprint 57 through Sprint 62 is complete.
+- The latest release-candidate pass validated write -> recognize -> auto-render or confirm -> clear ink -> export for `C`, `G/B`, `Db7(b9)`, and `Absus`.
+- Remaining known product work should come from user-facing priorities, not another recovery/audit loop.
 
-Sprint 62 tasks:
+Candidate directions:
 
-- Run one bounded chord-first pass through write -> recognize -> auto-render or confirm -> clear ink -> edit if needed -> export.
-- Include basic, slash, suspended, altered-extension, and one correction/rewrite case.
-- Use `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md` as the pass checklist.
-- Record whether any issue belongs to placement/snapping, recognition/candidate availability, confidence/trust, confirmation/direct input, render handoff, or export.
-- Verify a fresh PDF export for the active chart after the four-chord pass.
-- Keep validation proportional; capture summary evidence unless a real bug needs diagnostics.
-- Preserve deleted-render rejection memory, confirmation/direct-input behavior, supported-candidate backfill, accepted-chord ink clearing, export behavior, and native `PKCanvasView` writing feel.
-- Update this source-of-truth doc and the chord-first side-sprint doc when the slice closes.
+- Feature/product depth: chart setup, sections, roadmap text, repeat endings, or chart metadata.
+- Authoring polish: placement preview, drag/edit ergonomics, or direct chord-entry refinements if real chart use shows friction.
+- Library/app-shell polish: search, sort, archive, import/export organization, or recent-chart affordances.
+- Export/presentation polish: title/header controls, page layout, or visual renderer QA for new chart shapes.
 
 Non-goals:
 
 - No personal handwriting fixture expansion.
 - No recognition score retuning from one writer's pass.
 - No default OCR expansion or symbol-ledger diagnostics cost.
-- No broad architecture rewrite unless the release-candidate pass exposes a concrete blocker.
+- No new recovery/audit sweep without a concrete blocker.
 
 Acceptance criteria:
 
-- Chords render as structured `ChordEvent`s and accepted chord ink clears.
-- Close races route to clean confirmation/direct input.
-- Wrong render recovery does not create a write/delete/rewrite loop.
-- Export produces the full chart.
-- Any remaining issue is assigned to the correct next lane instead of reopening the whole audit plan.
-- No user handwriting training loop is introduced.
-- The next side sprint is chosen from the chord-first queue rather than reopening the full audit plan.
+- The next sprint is chosen intentionally from product priorities.
+- The sprint source-of-truth remains the first routing document.
+- Chord recognition stays writer-agnostic and proportional validation remains the default.
 
 ## Completed Sprints Log
 
@@ -856,6 +844,18 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: one `Db7(b9)` placement evidence mismatch appeared between diagnostic start `3` and current chart start `1`; route that as release-candidate placement evidence if it reproduces.
 - next sprint candidate: Sprint 62 chord-first release-candidate pass.
 
+### Sprint 62: Chord-First Release Candidate Pass
+
+- status: complete locally; required GitHub Actions need to run after closeout push
+- setup commit: `4fa2f53 Set up sprint 62 release candidate pass`
+- evidence commit: `5f9c4c8 Record sprint 62 pass evidence`
+- closeout commit: Sprint 62 closeout commit containing this entry
+- summary: Closed the chord-first side-sprint lane with one bounded release-candidate pass. The active chart committed `C`, `G/B`, `Db7(b9)`, and `Absus` as structured `ChordEvent`s; `Db7(b9)` used local correction memory from a close race instead of score retuning; placement evidence matched; render handoff stayed small; and a fresh PDF export opened in Preview with all four chords visible.
+- tests and evidence: required GitHub Actions passed on `4fa2f53` and `5f9c4c8`; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator; `python3 scripts/audit_chord_entry_diagnostics.py --app-data "$APP_DATA" --chart-id 9F9DD955-91BF-4361-9B02-177B49C48A0C --details --scores 8` reported `4` active diagnostics, `0` missing diagnostics, `0` stale diagnostics for the active chart, matched placement, and timing evidence for all four chords; the fresh PDF export was modified at `2026-05-27 12:23:13 -0700`, identified as a one-page PDF, and rendered successfully through QuickLook.
+- behavior boundary: no code behavior change, no personal handwriting fixture expansion, no recognition score retuning, no parser/compendium authority change, no default OCR expansion, no symbol-ledger diagnostics cost, no editor/export implementation change, and no accepted-chord ink clearing change.
+- unresolved follow-up: no release-candidate blocker remains from the bounded pass. Future work should be chosen from product priorities rather than reopening the recovery/audit loop.
+- next sprint candidate: Sprint 63 product prioritization decision.
+
 ## Chord-First Side Sprint Queue
 
 Use this queue for chord-specific product work after Sprint 56. `docs/smart-chart-chord-first-side-sprints-2026-05-27.md` is the supporting route map; this file remains the active sprint authority.
@@ -864,8 +864,8 @@ Use this queue for chord-specific product work after Sprint 56. `docs/smart-char
 - Sprint 58: Wrong Render Recovery And Replace UX: complete; GitHub Actions passed on `b748b2a`.
 - Sprint 59: Confirmation And Direct Input Polish: complete; GitHub Actions passed on `88feda5`.
 - Sprint 60: General Candidate Availability Hardening: complete; GitHub Actions passed on `899f690`.
-- Sprint 61: Raster/Render Handoff Polish: complete locally; awaiting GitHub verification.
-- Sprint 62: Chord-First Release Candidate Pass: active.
+- Sprint 61: Raster/Render Handoff Polish: complete locally; GitHub verification was superseded by later green commits.
+- Sprint 62: Chord-First Release Candidate Pass: complete locally; required GitHub Actions need to run after closeout push.
 
 ## Next Sprint Backlog
 
