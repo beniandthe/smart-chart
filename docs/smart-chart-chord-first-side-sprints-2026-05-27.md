@@ -54,7 +54,7 @@ Candidate work:
 
 ### Side Sprint 58: Wrong Render Recovery And Replace UX
 
-Status: complete locally; awaiting GitHub verification.
+Status: complete; GitHub Actions passed on `b748b2a`.
 
 Goal: make wrong auto-renders recover cleanly.
 
@@ -67,17 +67,20 @@ Candidate work:
 
 ### Side Sprint 59: Confirmation And Direct Input Polish
 
-Status: active.
+Status: complete locally; awaiting GitHub verification.
 
 Goal: turn confirmation/direct entry into a calm product loop.
 
 Candidate work:
 
-- Keep the sheet centered around three supported candidates, one manual field, and clear accept/rewrite actions.
-- Ensure manual entry that beats all suggestions records the right local exclusion/correction evidence.
-- Avoid creating local positive rules from extremely tight competitions.
+- Kept the sheet centered around three supported candidates, one manual field, and clear accept/rewrite actions.
+- Changed the top-three suggestions into compact product choices with calmer copy.
+- Made deleted-render reroutes read like a normal correction flow instead of a debug warning.
+- Preserved manual-entry exclusion/correction evidence and the existing extremely tight-race rule boundary.
 
 ### Side Sprint 60: General Candidate Availability Hardening
+
+Status: active.
 
 Goal: fix transferable chord-family gaps without handwriting-specific training.
 

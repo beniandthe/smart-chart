@@ -148,7 +148,7 @@ struct ChordInkConfirmationSheetView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 18) {
                     selectedChordSummary
                     candidateChoices
                     manualEntry
@@ -169,7 +169,7 @@ struct ChordInkConfirmationSheetView: View {
         .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(true)
         .task(id: confirmation.id) {
-            guard confirmation.requiresDirectEntry else {
+            guard shouldFocusManualEntry else {
                 return
             }
 
@@ -181,8 +181,28 @@ struct ChordInkConfirmationSheetView: View {
         manualCandidateText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var shouldFocusManualEntry: Bool {
+        confirmation.requiresDirectEntry || confirmation.visibleCandidateTexts.isEmpty
+    }
+
+    private var promptText: String {
+        if confirmation.requiresDirectEntry {
+            return "Type the chord you meant."
+        }
+
+        if confirmation.decision.reason.localizedCaseInsensitiveContains("previously rendered") {
+            return "Pick the chord you meant, or type it."
+        }
+
+        if confirmation.decision.isCloseRace {
+            return "Close match. Pick the chord you meant."
+        }
+
+        return "Choose one or type the chord."
+    }
+
     private var selectedChordSummary: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 7) {
             Text("Measure \(confirmation.displayMeasureNumber)")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -194,7 +214,7 @@ struct ChordInkConfirmationSheetView: View {
                 .minimumScaleFactor(0.55)
                 .frame(maxWidth: .infinity)
 
-            Text(confirmation.requiresDirectEntry ? "Type the chord to continue." : "Choose one or type the chord.")
+            Text(promptText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -204,75 +224,87 @@ struct ChordInkConfirmationSheetView: View {
     }
 
     private var candidateChoices: some View {
-        VStack(spacing: 8) {
-            let candidates = Array(confirmation.visibleCandidateTexts.prefix(3))
+        let candidates = Array(confirmation.visibleCandidateTexts.prefix(3))
+
+        return VStack(spacing: 9) {
             if candidates.isEmpty {
-                Text("No suggestions")
+                Text("No confident suggestions")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 10)
             } else {
-                Text("Top choices")
+                Text("Top 3")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
 
-                ForEach(Array(candidates.enumerated()), id: \.element) { index, candidate in
-                    Button {
-                        manualCandidateText = candidate
-                        fixtureCopyStatus = nil
-                    } label: {
-                        Text(candidate)
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(candidate == trimmedCandidateText ? Color.white : Color.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.65)
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(candidate == trimmedCandidateText ? Color.blue : Color(uiColor: .secondarySystemGroupedBackground))
-                            )
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .stroke(candidate == trimmedCandidateText ? Color.blue.opacity(0.45) : Color.black.opacity(0.06), lineWidth: 1)
-                            }
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: candidates.count),
+                    spacing: 8
+                ) {
+                    ForEach(Array(candidates.enumerated()), id: \.element) { index, candidate in
+                        Button {
+                            manualCandidateText = candidate
+                            fixtureCopyStatus = nil
+                        } label: {
+                            Text(candidate)
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(candidate == trimmedCandidateText ? Color.white : Color.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.55)
+                                .frame(maxWidth: .infinity, minHeight: 48)
+                                .padding(.horizontal, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(candidate == trimmedCandidateText ? Color.blue : Color(uiColor: .secondarySystemGroupedBackground))
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .stroke(candidate == trimmedCandidateText ? Color.blue.opacity(0.45) : Color.black.opacity(0.06), lineWidth: 1)
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Suggestion \(index + 1), \(candidate)")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Suggestion \(index + 1), \(candidate)")
                 }
             }
         }
     }
 
     private var manualEntry: some View {
-        TextField("Type chord", text: $manualCandidateText)
-            .font(.title3.weight(.semibold))
-            .multilineTextAlignment(.center)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .focused($isManualEntryFocused)
-            .submitLabel(.done)
-            .animation(nil, value: manualCandidateText)
-            .onSubmit {
-                acceptTrimmedCandidate()
-            }
-            .onChange(of: manualCandidateText) { _, _ in
-                if fixtureCopyStatus != nil {
-                    fixtureCopyStatus = nil
+        VStack(spacing: 8) {
+            Text("Manual entry")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+
+            TextField("Type chord", text: $manualCandidateText)
+                .font(.title3.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .focused($isManualEntryFocused)
+                .submitLabel(.done)
+                .animation(nil, value: manualCandidateText)
+                .onSubmit {
+                    acceptTrimmedCandidate()
                 }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(isManualEntryFocused ? Color.blue.opacity(0.45) : Color.black.opacity(0.06), lineWidth: 1)
-            }
-            .accessibilityLabel("Manual chord entry")
+                .onChange(of: manualCandidateText) { _, _ in
+                    if fixtureCopyStatus != nil {
+                        fixtureCopyStatus = nil
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(isManualEntryFocused ? Color.blue.opacity(0.45) : Color.black.opacity(0.06), lineWidth: 1)
+                }
+                .accessibilityLabel("Manual chord entry")
+        }
     }
 
     private var chartActions: some View {
@@ -280,7 +312,7 @@ struct ChordInkConfirmationSheetView: View {
             Button {
                 acceptTrimmedCandidate()
             } label: {
-                Text("Accept")
+                Text("Accept Chord")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
@@ -299,7 +331,7 @@ struct ChordInkConfirmationSheetView: View {
                 Button(role: .destructive) {
                     onClearAndRewrite()
                 } label: {
-                    Text("Rewrite")
+                    Text("Rewrite Ink")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
