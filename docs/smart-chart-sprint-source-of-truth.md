@@ -55,7 +55,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 60 general candidate availability artifact: `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`
 - Sprint 61 raster/render handoff polish artifact: `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`
 - Sprint 62 chord-first release-candidate pass artifact: `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`
-- latest local verification: Sprint 62 release-candidate pass gate was documented; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and screenshot verification passed; `git diff --check` passed. Sprint 61 timing capture showed render handoff stayed small at `15-28ms`; scheduler/continuation wait and complex-chord trust/OCR dominated perceived delay. Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures.
+- latest local verification: Sprint 62 pass metadata showed active chart `9F9DD955-91BF-4361-9B02-177B49C48A0C` committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement, structured `ChordEvent`s, and render handoff at `15-40ms`; the only simulator PDF cache was stale from `2026-05-26 09:31:58 -0700`, so Sprint 62 remains at export-only verification. XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and screenshot verification passed; `git diff --check` passed. Sprint 61 timing capture showed render handoff stayed small at `15-28ms`; scheduler/continuation wait and complex-chord trust/OCR dominated perceived delay.
 - latest GitHub verification: main commit `899f690 Backfill supported chord candidate scores` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -153,7 +153,7 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ### Sprint 62: Chord-First Release Candidate Pass
 
-Status: active side sprint; bounded release-candidate validation setup.
+Status: active side sprint; export-only verification needed.
 
 Goal: close the chord-first side-sprint lane with one bounded real chart pass and route any remaining issues by evidence.
 
@@ -164,6 +164,8 @@ Current state:
 - Sprint 60 backfilled supported candidates into candidate-score evidence when raw unsupported noise occupies the top prefix.
 - Sprint 61 showed render handoff stayed small at `15-28ms`; scheduler/continuation waits and complex-chord trust/OCR dominate perceived delay. No renderer/raster rewrite is justified.
 - One Sprint 61 placement evidence mismatch was observed for `Db7(b9)` after a user-rule-applied commit: diagnostic start `3`, current chart start `1`. Treat this as release-candidate observation input, not a render handoff issue.
+- Sprint 62 pass metadata shows `C`, `G/B`, `Db7(b9)`, and `Absus` committed on active chart `9F9DD955-91BF-4361-9B02-177B49C48A0C`. Placement matched, `Db7(b9)` used local correction memory after a close race, and render handoff stayed at `15-40ms`.
+- Sprint 62 export evidence is not current yet: the simulator PDF cache still points to a `2026-05-26` export. The next action is export-only verification, not another recognition pass.
 
 Sprint 62 tasks:
 
@@ -171,6 +173,7 @@ Sprint 62 tasks:
 - Include basic, slash, suspended, altered-extension, and one correction/rewrite case.
 - Use `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md` as the pass checklist.
 - Record whether any issue belongs to placement/snapping, recognition/candidate availability, confidence/trust, confirmation/direct input, render handoff, or export.
+- Verify a fresh PDF export for the active chart after the four-chord pass.
 - Keep validation proportional; capture summary evidence unless a real bug needs diagnostics.
 - Preserve deleted-render rejection memory, confirmation/direct-input behavior, supported-candidate backfill, accepted-chord ink clearing, export behavior, and native `PKCanvasView` writing feel.
 - Update this source-of-truth doc and the chord-first side-sprint doc when the slice closes.

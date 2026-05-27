@@ -107,12 +107,13 @@ Candidate work:
 
 ### Side Sprint 62: Chord-First Release Candidate Pass
 
-Status: active.
+Status: active; export-only verification needed.
 
 Goal: close the chord-first lane with one bounded real chart pass.
 
 Candidate work:
 
 - Validate write -> recognize -> auto-render or confirm -> clear ink -> edit if needed -> export using `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`.
+- Current pass metadata committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement and small render handoff; only fresh PDF export evidence is still missing.
 - Capture only summary evidence unless a new bug needs diagnostics.
 - Move remaining non-chord polish back to the normal backlog.

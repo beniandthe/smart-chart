@@ -1,6 +1,6 @@
 # Smart Chart Sprint 62 Chord First Release Candidate Pass
 
-Status: active validation gate
+Status: active export verification gate
 Date: 2026-05-27
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
@@ -83,6 +83,31 @@ If the pass finds an issue, assign it to one lane:
 - Sprint 60: supported candidate backfill prevents compendium-approved candidates from being hidden behind unsupported raw noise.
 - Sprint 61: render handoff stayed small at `15-28ms`; do not rewrite renderer/raster behavior from current evidence.
 - Sprint 61: one `Db7(b9)` placement evidence mismatch was observed after a user-rule-applied commit. Watch whether placement mismatch reproduces in this release-candidate pass.
+
+## Pass Evidence: 2026-05-27
+
+Simulator app data:
+
+- container: `/Users/benirossman/Library/Developer/CoreSimulator/Devices/42254D11-2E65-4586-AEBE-C6317AF2DD10/data/Containers/Data/Application/E00D3EF2-C51E-40D8-AED4-F887C6EBA6A5`
+- active chart: `9F9DD955-91BF-4361-9B02-177B49C48A0C`
+- active chart events: `C`, `G/B`, `Db7(b9)`, `Absus`
+
+Recognition and render evidence:
+
+| Chord | Result | Timing | Placement |
+| --- | --- | --- | --- |
+| `C` | auto-rendered | total `420ms`, recognition `1ms`, commit `8ms`, render `40ms` | matched |
+| `G/B` | auto-rendered | total `791ms`, recognition `2ms`, commit `3ms`, render `16ms` | matched |
+| `Db7(b9)` | user rule applied from close race | total `856ms`, recognition `64ms`, OCR `40ms`, commit `3ms`, render `16ms` | matched |
+| `Absus` | auto-rendered | total `432ms`, recognition `19ms`, commit `3ms`, render `15ms` | matched |
+
+Findings:
+
+- Basic, slash, suspended, and altered-extension chord commits are present as structured `ChordEvent`s.
+- `Db7(b9)` remained compendium-approved and was recovered through the local correction rule rather than score retuning.
+- Placement evidence was complete and matched for all four active chord events.
+- Render handoff stayed small at `15-40ms`; renderer/raster is not the current blocker.
+- The only simulator PDF cache found was stale: `Library/Caches/SmartChartExports/untitled-chart-concert.pdf` was last modified on `2026-05-26 09:31:58 -0700`, before the current `2026-05-27 11:52:45 -0700` pass. Sprint 62 therefore needs an export-only verification before closeout.
 
 ## Acceptance Criteria
 
