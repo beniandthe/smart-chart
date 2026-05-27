@@ -46,8 +46,8 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 53 validation speed artifact: `docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`
 - Sprint 54 confirmation UX polish artifact: `docs/smart-chart-sprint-54-confirmation-ux-polish-2026-05-26.md`
 - Sprint 55 chord-first product polish artifact: `docs/smart-chart-sprint-55-chord-first-product-polish-2026-05-26.md`
-- latest local verification: Sprint 55 timing-summary audit update `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py` passed; `git diff --check` passed; simulator sample `python3 scripts/audit_chord_entry_diagnostics.py --simulator 42254D11-2E65-4586-AEBE-C6317AF2DD10 --details --scores 3` completed and reported `Timing evidence: available=0` for the current older rows. Sprint 55 placement-evidence diagnostics focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-diagnostics --filter ChordEntryDiagnosticsTests` passed with `8` tests and `0` failures; XcodeBuildMCP iOS simulator compile-only build passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`. Sprint 55 placement slice focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-placement --filter MeasureRhythmMappingTests` passed with `15` tests and `0` failures. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
-- latest GitHub verification: main commit `3b23fd7 Flag chord placement drift in diagnostics audit` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health. Sprint 50 remains the latest broad full-suite local baseline; Sprint 55 placement drift audit is app-CI green and validated.
+- latest local verification: Sprint 55 `Absus` compact-suspended update `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-absus --filter ChordInkCandidateComposerTests` passed with `51` tests and `0` failures; `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-absus-recognizer --filter ChordInkRecognizerTests` passed with `40` tests, `1` skipped, and `0` failures; saved-state replay `SMART_CHART_REPLAY_CHART_ID=17D5CFA4-1267-4914-B800-63100FC13C78 SMART_CHART_REPLAY_GLYPHS=1 swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-absus-replay-after --filter ChordEntryPassReplayTests/testReplayChordWritingTestChartFromSavedState` passed and showed the three `Absus` rows now matching `Absus` through confirmation; XcodeBuildMCP `build_run_sim` passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`; `git diff --check` passed. Sprint 50 post-stroke responsiveness full verification remains the latest broad app baseline: full SwiftPM passed with `319` tests, `36` skipped, `0` failures; XcodeBuildMCP full iOS simulator scheme passed with `336` tests, `36` skipped, `0` failures; Python script compilation passed.
+- latest GitHub verification: main commit `e21b6d9 Summarize chord timing evidence in diagnostics audit` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health. Sprint 50 remains the latest broad full-suite local baseline; Sprint 55 timing-summary audit is app-CI green and validated.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -161,6 +161,7 @@ Current state:
 - The diagnostic audit script now prints placement evidence in pass metadata.
 - The diagnostic audit script now reports missing or mismatched placement evidence against the current rendered chart.
 - The diagnostic audit script now summarizes available timing evidence for render/performance triage.
+- A larger real-use pass felt good overall, but exposed a transferable `Absus` candidate-availability gap: compact suspended suffixes could fall out of suggestions or lose to slash-bass lookalikes.
 
 Sprint 55 tasks:
 
@@ -172,6 +173,8 @@ Sprint 55 tasks:
 - Diagnostic metadata review should surface placement evidence in the audit script details output.
 - Diagnostic metadata review should flag whether placement evidence is missing or no longer matches the active rendered chart.
 - Diagnostic metadata review should summarize available timing evidence before any render/performance change.
+- Compact suspended-chord recognition should keep `Absus` and neighboring suspended candidates available for confirmation without tuning around one writer's samples.
+- Slash-bass candidates should be softened when the slash column also carries suspended-`s` evidence, so `sus` lookalikes can compete instead of silently stealing the render.
 - Keep confidence and accuracy work measurement-first; do not retune scores from one writer's pass.
 - Keep render/raster work evidence-based using existing timing and renderer QA lanes.
 
@@ -182,6 +185,7 @@ Acceptance criteria:
 - The diagnostic audit script exposes that placement evidence during bounded pass review.
 - The diagnostic audit script flags missing or mismatched placement evidence.
 - The diagnostic audit script summarizes available timing evidence for render/performance triage.
+- `Absus` remains available as a supported candidate for compact suspended suffix evidence and stays confirmation-routed when root/suffix evidence is ambiguous.
 - The sprint avoids handwriting-training loops and personal fixture expansion.
 - Verification remains proportional to the touched surface.
 - Any recognition work must be triggered by transferable evidence, not one-off handwriting drift.

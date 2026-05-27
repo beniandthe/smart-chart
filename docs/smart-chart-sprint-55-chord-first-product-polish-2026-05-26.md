@@ -33,6 +33,8 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - Surface placement evidence in `scripts/audit_chord_entry_diagnostics.py --details` so pass review can see each rendered chord's final start, duration, rhythm placement, and one-based rhythm slot.
 - Report missing or mismatched placement evidence by comparing active diagnostics against the current rendered chart state.
 - Summarize available timing evidence by slowest delay, idle, recognition total, proposal, commit, and render handoff so render/performance review starts from metadata instead of impressions.
+- Tighten compact suspended-chord candidate availability from transferable field evidence: `Absus` failures were missing `Absus` from suggestions or losing to slash-bass lookalikes, so semantic suspended candidates now consider nearby plausible root letters and add cautious `sus` candidates without raising them into auto-render.
+- Soften slash-bass candidates when the slash column also carries suspended-`s` evidence, allowing `Absus`/neighboring suspended candidates to compete instead of letting a slash lookalike silently steal the result.
 - Preserve recognition, trust, parser, correction-memory, PencilKit, fixture corpus, OCR, export, and chart mutation authority.
 
 ## Verification Plan
@@ -64,6 +66,11 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py` passed after the timing-summary audit update.
 - `git diff --check` passed after the timing-summary audit update.
 - Simulator sample `python3 scripts/audit_chord_entry_diagnostics.py --simulator 42254D11-2E65-4586-AEBE-C6317AF2DD10 --details --scores 3` completed after the timing-summary update; it reported `Timing evidence: available=0` for the current older rows.
+- Focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-absus --filter ChordInkCandidateComposerTests` passed with `51` tests and `0` failures.
+- Focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-absus-recognizer --filter ChordInkRecognizerTests` passed with `40` tests, `1` skipped, and `0` failures.
+- Saved-state replay `SMART_CHART_REPLAY_CHART_ID=17D5CFA4-1267-4914-B800-63100FC13C78 SMART_CHART_REPLAY_GLYPHS=1 swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint55-absus-replay-after --filter ChordEntryPassReplayTests/testReplayChordWritingTestChartFromSavedState` passed; the three `Absus` rows now match `Absus` and remain confirmation-routed when root/suffix evidence is ambiguous.
+- XcodeBuildMCP `build_run_sim` passed for the `SmartChart` scheme with `CODE_SIGNING_ALLOWED=NO`.
+- `git diff --check` passed after the compact suspended-chord update.
 
 ## Acceptance Criteria
 
@@ -74,4 +81,5 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - The diagnostic audit script prints placement evidence during metadata review.
 - The diagnostic audit script reports whether active diagnostic placement evidence is missing or no longer matches the rendered chart.
 - The diagnostic audit script summarizes available timing evidence for render/performance triage.
+- Compact `Absus` evidence stays in the supported candidate set, with ambiguous cases routed to confirmation instead of new global score tuning or handwriting-specific fixtures.
 - No personal handwriting fixture expansion or score retuning.
