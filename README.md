@@ -131,6 +131,7 @@ Current implementation authority:
 - [`docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`](docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md) — Sprint 60 general candidate availability hardening
 - [`docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`](docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md) — Sprint 61 raster/render handoff evidence
 - [`docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`](docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md) — Sprint 62 chord-first release-candidate pass
+- [`docs/smart-chart-sprint-63-chart-layout-goals-2026-05-27.md`](docs/smart-chart-sprint-63-chart-layout-goals-2026-05-27.md) — Sprint 63 chart layout goals
 - [`docs/core-design-document.md`](docs/core-design-document.md) — enforced product and design rules
 - [`docs/developer-mvp-spec.md`](docs/developer-mvp-spec.md) — buildable MVP scope and behaviors
 - [`docs/repo-github-recognition-audit-2026-05-20.md`](docs/repo-github-recognition-audit-2026-05-20.md) — current recognition architecture and GitHub audit evidence for the recovery plan
@@ -172,4 +173,4 @@ The first meaningful prototype succeeds if a musician can:
 
 ## Status
 
-Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-62 restored the streamlined writer-agnostic recognition/editor pipeline, validated the writing-to-render loop with real app passes, added local chord-correction UX, shortened routine sprint validation, closed the first chord field-validation loop, and completed the chord-first release-candidate pass. Sprint 63 is the product prioritization decision gate. Current sprint status lives in the source-of-truth doc.
+Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-62 restored the streamlined writer-agnostic recognition/editor pipeline, validated the writing-to-render loop with real app passes, added local chord-correction UX, shortened routine sprint validation, closed the first chord field-validation loop, and completed the chord-first release-candidate pass. Sprint 63 defines the three new-chart layout families: Simple Chord Sheet, Rhythm Section Sheet, and Lead Sheet. Current sprint status lives in the source-of-truth doc.
