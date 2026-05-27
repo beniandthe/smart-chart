@@ -54,7 +54,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 59 confirmation/direct-input polish artifact: `docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md`
 - Sprint 60 general candidate availability artifact: `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`
 - Sprint 61 raster/render handoff polish artifact: `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`
-- latest local verification: Sprint 61 evidence audit inspected the timing/render handoff surfaces and current simulator diagnostics; `git diff --check` passed. Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures.
+- latest local verification: Sprint 61 evidence audit inspected the timing/render handoff surfaces and current simulator diagnostics; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed on the configured iPad simulator and a screenshot verified app launch; `git diff --check` passed. Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures.
 - latest GitHub verification: main commit `899f690 Backfill supported chord candidate scores` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -163,6 +163,7 @@ Current state:
 - Sprint 60 backfilled supported candidates into candidate-score evidence when raw unsupported noise occupies the top prefix.
 - The initial Sprint 61 audit found existing timing evidence points away from render/raster as the main bottleneck: Sprint 50 render handoff was `6-13ms`, while scheduler/idle and recognition/trust routing dominated perceived delay.
 - Current booted simulator diagnostics had rendered chord rows but no timing evidence, so one clean current timing capture is better evidence than a renderer rewrite.
+- The app is rebuilt and launched on the configured iPad simulator for a bounded `C`, `G/B`, `Db7(b9)` timing pass.
 
 Sprint 61 tasks:
 

@@ -45,6 +45,52 @@ Do not rewrite renderer/raster behavior from current evidence. The existing data
 - run one clean timing capture on the current app build, or
 - make only a tiny measurement/tooling improvement if current timing evidence is missing when it should be present.
 
+## Clean Current Timing Capture Setup
+
+Commit `5ae51d2` passed required GitHub Actions. The app was then rebuilt and launched on the configured iPad simulator with:
+
+```bash
+xcodebuildmcp build_run_sim CODE_SIGNING_ALLOWED=NO
+```
+
+Build/run result:
+
+- scheme: `SmartChart`
+- simulator: `iPad Pro 13-inch (M5)` / `42254D11-2E65-4586-AEBE-C6317AF2DD10`
+- bundle id: `com.smartchart.app`
+- result: succeeded
+- runtime log: `/Users/benirossman/Library/Developer/XcodeBuildMCP/workspaces/Smart-Chart-f58ea80f996f/logs/com.smartchart.app_2026-05-27T18-00-37-067Z_helperpid35175_ownerpid1549_ce5f8613.log`
+- OS log: `/Users/benirossman/Library/Developer/XcodeBuildMCP/workspaces/Smart-Chart-f58ea80f996f/logs/com.smartchart.app_oslog_2026-05-27T18-00-38-081Z_helperpid35249_ownerpid1549_2e153308.log`
+
+Run one bounded simulator/iPad pass:
+
+| Case | Expected route | Timing question |
+| --- | --- | --- |
+| `C` | auto-render if clear | Is final-stroke delay still scheduler/continuation wait, or does render handoff grow? |
+| `G/B` | auto-render if clear | Does slash placement stay fast after Sprint 60 candidate backfill? |
+| `Db7(b9)` | auto-render or confirm depending on confidence race | Does candidate availability stay present, and is any delay trust/confirmation rather than render? |
+
+After the pass, inspect persisted diagnostics:
+
+```bash
+APP_DATA="$(xcrun simctl get_app_container booted com.smartchart.app data)"
+python3 scripts/audit_chord_entry_diagnostics.py --app-data "$APP_DATA" --details --scores 8
+```
+
+If console logs are needed, parse the runtime log:
+
+```bash
+python3 scripts/analyze_chord_timing_logs.py "/Users/benirossman/Library/Developer/XcodeBuildMCP/workspaces/Smart-Chart-f58ea80f996f/logs/com.smartchart.app_2026-05-27T18-00-37-067Z_helperpid35175_ownerpid1549_ce5f8613.log"
+```
+
+Route the next move from evidence:
+
+- high `delay`/`idle`, low recognition/proposal/commit/render: scheduling or continuation policy
+- high `recognition`: recognizer/candidate conflict
+- high `proposal` or `commit`: editor proposal or chart mutation
+- high `render`: SwiftUI/render handoff
+- low timing but wrong/ambiguous result: confidence/candidate/trust route
+
 ## Guardrails
 
 - No personal handwriting fixture expansion.
