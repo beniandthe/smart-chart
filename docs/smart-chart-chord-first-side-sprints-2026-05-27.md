@@ -80,7 +80,7 @@ Candidate work:
 
 ### Side Sprint 60: General Candidate Availability Hardening
 
-Status: complete locally; awaiting GitHub verification.
+Status: complete; GitHub Actions passed on `899f690`.
 
 Goal: fix transferable chord-family gaps without handwriting-specific training.
 
@@ -93,14 +93,15 @@ Candidate work:
 
 ### Side Sprint 61: Raster/Render Handoff Polish
 
-Status: active.
+Status: active evidence audit.
 
 Goal: keep the writing-to-render handoff feeling immediate without premature rendering.
 
 Candidate work:
 
-- Inspect timing telemetry before changing debounce or render policy.
-- Separate recognition wait from commit/render/export work.
+- Inspected timing telemetry before changing debounce or render policy.
+- Separated recognition wait from commit/render/export work in the evidence map.
+- Current finding: prior persisted evidence shows render handoff around `6-13ms`, so do not rewrite raster/render behavior without a fresh timing pass that contradicts that signal.
 - Keep `PKCanvasView` as the native ink renderer.
 
 ### Side Sprint 62: Chord-First Release Candidate Pass

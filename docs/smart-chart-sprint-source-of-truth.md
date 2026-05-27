@@ -53,8 +53,9 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 58 wrong render recovery artifact: `docs/smart-chart-sprint-58-wrong-render-recovery-2026-05-27.md`
 - Sprint 59 confirmation/direct-input polish artifact: `docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md`
 - Sprint 60 general candidate availability artifact: `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`
-- latest local verification: Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures; `git diff --check` passed. Sprint 59 required GitHub Actions passed on `88feda5`.
-- latest GitHub verification: main commit `88feda5 Polish chord confirmation flow` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
+- Sprint 61 raster/render handoff polish artifact: `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`
+- latest local verification: Sprint 61 evidence audit inspected the timing/render handoff surfaces and current simulator diagnostics; `git diff --check` passed. Sprint 60 focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped, and `0` failures.
+- latest GitHub verification: main commit `899f690 Backfill supported chord candidate scores` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
 
@@ -160,12 +161,14 @@ Current state:
 - Sprint 58 prevents repeated wrong auto-renders by local ink digest or candidate-signature reroute.
 - Sprint 59 made confirmation/direct input calmer and more concise when reroutes, close races, or complete misses need user input.
 - Sprint 60 backfilled supported candidates into candidate-score evidence when raw unsupported noise occupies the top prefix.
-- The next chord-first gap is handoff feel: confirm whether any remaining perceived delay is recognition wait, commit/render handoff, or visual redraw/raster work before changing policy.
+- The initial Sprint 61 audit found existing timing evidence points away from render/raster as the main bottleneck: Sprint 50 render handoff was `6-13ms`, while scheduler/idle and recognition/trust routing dominated perceived delay.
+- Current booted simulator diagnostics had rendered chord rows but no timing evidence, so one clean current timing capture is better evidence than a renderer rewrite.
 
 Sprint 61 tasks:
 
 - Inspect timing telemetry and current renderer/raster handoff points before changing behavior.
 - Separate recognition wait from commit mutation, rendered-chord display, and export/raster work in the evidence.
+- Run one clean current timing capture or improve timing capture only if current evidence is missing when it should be present.
 - Improve only the measured handoff bottleneck if the evidence points to a small transferable change.
 - Preserve deleted-render rejection memory, confirmation/direct-input behavior, accepted-chord ink clearing, export behavior, supported-candidate backfill, and native `PKCanvasView` writing feel.
 - Update this source-of-truth doc and the chord-first side-sprint doc when the slice closes.
@@ -829,8 +832,8 @@ Append one entry here after each sprint completes. Each entry must include:
 
 ### Sprint 60: General Candidate Availability Hardening
 
-- status: complete locally; required GitHub Actions need to run after push
-- implementation commit: Sprint 60 closeout commit containing this entry
+- status: complete; required GitHub Actions passed on `899f690`
+- implementation commit: `899f690 Backfill supported chord candidate scores`
 - summary: Hardened candidate-score availability without retuning recognition. The recognizer still keeps the top raw score prefix for diagnostics, but now backfills bounded unique supported candidates from beyond that prefix so confirmation/trust evidence can include compendium-approved chords even when unsupported numeric/noisy candidates occupy the top raw slots.
 - tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-sprint60-availability --filter ChordInkRecognizerTests` passed with `41` tests, `1` skipped by the opt-in full fixture archive gate, and `0` failures; `git diff --check` passed.
 - behavior boundary: no personal handwriting fixture expansion, no recognition score retuning, no parser/compendium authority change, no default OCR expansion, no symbol-ledger diagnostics cost, no editor/export/placement/direct-input behavior change, and no accepted-chord ink clearing change.
@@ -844,7 +847,7 @@ Use this queue for chord-specific product work after Sprint 56. `docs/smart-char
 - Sprint 57: Chord Placement And Edit Loop: complete; GitHub Actions passed on `ece1924`.
 - Sprint 58: Wrong Render Recovery And Replace UX: complete; GitHub Actions passed on `b748b2a`.
 - Sprint 59: Confirmation And Direct Input Polish: complete; GitHub Actions passed on `88feda5`.
-- Sprint 60: General Candidate Availability Hardening: complete locally; awaiting GitHub verification.
+- Sprint 60: General Candidate Availability Hardening: complete; GitHub Actions passed on `899f690`.
 - Sprint 61: Raster/Render Handoff Polish: active.
 - Sprint 62: Chord-First Release Candidate Pass.
 
@@ -897,6 +900,7 @@ Current authority:
 - `docs/smart-chart-sprint-58-wrong-render-recovery-2026-05-27.md`: Sprint 58 wrong render recovery and replace UX.
 - `docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md`: Sprint 59 confirmation and direct-input polish.
 - `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`: Sprint 60 general candidate availability hardening.
+- `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`: Sprint 61 raster/render handoff polish.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

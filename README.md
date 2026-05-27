@@ -129,6 +129,7 @@ Current implementation authority:
 - [`docs/smart-chart-sprint-58-wrong-render-recovery-2026-05-27.md`](docs/smart-chart-sprint-58-wrong-render-recovery-2026-05-27.md) — Sprint 58 wrong render recovery and replace UX
 - [`docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md`](docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md) — Sprint 59 confirmation and direct-input polish
 - [`docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`](docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md) — Sprint 60 general candidate availability hardening
+- [`docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`](docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md) — Sprint 61 raster/render handoff evidence
 - [`docs/core-design-document.md`](docs/core-design-document.md) — enforced product and design rules
 - [`docs/developer-mvp-spec.md`](docs/developer-mvp-spec.md) — buildable MVP scope and behaviors
 - [`docs/repo-github-recognition-audit-2026-05-20.md`](docs/repo-github-recognition-audit-2026-05-20.md) — current recognition architecture and GitHub audit evidence for the recovery plan
