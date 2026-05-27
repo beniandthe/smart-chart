@@ -32,22 +32,50 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Decide CodeQL scope
+        id: codeql_scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          run_codeql=false
+          reason="CodeQL is deferred on direct main pushes; it still runs on pull requests, the weekly schedule, and manual dispatch."
+
+          case "${{ github.event_name }}" in
+            pull_request|schedule|workflow_dispatch)
+              run_codeql=true
+              reason="CodeQL is enabled for ${{ github.event_name }}."
+              ;;
+          esac
+
+          echo "run_codeql=$run_codeql" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=$reason" >> "$GITHUB_OUTPUT"
+
+      - name: Report deferred CodeQL
+        if: steps.codeql_scope.outputs.run_codeql != 'true'
+        run: echo "${{ steps.codeql_scope.outputs.skip_reason }}"
+
       - name: Install XcodeGen
+        if: steps.codeql_scope.outputs.run_codeql == 'true'
         run: brew install xcodegen
 
       - name: Generate Xcode project
+        if: steps.codeql_scope.outputs.run_codeql == 'true'
         run: xcodegen generate
 
       - name: Initialize CodeQL
+        if: steps.codeql_scope.outputs.run_codeql == 'true'
         uses: github/codeql-action/init@v4
         with:
           languages: swift
           build-mode: manual
 
       - name: Select iPad simulator
+        if: steps.codeql_scope.outputs.run_codeql == 'true'
         run: .github/scripts/select-ipad-simulator.sh
 
       - name: Build for CodeQL
+        if: steps.codeql_scope.outputs.run_codeql == 'true'
         run: |
           xcodebuild build \
             -scheme SmartChart \
@@ -55,4 +83,5 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Perform CodeQL analysis
+        if: steps.codeql_scope.outputs.run_codeql == 'true'
         uses: github/codeql-action/analyze@v4

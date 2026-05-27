@@ -1,8 +1,8 @@
 # Smart Chart Sprint 52 Manual UX Validation Log
 
-Status: ready for bounded manual pass
+Status: validated; closeout routed to Sprint 53 validation-speed cleanup
 Date: 2026-05-26
-Build/commit: `0a59588 Add sprint 52 chord confirmation user loop`
+Build/commit: `bded045 Record deleted chord auto-render rejections`
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Sprint artifact: `docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`
 
@@ -102,21 +102,19 @@ Record:
 
 ## Results
 
-Fill this section after the pass.
-
-- Device:
-- Chart:
-- Complete-fail attempts:
-- Close-race chord:
-- Visible suggestions:
-- Selected or typed chord:
-- Auto-render sanity chord:
-- Wrong auto-render deleted:
-- Overall feel:
+- Device: app validation pass; real-device details not re-recorded in this closeout note
+- Chart: disposable validation chart
+- Complete-fail attempts: user reported the new loop seems to be working
+- Close-race chord: user reported the confirmation/user loop seems to be working
+- Visible suggestions: no top-three presentation regression reported
+- Selected or typed chord: no manual-entry escape regression reported
+- Auto-render sanity chord: no auto-render regression reported
+- Wrong auto-render deleted: deletion-feedback rule added and focused tests passed; user goal is to avoid a write-delete-rewrite-delete loop
+- Overall feel: validated enough to move on; future work should treat infinite correction loops as a product failure, not normal behavior
 
 ## Routing
 
-- If this feels right, close Sprint 52 and route Sprint 53 to the next product polish lane.
+- Sprint 52 is validated and routed to Sprint 53 validation-speed cleanup.
 - If complete-fail clearing is too aggressive, tune the failure loop UX before adding more correction memory.
 - If top-three suggestions are not useful, improve candidate presentation before changing recognizer scoring.
 - If deleting a wrong auto-render does not prevent the repeat, fix local negative-memory application before touching global recognition.

@@ -26,6 +26,7 @@ write -> auto-render when trusted -> confirm when close -> direct input when fai
 - Extremely tight races do not create user rules because the competing chords are too close to safely bias later behavior.
 - Manual entry after wrong suggestions creates a local exclusion for that top-three suggestion signature.
 - Deleting an ink-origin rendered chord with the x control records a local rejection against that rendered chord for that exact ink symbol, so the same ink/chord pair does not silently auto-render again.
+- The correction loop must not trap the user in write -> wrong render -> delete -> rewrite -> wrong render again. After negative feedback, the next attempt must route to a recoverable choice or direct input.
 
 ## Architecture Boundary
 
@@ -57,6 +58,7 @@ This is product personalization, not recognizer training.
 - Confirming an extremely tight race does not create a local user correction rule.
 - Manual entry outside the suggestions records an exclusion and prevents local auto-rule application for that signature.
 - Deleting an ink-origin rendered chord prevents that same ink digest from auto-rendering as that same chord again.
+- Rejected auto-renders must not create an infinite correction loop for the same ink/chord pair.
 - Existing compendium/parser validation still gates every accepted chord.
 
 ## Verification Plan

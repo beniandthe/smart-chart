@@ -118,6 +118,8 @@ Current implementation authority:
 - [`docs/smart-chart-real-pencil-field-test-log-2026-05-26.md`](docs/smart-chart-real-pencil-field-test-log-2026-05-26.md) — Sprint 43 real Pencil field-test evidence log
 - [`docs/smart-chart-post-export-field-test-log-2026-05-26.md`](docs/smart-chart-post-export-field-test-log-2026-05-26.md) — Sprint 45 post-export real Pencil validation evidence log
 - [`docs/smart-chart-recognition-latency-triage-2026-05-26.md`](docs/smart-chart-recognition-latency-triage-2026-05-26.md) — Sprint 46 recognition latency evidence
+- [`docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md`](docs/smart-chart-sprint-52-chord-confirmation-user-loop-2026-05-26.md) — Sprint 52 chord confirmation and local user correction loop
+- [`docs/smart-chart-sprint-53-validation-speed-2026-05-26.md`](docs/smart-chart-sprint-53-validation-speed-2026-05-26.md) — Sprint 53 validation-speed policy and workflow cleanup
 - [`docs/core-design-document.md`](docs/core-design-document.md) — enforced product and design rules
 - [`docs/developer-mvp-spec.md`](docs/developer-mvp-spec.md) — buildable MVP scope and behaviors
 - [`docs/repo-github-recognition-audit-2026-05-20.md`](docs/repo-github-recognition-audit-2026-05-20.md) — current recognition architecture and GitHub audit evidence for the recovery plan
@@ -159,4 +161,4 @@ The first meaningful prototype succeeds if a musician can:
 
 ## Status
 
-Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-42 restored the streamlined writer-agnostic recognition/editor pipeline and added bounded writing-to-render readiness QA for real Apple Pencil validation. Current sprint status lives in the source-of-truth doc.
+Post-merge recovery/audit stage: the recognition recovery branch is merged into `main`; Sprints 12-52 restored the streamlined writer-agnostic recognition/editor pipeline, validated the writing-to-render loop with real app passes, and added the first local chord-correction UX loop. Current sprint status lives in the source-of-truth doc.
