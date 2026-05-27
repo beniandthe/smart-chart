@@ -385,7 +385,7 @@ enum ChordSymbolParser {
         }
 
         if !alterations.isEmpty,
-           extensions != ["7"] {
+           extensions.isEmpty {
             throw ChordSymbolParseError.unsupportedAlteration
         }
 
