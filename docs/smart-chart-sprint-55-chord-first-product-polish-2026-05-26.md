@@ -32,6 +32,7 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - Placement evidence lets the next real pass audit where a chord actually landed without expanding the handwriting fixture corpus or retuning recognition scores.
 - Surface placement evidence in `scripts/audit_chord_entry_diagnostics.py --details` so pass review can see each rendered chord's final start, duration, rhythm placement, and one-based rhythm slot.
 - Report missing or mismatched placement evidence by comparing active diagnostics against the current rendered chart state.
+- Summarize available timing evidence by slowest delay, idle, recognition total, proposal, commit, and render handoff so render/performance review starts from metadata instead of impressions.
 - Preserve recognition, trust, parser, correction-memory, PencilKit, fixture corpus, OCR, export, and chart mutation authority.
 
 ## Verification Plan
@@ -59,6 +60,10 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py` passed after the placement-drift audit update.
 - `git diff --check` passed after the placement-drift audit update.
 - Simulator sample `python3 scripts/audit_chord_entry_diagnostics.py --simulator 42254D11-2E65-4586-AEBE-C6317AF2DD10 --details --scores 3` completed; it reported `missing=6, mismatched=0` placement evidence for the current pre-placement-evidence diagnostic rows.
+- GitHub Actions for `3b23fd7 Flag chord placement drift in diagnostics audit` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-26.
+- `python3 -m py_compile scripts/audit_chord_entry_diagnostics.py` passed after the timing-summary audit update.
+- `git diff --check` passed after the timing-summary audit update.
+- Simulator sample `python3 scripts/audit_chord_entry_diagnostics.py --simulator 42254D11-2E65-4586-AEBE-C6317AF2DD10 --details --scores 3` completed after the timing-summary update; it reported `Timing evidence: available=0` for the current older rows.
 
 ## Acceptance Criteria
 
@@ -68,4 +73,5 @@ Reason: if a chord lands in the wrong rhythmic location, it feels wrong even whe
 - Chord-entry diagnostics include placement evidence for committed, corrected, and reconciled rendered chords.
 - The diagnostic audit script prints placement evidence during metadata review.
 - The diagnostic audit script reports whether active diagnostic placement evidence is missing or no longer matches the rendered chart.
+- The diagnostic audit script summarizes available timing evidence for render/performance triage.
 - No personal handwriting fixture expansion or score retuning.

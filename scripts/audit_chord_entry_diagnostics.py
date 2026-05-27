@@ -15,6 +15,14 @@ from typing import Any
 
 DEFAULT_BUNDLE_ID = "com.smartchart.app"
 DEFAULT_CHART_TITLE = "Chord Writing Test Chart"
+TIMING_SUMMARY_FIELDS = [
+    ("requestedDelayMilliseconds", "delay"),
+    ("idleMilliseconds", "idle"),
+    ("recognitionTotalMilliseconds", "recognitionTotal"),
+    ("proposalDecisionMilliseconds", "proposal"),
+    ("commitMutationMilliseconds", "commit"),
+    ("renderHandoffMilliseconds", "render"),
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -188,6 +196,10 @@ def format_confidence(value: Any) -> str:
     return f"{value:.2f}" if isinstance(value, (float, int)) else "?"
 
 
+def format_milliseconds(value: Any) -> str:
+    return f"{value:.0f}ms" if isinstance(value, (float, int)) else "?"
+
+
 def format_gap(value: Any) -> str:
     return f"{value:.2f}" if isinstance(value, (float, int)) else "-"
 
@@ -241,8 +253,7 @@ def format_timing_evidence(timing: dict[str, Any] | None) -> str:
         return ""
 
     def ms(key: str) -> str:
-        value = timing.get(key)
-        return "?" if value is None else f"{value:.0f}ms"
+        return format_milliseconds(timing.get(key))
 
     return (
         " timing=["
@@ -535,6 +546,37 @@ def placement_evidence_status(
     return missing, mismatched
 
 
+def timing_evidence_status(
+    chart_diagnostics: list[dict[str, Any]]
+) -> tuple[int, dict[str, tuple[float | int, dict[str, Any]]]]:
+    available_count = 0
+    slowest_by_field: dict[str, tuple[float | int, dict[str, Any]]] = {}
+
+    for event in chart_diagnostics:
+        timing = event.get("timingEvidence")
+        if not timing:
+            continue
+
+        available_count += 1
+        for field, _label in TIMING_SUMMARY_FIELDS:
+            value = timing.get(field)
+            if not isinstance(value, (float, int)):
+                continue
+
+            current = slowest_by_field.get(field)
+            if current is None or value > current[0]:
+                slowest_by_field[field] = (value, event)
+
+    return available_count, slowest_by_field
+
+
+def timing_peak_label(value: float | int, event: dict[str, Any]) -> str:
+    rendered = short_text(event.get("renderedDisplayText"), fallback="?")
+    measure = event.get("measureIndex")
+    measure_label = measure + 1 if isinstance(measure, int) else "?"
+    return f"{format_milliseconds(value)} {rendered}@m{measure_label}"
+
+
 def main() -> int:
     args = parse_args()
     try:
@@ -600,6 +642,7 @@ def main() -> int:
         latest_active_chart_diagnostics,
         rendered_by_id,
     )
+    timing_event_count, slowest_timing = timing_evidence_status(latest_active_chart_diagnostics)
 
     print(f"App data: {app_data}")
     print(f"Chart: {chart_title} ({chart_id})")
@@ -618,6 +661,15 @@ def main() -> int:
         "Placement evidence: "
         f"missing={len(missing_placement_events)}, mismatched={len(placement_mismatches)}"
     )
+    timing_summary = []
+    for field, label in TIMING_SUMMARY_FIELDS:
+        peak = slowest_timing.get(field)
+        if peak:
+            timing_summary.append(f"{label}={timing_peak_label(peak[0], peak[1])}")
+    if timing_summary:
+        print(f"Timing evidence: available={timing_event_count}; " + ", ".join(timing_summary))
+    else:
+        print(f"Timing evidence: available={timing_event_count}")
 
     if args.details:
         print_diagnostic_details(latest_active_chart_diagnostics, args.scores)
