@@ -63,18 +63,23 @@ struct LeadSheetNotationRenderer {
             )
         }
 
-        drawText(
-            chart.documentKey.transposed(for: chart.defaultTranspositionView).displayText.uppercased(),
-            in: header.keyFrame,
-            font: style.metadataFont(size: 14),
-            color: style.inkColor.withAlphaComponent(0.82)
-        )
-        drawText(
-            chart.defaultMeter.displayText,
-            in: header.meterFrame,
-            font: style.metadataFont(size: 14),
-            color: style.inkColor.withAlphaComponent(0.82)
-        )
+        if let keyFrame = header.keyFrame {
+            drawText(
+                chart.documentKey.transposed(for: chart.defaultTranspositionView).displayText.uppercased(),
+                in: keyFrame,
+                font: style.metadataFont(size: 14),
+                color: style.inkColor.withAlphaComponent(0.82)
+            )
+        }
+
+        if let meterFrame = header.meterFrame {
+            drawText(
+                chart.defaultMeter.displayText,
+                in: meterFrame,
+                font: style.metadataFont(size: 14),
+                color: style.inkColor.withAlphaComponent(0.82)
+            )
+        }
 
         let underlinePath = UIBezierPath()
         underlinePath.move(to: CGPoint(x: header.titleFrame.minX + 28, y: header.titleFrame.maxY - 4))
@@ -116,11 +121,22 @@ struct LeadSheetNotationRenderer {
     }
 
     func drawClef(in frame: CGRect) {
+        let symbol: NotationGlyphCatalog.Symbol = chart.defaultClef == .bass ? .bassClef : .trebleClef
         drawNotationSymbol(
-            .trebleClef,
+            symbol,
             centeredAt: CGPoint(x: frame.midX, y: frame.midY + 2),
             staffSpace: style.defaultStaffSpace
         )
+    }
+
+    func drawKeySignature(_ layouts: [LeadSheetKeySignatureLayout]) {
+        for layout in layouts {
+            drawNotationSymbol(
+                layout.symbol,
+                centeredAt: layout.frame.center,
+                staffSpace: layout.staffSpace
+            )
+        }
     }
 
     func drawTimeSignature(_ meter: Meter, in frame: CGRect) {

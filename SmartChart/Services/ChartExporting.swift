@@ -113,6 +113,7 @@ private struct ChartPDFRenderer {
             drawSystem(system, using: renderer)
         }
 
+        LeadSheetSavedInkRenderer.drawFreehandSymbols(pageLayout.freehandSymbolLayouts(for: chart))
         LeadSheetSavedInkRenderer.drawPageInk(chart.pageHandwrittenNotationData, in: pageLayout)
         LeadSheetSavedInkRenderer.drawChordInk(chart.pageHandwrittenChordData, in: pageLayout)
     }
@@ -133,6 +134,8 @@ private struct ChartPDFRenderer {
         if let clefFrame = system.clefFrame {
             renderer.drawClef(in: clefFrame)
         }
+
+        renderer.drawKeySignature(system.keySignatureLayouts)
 
         if let timeSignatureFrame = system.timeSignatureFrame {
             renderer.drawTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
@@ -167,7 +170,7 @@ private struct ChartPDFRenderer {
             renderer.drawTimeSignature(trailingMeterChange, in: trailingMeterChangeFrame)
         }
 
-        if measure.isOpen {
+        if measure.isOpen && chart.layoutStyle != .simpleChordSheet {
             renderer.drawOpenMeasureHint(measure)
         } else {
             renderer.drawBarline(measure.barlineAfter, in: measure.trailingBarlineFrame)

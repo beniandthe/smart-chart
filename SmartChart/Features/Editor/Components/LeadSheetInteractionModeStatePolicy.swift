@@ -15,22 +15,39 @@ struct LeadSheetInteractionModeStatePolicy {
     var clearsChordInteractionState: Bool
     var hidesPageInkCanvas: Bool
     var inkTool: PKInkingTool
+    var inkToolMode: EditorInkToolMode
     var drawingPolicy: PKCanvasViewDrawingPolicy
 
-    static func resolve(for interactionMode: EditorCanvasMode) -> LeadSheetInteractionModeStatePolicy {
-        LeadSheetInteractionModeStatePolicy(
+    var canvasTool: PKTool {
+        switch inkToolMode {
+        case .write:
+            return inkTool
+        case .erase:
+            return PKEraserTool(.bitmap)
+        }
+    }
+
+    static func resolve(
+        for interactionMode: EditorCanvasMode,
+        inkToolMode: EditorInkToolMode = .write
+    ) -> LeadSheetInteractionModeStatePolicy {
+        let allowsTransparentEditOverlay = interactionMode.allowsChordInkEditing || interactionMode.allowsPageInkEditing
+        return LeadSheetInteractionModeStatePolicy(
             selectionTapEnabled: interactionMode.allowsMeasureSelection || interactionMode.allowsNoteSelection,
-            inkSelectionTapEnabled: interactionMode.allowsNoteSelection || interactionMode.allowsChordInkEditing,
+            inkSelectionTapEnabled: interactionMode.allowsNoteSelection
+                || interactionMode.allowsChordInkEditing
+                || interactionMode.allowsPageInkEditing,
             measureResizePanEnabled: interactionMode.showsMeasureResizeHandles,
-            chordEditTapEnabled: interactionMode.allowsChordInkEditing,
-            chordMovePanEnabled: interactionMode.allowsChordInkEditing,
-            chordEditOverlayHidden: !interactionMode.allowsChordInkEditing,
-            chordEditOverlayInteractionEnabled: interactionMode.allowsChordInkEditing,
+            chordEditTapEnabled: allowsTransparentEditOverlay,
+            chordMovePanEnabled: allowsTransparentEditOverlay,
+            chordEditOverlayHidden: !allowsTransparentEditOverlay,
+            chordEditOverlayInteractionEnabled: allowsTransparentEditOverlay,
             pageInkCanvasInteractionEnabled: interactionMode.allowsAnyInkEditing,
             clearsMeasureResizeDrag: !interactionMode.showsMeasureResizeHandles,
             clearsChordInteractionState: !interactionMode.allowsChordInkEditing,
             hidesPageInkCanvas: !interactionMode.allowsAnyInkEditing,
             inkTool: inkTool(for: interactionMode),
+            inkToolMode: interactionMode.allowsAnyInkEditing ? inkToolMode : .write,
             drawingPolicy: drawingPolicy(for: interactionMode)
         )
     }

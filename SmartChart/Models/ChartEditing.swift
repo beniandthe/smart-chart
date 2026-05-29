@@ -2,22 +2,38 @@ import CoreGraphics
 import Foundation
 
 extension Chart {
+    func resolvedAuthoringMeasureID(preferredMeasureID: UUID? = nil) -> UUID? {
+        if let preferredMeasureID,
+           measure(id: preferredMeasureID) != nil {
+            return preferredMeasureID
+        }
+
+        return measures.first(where: { $0.authoringState == .open })?.id
+            ?? measures.last?.id
+    }
+
     mutating func completeInitialSetup(
         title: String,
         key: DocumentKey,
         meter: Meter,
-        staffStyle: StaffStyle
+        staffStyle: StaffStyle,
+        startingMeasureCount: Int = 1,
+        clef: ChartClef = .treble
     ) {
         self.title = title
         documentKey = key
         defaultMeter = meter
         self.staffStyle = staffStyle
+        defaultClef = clef
         timeSignatureChanges = []
         ensureInitialSystem()
         if measures.isEmpty {
-            systems[0].measures = [
-                Self.makeMeasure(index: 1, authoringState: .open)
-            ]
+            let measureDefaults = layoutStyle.profile.measureDefaults
+            systems[0].spacingMode = measureDefaults.systemSpacingMode
+            systems[0].measures = Self.makeInitialMeasures(
+                count: startingMeasureCount,
+                measureDefaults: measureDefaults
+            )
         }
         hasCompletedInitialSetup = true
         updatedAt = .now
@@ -123,9 +139,26 @@ extension Chart {
         let newMeasure = Self.makeMeasure(
             index: measures.count + 1,
             authoringState: authoringState,
-            barlineAfter: barlineAfter
+            barlineAfter: barlineAfter,
+            beatGridPreset: layoutStyle.profile.measureDefaults.beatGridPreset
         )
         appendPreparedMeasure(newMeasure)
+        updatedAt = .now
+        return newMeasure.id
+    }
+
+    @discardableResult
+    mutating func insertMeasureAtBeginning(
+        authoringState: MeasureAuthoringState = .committed,
+        barlineAfter: BarlineType = .single
+    ) -> UUID {
+        let newMeasure = Self.makeMeasure(
+            index: 1,
+            authoringState: authoringState,
+            barlineAfter: barlineAfter,
+            beatGridPreset: layoutStyle.profile.measureDefaults.beatGridPreset
+        )
+        insertPreparedMeasure(newMeasure, at: 0)
         updatedAt = .now
         return newMeasure.id
     }
@@ -191,6 +224,81 @@ extension Chart {
         systems[location.systemIndex].measures[location.measureIndex].rhythmMap = normalizedMap
         systems[location.systemIndex].measures[location.measureIndex]
             .clearInvalidRhythmSlotAssignments(defaultMeter: defaultMeter)
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func setLeadSheetPitchedNotes(
+        _ notes: [LeadSheetPitchedNoteInput],
+        for measureID: UUID
+    ) -> Bool {
+        guard !notes.isEmpty,
+              notes.allSatisfy({ $0.rhythmValue.supportsPitchedLeadSheetNote }) else {
+            return false
+        }
+
+        let values = notes.map(\.rhythmValue)
+        let slotInputs = notes.enumerated().map { index, note in
+            LeadSheetPitchedNoteSlotInput(
+                rhythmSlotIndex: index,
+                staffPosition: note.staffPosition,
+                sourceInkData: note.sourceInkData
+            )
+        }
+        return setLeadSheetRhythmMap(values, pitchedNotes: slotInputs, for: measureID)
+    }
+
+    @discardableResult
+    mutating func setLeadSheetRhythmMap(
+        _ values: [RhythmValue],
+        pitchedNotes: [LeadSheetPitchedNoteSlotInput],
+        for measureID: UUID
+    ) -> Bool {
+        guard layoutStyle == .leadSheet,
+              !values.isEmpty,
+              let location = measureLocation(id: measureID) else {
+            return false
+        }
+
+        var measure = systems[location.systemIndex].measures[location.measureIndex]
+        let meter = measure.resolvedMeter(defaultMeter: defaultMeter)
+        let rhythmMap = MeasureRhythmMap(values: values)
+        guard RhythmicNotationCompendium.accepts(values, in: meter),
+              let slots = rhythmMap.resolvedSlots(for: meter) else {
+            return false
+        }
+        let uniqueSlotIndices = Set(pitchedNotes.map(\.rhythmSlotIndex))
+        let noteSlotIndices = Set(slots.indices.filter {
+            slots[$0].duration.supportsPitchedLeadSheetNote
+        })
+        guard uniqueSlotIndices.count == pitchedNotes.count,
+              uniqueSlotIndices == noteSlotIndices,
+              pitchedNotes.allSatisfy({ input in
+                slots.indices.contains(input.rhythmSlotIndex)
+                    && slots[input.rhythmSlotIndex].duration.supportsPitchedLeadSheetNote
+              }) else {
+            return false
+        }
+
+        let pitchedNoteEvents = pitchedNotes
+            .sorted { $0.rhythmSlotIndex < $1.rhythmSlotIndex }
+            .map { note in
+            LeadSheetPitchedNoteEvent(
+                rhythmSlotIndex: note.rhythmSlotIndex,
+                staffPosition: note.staffPosition,
+                sourceInkData: note.sourceInkData?.isEmpty == true ? nil : note.sourceInkData
+            )
+        }
+        guard measure.rhythmMap != rhythmMap || measure.pitchedNoteEvents != pitchedNoteEvents else {
+            return false
+        }
+
+        measure.rhythmMap = rhythmMap
+        measure.pitchedNoteEvents = pitchedNoteEvents
+        measure.handwrittenRhythmicNotationData = nil
+        measure.clearInvalidRhythmSlotAssignments(defaultMeter: defaultMeter)
+        systems[location.systemIndex].measures[location.measureIndex] = measure
         updatedAt = .now
         return true
     }
@@ -445,13 +553,83 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func addFreehandSymbol(
+        anchorMeasureID: UUID,
+        lane: FreehandSymbolLane,
+        normalizedFrame: FreehandSymbolNormalizedFrame,
+        drawingData: Data
+    ) -> UUID? {
+        guard layoutStyle.profile.freehandSymbolLanes.contains(lane),
+              measureLocation(id: anchorMeasureID) != nil,
+              !drawingData.isEmpty,
+              normalizedFrame.width > 0,
+              normalizedFrame.height > 0 else {
+            return nil
+        }
+
+        let symbolID = UUID()
+        let nextZIndex = (freehandSymbols.map(\.zIndex).max() ?? -1) + 1
+        freehandSymbols.append(
+            FreehandSymbol(
+                id: symbolID,
+                anchorMeasureID: anchorMeasureID,
+                lane: lane,
+                normalizedFrame: normalizedFrame,
+                drawingData: drawingData,
+                zIndex: nextZIndex
+            )
+        )
+        updatedAt = .now
+        return symbolID
+    }
+
+    func freehandSymbol(id symbolID: UUID) -> FreehandSymbol? {
+        freehandSymbols.first { $0.id == symbolID }
+    }
+
+    @discardableResult
+    mutating func moveFreehandSymbol(
+        _ symbolID: UUID,
+        to normalizedFrame: FreehandSymbolNormalizedFrame
+    ) -> Bool {
+        guard normalizedFrame.width > 0,
+              normalizedFrame.height > 0,
+              let symbolIndex = freehandSymbols.firstIndex(where: { $0.id == symbolID }),
+              layoutStyle.profile.freehandSymbolLanes.contains(freehandSymbols[symbolIndex].lane),
+              measureLocation(id: freehandSymbols[symbolIndex].anchorMeasureID) != nil,
+              freehandSymbols[symbolIndex].normalizedFrame != normalizedFrame else {
+            return false
+        }
+
+        freehandSymbols[symbolIndex].normalizedFrame = normalizedFrame
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func deleteFreehandSymbol(_ symbolID: UUID) -> Bool {
+        guard let symbolIndex = freehandSymbols.firstIndex(where: { $0.id == symbolID }),
+              layoutStyle.profile.freehandSymbolLanes.contains(freehandSymbols[symbolIndex].lane) else {
+            return false
+        }
+
+        freehandSymbols.remove(at: symbolIndex)
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
     mutating func commitOpenMeasure() -> UUID? {
         guard let location = openMeasureLocation() else {
             return nil
         }
 
         systems[location.systemIndex].measures[location.measureIndex].authoringState = .committed
-        let newMeasure = Self.makeMeasure(index: measures.count + 1, authoringState: .open)
+        let newMeasure = Self.makeMeasure(
+            index: measures.count + 1,
+            authoringState: .open,
+            beatGridPreset: layoutStyle.profile.measureDefaults.beatGridPreset
+        )
         insertPreparedMeasure(newMeasure, after: location)
         updatedAt = .now
         return newMeasure.id
@@ -480,7 +658,11 @@ extension Chart {
             openMeasure = systems[openLocation.systemIndex].measures[openLocation.measureIndex]
             removeMeasure(at: openLocation)
         } else {
-            openMeasure = Self.makeMeasure(index: measures.count + 1, authoringState: .open)
+            openMeasure = Self.makeMeasure(
+                index: measures.count + 1,
+                authoringState: .open,
+                beatGridPreset: layoutStyle.profile.measureDefaults.beatGridPreset
+            )
         }
 
         guard let refreshedTargetLocation = measureLocation(id: measureID) else {
@@ -603,19 +785,34 @@ extension Chart {
     private static func makeMeasure(
         index: Int,
         authoringState: MeasureAuthoringState,
-        barlineAfter: BarlineType = .single
+        barlineAfter: BarlineType = .single,
+        beatGridPreset: BeatGridPreset = .simple
     ) -> Measure {
         Measure(
             id: UUID(),
             index: index,
             meterOverride: nil,
-            beatGridPreset: .simple,
+            beatGridPreset: beatGridPreset,
             barlineAfter: barlineAfter,
             chordEvents: [],
             cueTextIDs: [],
             roadmapObjectIDs: [],
             authoringState: authoringState
         )
+    }
+
+    private static func makeInitialMeasures(
+        count: Int,
+        measureDefaults: ChartLayoutMeasureDefaults
+    ) -> [Measure] {
+        let normalizedCount = max(1, count)
+        return (1...normalizedCount).map { index in
+            Self.makeMeasure(
+                index: index,
+                authoringState: index == normalizedCount ? .open : .committed,
+                beatGridPreset: measureDefaults.beatGridPreset
+            )
+        }
     }
 
     private func openMeasureLocation() -> (systemIndex: Int, measureIndex: Int)? {
@@ -648,6 +845,7 @@ extension Chart {
         return measure.chordEvents.isEmpty
             && measure.rhythmMap == nil
             && measure.handwrittenRhythmicNotationData == nil
+            && !freehandSymbols.contains { $0.anchorMeasureID == measure.id }
             && measure.cueTextIDs.isEmpty
             && measure.roadmapObjectIDs.isEmpty
     }
@@ -673,6 +871,14 @@ extension Chart {
 
     private mutating func appendPreparedMeasure(_ newMeasure: Measure) {
         insertPreparedMeasure(newMeasure, after: lastMeasureLocation())
+    }
+
+    private mutating func insertPreparedMeasure(_ newMeasure: Measure, at insertionIndex: Int) {
+        ensureInitialSystem()
+        var flattenedMeasures = measures
+        let clampedIndex = min(max(insertionIndex, 0), flattenedMeasures.count)
+        flattenedMeasures.insert(newMeasure, at: clampedIndex)
+        rebuildSystems(using: flattenedMeasures)
     }
 
     private mutating func insertPreparedMeasure(

@@ -9,6 +9,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     @Binding var selectedMeasureID: UUID?
     @Binding var selectedNoteSelection: LeadSheetNoteSelection?
     let interactionMode: EditorCanvasMode
+    let inkToolMode: EditorInkToolMode
     var onTimeSignatureTargetRequested: ((UUID) -> Void)? = nil
     var onRhythmicNotationProposal: ((UUID, [RhythmValue], Data) -> Void)? = nil
     var onRhythmicNotationValidationError: ((String) -> Void)? = nil
@@ -40,6 +41,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         view.selectedMeasureID = selectedMeasureID
         view.selectedNoteSelection = selectedNoteSelection
         view.interactionMode = interactionMode
+        view.inkToolMode = inkToolMode
         view.onMeasureSelectionChanged = { measureID in
             context.coordinator.selectedMeasureID.wrappedValue = measureID
         }
@@ -75,6 +77,326 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
     }
 }
 
+enum LeadSheetInkCanvasSyncPolicy {
+    static func shouldPreserveActiveCanvas(
+        activeInkScope: LeadSheetActiveInkScope,
+        interactionMode: EditorCanvasMode,
+        hasUnpersistedChordInk: Bool,
+        hasUnpersistedRhythmicNotationInk: Bool,
+        currentDrawingData: Data?,
+        desiredDrawingData: Data?
+    ) -> Bool {
+        guard currentDrawingData != desiredDrawingData else {
+            return false
+        }
+
+        switch activeInkScope {
+        case .chords:
+            return interactionMode.allowsChordInkEditing && hasUnpersistedChordInk
+        case .rhythmicMeasure:
+            return interactionMode.allowsDirectRhythmicNotationInk && hasUnpersistedRhythmicNotationInk
+        case .page, .noteSelection, .freehandSymbols:
+            return false
+        }
+    }
+}
+
+struct LeadSheetRhythmicNotationInkSnapshot: Equatable {
+    private struct StrokeSignature: Equatable {
+        var pointCount: Int
+        var bounds: CGRect
+        var pathLength: CGFloat
+        var startPoint: CGPoint
+        var endPoint: CGPoint
+    }
+
+    private var strokeSignatures: [StrokeSignature]
+
+    init?(drawing: PKDrawing) {
+        let signatures = drawing.strokes.compactMap { stroke -> StrokeSignature? in
+            let points = Array(stroke.path).map(\.location)
+            guard !points.isEmpty else {
+                return nil
+            }
+
+            let bounds = points.reduce(into: CGRect.null) { partialResult, point in
+                partialResult = partialResult.union(CGRect(origin: point, size: .zero))
+            }
+            let pathLength = points.count < 2
+                ? CGFloat.zero
+                : zip(points, points.dropFirst()).reduce(CGFloat.zero) { partialResult, segment in
+                    partialResult + hypot(segment.1.x - segment.0.x, segment.1.y - segment.0.y)
+                }
+
+            return StrokeSignature(
+                pointCount: points.count,
+                bounds: Self.rounded(bounds),
+                pathLength: Self.rounded(pathLength),
+                startPoint: Self.rounded(points.first ?? .zero),
+                endPoint: Self.rounded(points.last ?? .zero)
+            )
+        }
+
+        guard !signatures.isEmpty else {
+            return nil
+        }
+
+        strokeSignatures = signatures
+    }
+
+    init(testValues: [Int]) {
+        strokeSignatures = testValues.map { value in
+            StrokeSignature(
+                pointCount: value,
+                bounds: CGRect(x: value, y: value, width: value, height: value),
+                pathLength: CGFloat(value),
+                startPoint: CGPoint(x: value, y: value),
+                endPoint: CGPoint(x: value + 1, y: value + 1)
+            )
+        }
+    }
+
+    private static func rounded(_ point: CGPoint) -> CGPoint {
+        CGPoint(x: rounded(point.x), y: rounded(point.y))
+    }
+
+    private static func rounded(_ rect: CGRect) -> CGRect {
+        CGRect(
+            x: rounded(rect.origin.x),
+            y: rounded(rect.origin.y),
+            width: rounded(rect.size.width),
+            height: rounded(rect.size.height)
+        )
+    }
+
+    private static func rounded(_ value: CGFloat) -> CGFloat {
+        (value * 2).rounded() / 2
+    }
+}
+
+enum LeadSheetRhythmicNotationAutoApplyPolicy {
+    static let idleDelay: TimeInterval = 0.58
+    static let exactFitGraceDelay: TimeInterval = 0.70
+    static let ambiguousTerminalStemGraceDelay: TimeInterval = 0.85
+
+    static func exactFitGraceDelay(requiresExtendedStability: Bool) -> TimeInterval {
+        exactFitGraceDelay + (requiresExtendedStability ? ambiguousTerminalStemGraceDelay : 0)
+    }
+
+    static func canUseScheduledSnapshot(
+        currentInkSnapshot: LeadSheetRhythmicNotationInkSnapshot?,
+        scheduledInkSnapshot: LeadSheetRhythmicNotationInkSnapshot?
+    ) -> Bool {
+        guard let currentInkSnapshot,
+              let scheduledInkSnapshot else {
+            return false
+        }
+
+        return currentInkSnapshot == scheduledInkSnapshot
+    }
+
+    static func canAttemptAutoApply(
+        currentInkSnapshot: LeadSheetRhythmicNotationInkSnapshot?,
+        scheduledInkSnapshot: LeadSheetRhythmicNotationInkSnapshot?
+    ) -> Bool {
+        return canUseScheduledSnapshot(
+            currentInkSnapshot: currentInkSnapshot,
+            scheduledInkSnapshot: scheduledInkSnapshot
+        )
+    }
+
+    static func canAutoApplyProposal(
+        _ proposal: RhythmicNotationMeasureProposal,
+        requiresNaturalExactFitAfterErase: Bool
+    ) -> Bool {
+        // A live rhythm commit clears the user's ink, so meter-fit rewrites never auto-apply.
+        proposal.canAutoApply
+            && (!requiresNaturalExactFitAfterErase || proposal.isNaturalExactFit)
+    }
+}
+
+struct LeadSheetRhythmicNotationUnreadInkFeedback: Equatable {
+    var measureID: UUID
+    var reason: RhythmRecognitionReason
+    var frame: CGRect
+}
+
+enum LeadSheetRhythmicNotationFeedbackPolicy {
+    static func shouldHighlightUnreadInk(for decision: RhythmRecognitionDecision) -> Bool {
+        guard let phrase = decision.phrase,
+              phraseIsReadyForUnreadFeedback(phrase) else {
+            return false
+        }
+
+        switch decision {
+        case .commit:
+            return false
+        case .needsReview:
+            return true
+        case .keepWriting(let reason, _):
+            switch reason {
+            case .noInk, .underfilled:
+                return false
+            case .overflow,
+                 .unsupported,
+                 .nonNaturalExactFit,
+                 .ambiguousPhrase,
+                 .manualReview,
+                 .nonVisualFallback,
+                 .uncoveredStrokes,
+                 .competingExactPhrases:
+                return true
+            }
+        }
+    }
+
+    static func unreadInkFrame(
+        for _: PKDrawing,
+        decision: RhythmRecognitionDecision,
+        canvasFrame: CGRect,
+        padding: CGFloat = 7
+    ) -> CGRect? {
+        guard let phrase = decision.phrase,
+              phraseIsReadyForUnreadFeedback(phrase) else {
+            return nil
+        }
+
+        if let phrase = decision.phrase,
+           decision.reason == .uncoveredStrokes,
+           let uncoveredFrame = unreadPrimitiveFrame(
+            phrase: phrase,
+            strokeIndices: phrase.uncoveredStrokeIndices,
+            canvasFrame: canvasFrame,
+            padding: padding
+           ) {
+            return uncoveredFrame
+        }
+
+        if let phrase = decision.phrase,
+           let unreadSymbolFrame = unreadSymbolFrame(
+            phrase: phrase,
+            canvasFrame: canvasFrame,
+            padding: padding
+           ) {
+            return unreadSymbolFrame
+        }
+
+        return nil
+    }
+
+    static func unreadInkFrame(
+        for drawing: PKDrawing,
+        canvasFrame: CGRect,
+        padding: CGFloat = 7
+    ) -> CGRect? {
+        let localBounds = drawing.strokes.reduce(into: CGRect.null) { partialResult, stroke in
+            let points = Array(stroke.path).map(\.location)
+            for point in points {
+                partialResult = partialResult.union(CGRect(origin: point, size: .zero))
+            }
+        }
+        guard !localBounds.isNull else {
+            return nil
+        }
+
+        let paddedFrame = localBounds
+            .insetBy(dx: -padding, dy: -padding)
+            .offsetBy(dx: canvasFrame.minX, dy: canvasFrame.minY)
+        return paddedFrame.isEmpty ? nil : paddedFrame
+    }
+
+    private static func phraseIsReadyForUnreadFeedback(_ phrase: RhythmPhraseHypothesis) -> Bool {
+        phrase.targetUnits > 0 && phrase.naturalUnits >= phrase.targetUnits
+    }
+
+    private static func unreadPrimitiveFrame(
+        phrase: RhythmPhraseHypothesis,
+        strokeIndices: [Int],
+        canvasFrame: CGRect,
+        padding: CGFloat
+    ) -> CGRect? {
+        guard !strokeIndices.isEmpty else {
+            return nil
+        }
+
+        let indexedPrimitives = Dictionary(
+            uniqueKeysWithValues: phrase.primitives.map { primitive in
+                (primitive.strokeIndex, primitive)
+            }
+        )
+        let localBounds = strokeIndices.reduce(into: CGRect.null) { partialResult, strokeIndex in
+            guard let primitive = indexedPrimitives[strokeIndex],
+                  !primitive.bounds.isNull else {
+                return
+            }
+            partialResult = partialResult.union(primitive.bounds)
+        }
+        guard !localBounds.isNull else {
+            return nil
+        }
+
+        let paddedFrame = localBounds
+            .insetBy(dx: -padding, dy: -padding)
+            .offsetBy(dx: canvasFrame.minX, dy: canvasFrame.minY)
+        return paddedFrame.isEmpty ? nil : paddedFrame
+    }
+
+    private static func unreadSymbolFrame(
+        phrase: RhythmPhraseHypothesis,
+        canvasFrame: CGRect,
+        padding: CGFloat
+    ) -> CGRect? {
+        let unreadBounds = phrase.symbols.reduce(into: CGRect.null) { partialResult, symbol in
+            guard symbol.selectedValue == nil,
+                  !symbol.bounds.isNull,
+                  !symbol.bounds.isEmpty else {
+                return
+            }
+            partialResult = partialResult.union(symbol.bounds)
+        }
+        guard !unreadBounds.isNull else {
+            return nil
+        }
+
+        let paddedFrame = unreadBounds
+            .insetBy(dx: -padding, dy: -padding)
+            .offsetBy(dx: canvasFrame.minX, dy: canvasFrame.minY)
+        return paddedFrame.isEmpty ? nil : paddedFrame
+    }
+}
+
+struct LeadSheetRhythmicNotationEraseRecovery {
+    private(set) var measureRequiringNaturalExactFit: UUID?
+
+    mutating func recordDrawingChange(
+        selectedMeasureID: UUID?,
+        inkToolMode: EditorInkToolMode
+    ) -> Bool {
+        guard let selectedMeasureID else {
+            return false
+        }
+
+        switch inkToolMode {
+        case .write:
+            if measureRequiringNaturalExactFit == selectedMeasureID {
+                measureRequiringNaturalExactFit = nil
+            }
+            return false
+        case .erase:
+            measureRequiringNaturalExactFit = selectedMeasureID
+            return true
+        }
+    }
+
+    mutating func reset() {
+        measureRequiringNaturalExactFit = nil
+    }
+
+    func requiresNaturalExactFit(for measureID: UUID) -> Bool {
+        measureRequiringNaturalExactFit == measureID
+    }
+}
+
 final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRecognizerDelegate {
     var chart: Chart = .draft(title: "Preview") {
         didSet {
@@ -83,6 +405,15 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             }
 
             invalidateLayout()
+        }
+    }
+    var inkToolMode: EditorInkToolMode = .write {
+        didSet {
+            guard oldValue != inkToolMode else {
+                return
+            }
+
+            updateInteractionMode()
         }
     }
     var selectedMeasureID: UUID? {
@@ -98,6 +429,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 return
             }
 
+            clearRhythmicNotationUnreadInkFeedback()
             syncPageInkCanvas()
             setNeedsDisplay()
         }
@@ -121,8 +453,18 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 persistActiveInkIfNeeded()
             }
 
+            if oldValue.allowsDirectRhythmicNotationInk && !interactionMode.allowsDirectRhythmicNotationInk {
+                cancelPendingRhythmicNotationAutoApply()
+                clearRhythmicNotationUnreadInkFeedback()
+            }
+
             if oldValue.allowsNoteSelectionInk && !interactionMode.allowsNoteSelectionInk {
                 clearNoteSelectionInk()
+            }
+
+            if oldValue.allowsPageInkEditing && !interactionMode.allowsPageInkEditing {
+                selectedFreehandSymbolID = nil
+                activeFreehandSymbolMoveDrag = nil
             }
 
             updateInteractionMode()
@@ -142,6 +484,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
     private var pageLayout: LeadSheetPageLayout?
     private let pageInkCanvasView = PKCanvasView()
+    private let rhythmicNotationFeedbackOverlayView = RhythmicNotationFeedbackOverlayView()
     private let chordEditHitOverlayView = ChordEditHitOverlayView()
     private let chordInkRecognizer = ChordInkRecognizer()
     private var chordInkRecognitionOptions: ChordInkRecognitionOptions {
@@ -189,10 +532,22 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     )
     private var isSyncingInkCanvasFromModel = false
     private var hasUnpersistedChordInk = false
+    private var hasUnpersistedRhythmicNotationInk = false
     private var pendingInkPersistWorkItem: DispatchWorkItem?
+    private var pendingRhythmicNotationCommitWorkItem: DispatchWorkItem?
+    private var rhythmicNotationEraseRecovery = LeadSheetRhythmicNotationEraseRecovery()
+    private var rhythmicNotationUnreadInkFeedback: LeadSheetRhythmicNotationUnreadInkFeedback? {
+        didSet {
+            rhythmicNotationFeedbackOverlayView.feedback = rhythmicNotationUnreadInkFeedback
+        }
+    }
     private var chordInkRecognitionRequestState = LeadSheetChordInkRecognitionRequestState()
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
+    private var selectedFreehandSymbolID: UUID?
+    private var activeFreehandSymbolMoveDrag: ActiveFreehandSymbolMoveDrag?
+    private var lastEditableOverlayHitTarget: EditableOverlayHitTarget?
+    private var isClearingFreehandSymbolInk = false
     private var isRestoringSelection = false
     private var isApplyingTapSelection = false
     private var notationRenderer: LeadSheetNotationRenderer {
@@ -212,6 +567,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     override func layoutSubviews() {
         super.layoutSubviews()
         chordEditHitOverlayView.frame = bounds
+        rhythmicNotationFeedbackOverlayView.frame = bounds
         invalidateLayout()
     }
 
@@ -240,6 +596,18 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if interactionMode.allowsChordInkEditing {
             drawChordWritingLanes(pageLayout)
+        }
+
+        if interactionMode.allowsPageInkEditing,
+           !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
+            drawFreehandSymbolLanes(pageLayout)
+        }
+
+        drawSavedFreehandSymbols()
+
+        if interactionMode.allowsPageInkEditing,
+           !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
+            drawFreehandSymbolEditOverlays(using: renderer)
         }
 
         if interactionMode.showsMeasureResizeHandles,
@@ -272,16 +640,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         pageInkCanvasView.isHidden = true
         addSubview(pageInkCanvasView)
 
+        rhythmicNotationFeedbackOverlayView.backgroundColor = .clear
+        rhythmicNotationFeedbackOverlayView.isOpaque = false
+        rhythmicNotationFeedbackOverlayView.isUserInteractionEnabled = false
+        rhythmicNotationFeedbackOverlayView.isHidden = true
+        addSubview(rhythmicNotationFeedbackOverlayView)
+
         chordEditHitOverlayView.backgroundColor = .clear
         chordEditHitOverlayView.isOpaque = false
         chordEditHitOverlayView.isHidden = true
         chordEditHitOverlayView.containsEditableControl = { [weak self] location in
-            self?.chordEditHitTarget(at: location) != nil
+            let hitTarget = self?.editableOverlayHitTarget(at: location)
+            self?.lastEditableOverlayHitTarget = hitTarget
+            return hitTarget != nil
         }
         chordEditTapRecognizer.delegate = self
         chordEditHitOverlayView.addGestureRecognizer(chordEditTapRecognizer)
         chordMovePanRecognizer.delegate = self
-        chordEditHitOverlayView.addGestureRecognizer(chordMovePanRecognizer)
+        addGestureRecognizer(chordMovePanRecognizer)
         addSubview(chordEditHitOverlayView)
         updateInteractionMode()
     }
@@ -315,6 +691,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         if let clefFrame = system.clefFrame {
             renderer.drawClef(in: clefFrame)
         }
+
+        renderer.drawKeySignature(system.keySignatureLayouts)
 
         if let timeSignatureFrame = system.timeSignatureFrame {
             renderer.drawTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
@@ -356,7 +734,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 renderer.drawTimeSignature(trailingMeterChange, in: trailingMeterChangeFrame)
             }
 
-            if measure.isOpen {
+            if measure.isOpen && chart.layoutStyle != .simpleChordSheet {
                 renderer.drawOpenMeasureHint(measure)
             } else {
                 renderer.drawBarline(measure.barlineAfter, in: measure.trailingBarlineFrame)
@@ -440,6 +818,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         LeadSheetSavedInkRenderer.drawChordInk(chart.pageHandwrittenChordData, in: pageLayout)
     }
 
+    private func drawSavedFreehandSymbols() {
+        guard let pageLayout else {
+            return
+        }
+
+        LeadSheetSavedInkRenderer.drawFreehandSymbols(pageLayout.freehandSymbolLayouts(for: chart))
+    }
+
     private func drawChordWritingLanes(_ pageLayout: LeadSheetPageLayout) {
         for system in pageLayout.systems {
             let measureFrames = system.measures.map(\.chordBandFrame)
@@ -463,6 +849,79 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
     }
 
+    private func drawFreehandSymbolLanes(_ pageLayout: LeadSheetPageLayout) {
+        for system in pageLayout.systems {
+            for measure in system.measures {
+                for laneFrame in [measure.freehandAboveFrame, measure.freehandBelowFrame].compactMap({ $0 }) {
+                    let lanePath = UIBezierPath(roundedRect: laneFrame.insetBy(dx: -2, dy: -2), cornerRadius: 7)
+                    UIColor(red: 0.12, green: 0.46, blue: 0.42, alpha: 0.045).setFill()
+                    lanePath.fill()
+                    UIColor(red: 0.12, green: 0.46, blue: 0.42, alpha: 0.16).setStroke()
+                    lanePath.lineWidth = 1
+                    lanePath.setLineDash([5, 4], count: 2, phase: 0)
+                    lanePath.stroke()
+                }
+            }
+        }
+    }
+
+    private func drawFreehandSymbolEditOverlays(using renderer: LeadSheetNotationRenderer) {
+        guard let selectedFreehandSymbolID,
+              let symbolLayout = freehandSymbolLayouts().first(where: { $0.id == selectedFreehandSymbolID }) else {
+            return
+        }
+
+        drawFreehandSymbolEditOverlay(for: symbolLayout, using: renderer)
+    }
+
+    private func drawFreehandSymbolEditOverlay(
+        for symbolLayout: LeadSheetFreehandSymbolLayout,
+        using renderer: LeadSheetNotationRenderer
+    ) {
+        let editFrame = LeadSheetFreehandSymbolEditOverlayGeometry.editFrame(for: symbolLayout)
+        let controlFrames = LeadSheetFreehandSymbolEditOverlayGeometry.controlFrames(for: symbolLayout)
+        let isActiveMove = activeFreehandSymbolMoveDrag?.symbolID == symbolLayout.id
+
+        let boxPath = UIBezierPath(roundedRect: editFrame, cornerRadius: 6)
+        UIColor(red: 0.80, green: 0.96, blue: 0.91, alpha: isActiveMove ? 0.34 : 0.20).setFill()
+        boxPath.fill()
+        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveMove ? 0.92 : 0.66).setStroke()
+        boxPath.lineWidth = isActiveMove ? 1.4 : 1
+        boxPath.stroke()
+
+        let deletePath = UIBezierPath(ovalIn: controlFrames.delete)
+        UIColor.white.withAlphaComponent(0.96).setFill()
+        deletePath.fill()
+        UIColor(red: 0.92, green: 0.16, blue: 0.20, alpha: 0.86).setStroke()
+        deletePath.lineWidth = 1
+        deletePath.stroke()
+        renderer.drawText(
+            "x",
+            in: controlFrames.delete.insetBy(dx: 1, dy: -1),
+            font: UIFont.systemFont(ofSize: 10, weight: .bold),
+            color: UIColor(red: 0.82, green: 0.08, blue: 0.12, alpha: 1),
+            alignment: .center
+        )
+
+        let movePath = UIBezierPath(ovalIn: controlFrames.move)
+        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveMove ? 1 : 0.88).setFill()
+        movePath.fill()
+        UIColor.white.withAlphaComponent(0.95).setStroke()
+        movePath.lineWidth = 1
+        movePath.stroke()
+
+        let moveGlyph = UIBezierPath()
+        let glyphInset: CGFloat = 5
+        moveGlyph.move(to: CGPoint(x: controlFrames.move.minX + glyphInset, y: controlFrames.move.midY))
+        moveGlyph.addLine(to: CGPoint(x: controlFrames.move.maxX - glyphInset, y: controlFrames.move.midY))
+        moveGlyph.move(to: CGPoint(x: controlFrames.move.midX, y: controlFrames.move.minY + glyphInset))
+        moveGlyph.addLine(to: CGPoint(x: controlFrames.move.midX, y: controlFrames.move.maxY - glyphInset))
+        UIColor.white.withAlphaComponent(0.96).setStroke()
+        moveGlyph.lineWidth = 1.5
+        moveGlyph.lineCapStyle = .round
+        moveGlyph.stroke()
+    }
+
     private func drawChordEditOverlay(
         for chordLayout: LeadSheetChordLayout,
         using renderer: LeadSheetNotationRenderer
@@ -470,6 +929,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         let editFrame = LeadSheetChordEditOverlayGeometry.editFrame(for: chordLayout)
         let controlFrames = LeadSheetChordEditOverlayGeometry.controlFrames(for: chordLayout)
         let isActiveMove = activeChordMoveDrag?.chordID == chordLayout.id
+
+        if isActiveMove {
+            drawChordSnapGuide(for: chordLayout)
+        }
 
         let boxPath = UIBezierPath(roundedRect: editFrame, cornerRadius: 5)
         UIColor(red: 0.88, green: 0.93, blue: 1, alpha: isActiveMove ? 0.30 : 0.18).setFill()
@@ -509,6 +972,27 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         moveGlyph.lineWidth = 1.5
         moveGlyph.lineCapStyle = .round
         moveGlyph.stroke()
+    }
+
+    private func drawChordSnapGuide(for chordLayout: LeadSheetChordLayout) {
+        let startPoint = CGPoint(
+            x: chordLayout.frame.midX,
+            y: chordLayout.frame.maxY + 1
+        )
+        let endPoint = chordLayout.snapGuideTarget
+        let guidePath = UIBezierPath()
+        guidePath.move(to: startPoint)
+        guidePath.addLine(to: endPoint)
+        UIColor(red: 0.16, green: 0.38, blue: 0.86, alpha: 0.54).setStroke()
+        guidePath.lineWidth = 1.2
+        guidePath.lineCapStyle = .round
+        guidePath.setLineDash([4, 4], count: 2, phase: 0)
+        guidePath.stroke()
+
+        let targetRect = CGRect(x: endPoint.x - 3.5, y: endPoint.y - 3.5, width: 7, height: 7)
+        let targetPath = UIBezierPath(ovalIn: targetRect)
+        UIColor(red: 0.16, green: 0.38, blue: 0.86, alpha: 0.72).setFill()
+        targetPath.fill()
     }
 
     private func drawSavedMeasureRhythmicNotation(_ measure: LeadSheetMeasureLayout) {
@@ -559,13 +1043,82 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         return LeadSheetChordEditOverlayGeometry.hitTarget(at: location, in: pageLayout)
     }
 
+    private enum EditableOverlayHitTarget {
+        case chord(ChordEditHitTarget)
+        case freehand(FreehandSymbolEditHitTarget)
+    }
+
+    private func editableOverlayHitTarget(at location: CGPoint) -> EditableOverlayHitTarget? {
+        if let chordTarget = chordEditHitTarget(at: location) {
+            return .chord(chordTarget)
+        }
+
+        if let freehandTarget = freehandSymbolEditHitTarget(at: location) {
+            return .freehand(freehandTarget)
+        }
+
+        return nil
+    }
+
+    private func freehandSymbolLayouts() -> [LeadSheetFreehandSymbolLayout] {
+        guard let pageLayout else {
+            return []
+        }
+
+        return pageLayout.freehandSymbolLayouts(for: chart)
+    }
+
+    private func freehandSymbolEditHitTarget(at location: CGPoint) -> FreehandSymbolEditHitTarget? {
+        guard interactionMode.allowsPageInkEditing,
+              !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty else {
+            return nil
+        }
+
+        let symbolLayouts = freehandSymbolLayouts()
+        if let selectedFreehandSymbolID,
+           let selectedLayout = symbolLayouts.first(where: { $0.id == selectedFreehandSymbolID }),
+           let selectedHitTarget = LeadSheetFreehandSymbolEditOverlayGeometry.hitTarget(
+               at: location,
+               in: [selectedLayout]
+           ) {
+            return selectedHitTarget
+        }
+
+        for symbolLayout in symbolLayouts.reversed() where symbolLayout.id != selectedFreehandSymbolID {
+            if LeadSheetFreehandSymbolEditOverlayGeometry.editFrame(for: symbolLayout)
+                .insetBy(dx: -8, dy: -8)
+                .contains(location) {
+                return FreehandSymbolEditHitTarget(symbolID: symbolLayout.id, action: .select)
+            }
+        }
+
+        return nil
+    }
+
+    private func lastFreehandSymbolDragHitTarget() -> FreehandSymbolEditHitTarget? {
+        guard case let .freehand(hitTarget)? = lastEditableOverlayHitTarget,
+              hitTarget.action != .delete else {
+            return nil
+        }
+
+        return hitTarget
+    }
+
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
         guard !isSyncingInkCanvasFromModel else {
+            return
+        }
+        guard !isClearingFreehandSymbolInk else {
             return
         }
 
         if interactionMode.allowsChordInkEditing {
             hasUnpersistedChordInk = true
+        }
+        if interactionMode.allowsDirectRhythmicNotationInk {
+            hasUnpersistedRhythmicNotationInk = true
+            clearRhythmicNotationUnreadInkFeedback()
+            recordRhythmicNotationDrawingChange()
         }
 
         schedulePersistActiveInk()
@@ -573,6 +1126,12 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
     @objc
     private func handleTap(_ recognizer: UITapGestureRecognizer) {
+        if interactionMode.allowsPageInkEditing,
+           !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
+            handleFreehandSymbolTap(at: recognizer.location(in: self))
+            return
+        }
+
         if interactionMode.allowsChordInkEditing {
             handleChordEntryTap(at: recognizer.location(in: self))
             return
@@ -606,6 +1165,22 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
     }
 
+    private func handleFreehandSymbolTap(at location: CGPoint) {
+        guard let hitTarget = freehandSymbolEditHitTarget(at: location) else {
+            selectedFreehandSymbolID = nil
+            setNeedsDisplay()
+            return
+        }
+
+        switch hitTarget.action {
+        case .delete:
+            deleteFreehandSymbol(hitTarget.symbolID)
+        case .move, .select:
+            selectedFreehandSymbolID = hitTarget.symbolID
+            setNeedsDisplay()
+        }
+    }
+
     @objc
     private func handleChordEditTap(_ recognizer: UITapGestureRecognizer) {
         guard recognizer.state == .ended else {
@@ -613,6 +1188,12 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         let location = recognizer.location(in: chordEditHitOverlayView)
+        if interactionMode.allowsPageInkEditing,
+           !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
+            handleFreehandSymbolTap(at: location)
+            return
+        }
+
         guard let hitTarget = chordEditHitTarget(at: location) else {
             return
         }
@@ -662,6 +1243,23 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         chart = updatedChart
         onChartChanged?(updatedChart)
         onChordDeleted?(deletedChord)
+        setNeedsDisplay()
+    }
+
+    private func deleteFreehandSymbol(_ symbolID: UUID) {
+        var updatedChart = chart
+        guard updatedChart.deleteFreehandSymbol(symbolID) else {
+            return
+        }
+
+        if selectedFreehandSymbolID == symbolID {
+            selectedFreehandSymbolID = nil
+        }
+        if activeFreehandSymbolMoveDrag?.symbolID == symbolID {
+            activeFreehandSymbolMoveDrag = nil
+        }
+        chart = updatedChart
+        onChartChanged?(updatedChart)
         setNeedsDisplay()
     }
 
@@ -731,6 +1329,12 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
     @objc
     private func handleChordMovePan(_ recognizer: UIPanGestureRecognizer) {
+        if interactionMode.allowsPageInkEditing,
+           !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
+            handleFreehandSymbolMovePan(recognizer)
+            return
+        }
+
         switch recognizer.state {
         case .began:
             let location = recognizer.location(in: self)
@@ -780,6 +1384,77 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
     }
 
+    private func handleFreehandSymbolMovePan(_ recognizer: UIPanGestureRecognizer) {
+        switch recognizer.state {
+        case .began:
+            let location = recognizer.location(in: self)
+            let translation = recognizer.translation(in: self)
+            let startLocation = CGPoint(
+                x: location.x - translation.x,
+                y: location.y - translation.y
+            )
+            let resolvedHitTarget = freehandSymbolEditHitTarget(at: startLocation)
+                ?? lastFreehandSymbolDragHitTarget()
+                ?? selectedFreehandSymbolID.map {
+                    FreehandSymbolEditHitTarget(symbolID: $0, action: .move)
+                }
+            guard let hitTarget = resolvedHitTarget,
+                  hitTarget.action != .delete,
+                  let symbolLayout = freehandSymbolLayouts().first(where: { $0.id == hitTarget.symbolID }) else {
+                activeFreehandSymbolMoveDrag = nil
+                setNeedsDisplay()
+                return
+            }
+
+            selectedFreehandSymbolID = hitTarget.symbolID
+            activeFreehandSymbolMoveDrag = ActiveFreehandSymbolMoveDrag(
+                symbolID: hitTarget.symbolID,
+                initialFrame: symbolLayout.frame,
+                laneFrame: symbolLayout.laneFrame
+            )
+            setNeedsDisplay()
+        case .changed, .ended:
+            guard let activeFreehandSymbolMoveDrag else {
+                return
+            }
+
+            let translation = recognizer.translation(in: self)
+            let proposedFrame = activeFreehandSymbolMoveDrag.initialFrame.offsetBy(
+                dx: translation.x,
+                dy: translation.y
+            )
+            let clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.clampedFrame(
+                proposedFrame,
+                in: activeFreehandSymbolMoveDrag.laneFrame
+            )
+            let normalizedFrame = FreehandSymbolNormalizedFrame(
+                frame: clampedFrame,
+                in: activeFreehandSymbolMoveDrag.laneFrame
+            )
+
+            var updatedChart = chart
+            if updatedChart.moveFreehandSymbol(
+                activeFreehandSymbolMoveDrag.symbolID,
+                to: normalizedFrame
+            ) {
+                chart = updatedChart
+                onChartChanged?(updatedChart)
+                setNeedsDisplay()
+            }
+
+            if recognizer.state == .ended {
+                self.activeFreehandSymbolMoveDrag = nil
+                lastEditableOverlayHitTarget = nil
+            }
+        case .cancelled, .failed:
+            activeFreehandSymbolMoveDrag = nil
+            lastEditableOverlayHitTarget = nil
+            setNeedsDisplay()
+        default:
+            break
+        }
+    }
+
     private func syncPageInkCanvas() {
         guard let activeInkScope = activeInkScope() else {
             if !interactionMode.allowsAnyInkEditing {
@@ -800,9 +1475,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         let desiredData = activeInkScope.drawingData(in: chart)
         let currentData = currentCanvasDrawingData()
-        if interactionMode.allowsChordInkEditing,
-           hasUnpersistedChordInk,
-           currentData != desiredData {
+        if LeadSheetInkCanvasSyncPolicy.shouldPreserveActiveCanvas(
+            activeInkScope: activeInkScope,
+            interactionMode: interactionMode,
+            hasUnpersistedChordInk: hasUnpersistedChordInk,
+            hasUnpersistedRhythmicNotationInk: hasUnpersistedRhythmicNotationInk,
+            currentDrawingData: currentData,
+            desiredDrawingData: desiredData
+        ) {
             pageInkCanvasView.becomeFirstResponder()
             return
         }
@@ -829,6 +1509,25 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         pendingInkPersistWorkItem?.cancel()
+        pendingRhythmicNotationCommitWorkItem?.cancel()
+        pendingRhythmicNotationCommitWorkItem = nil
+        if interactionMode.allowsDirectRhythmicNotationInk,
+           let selectedMeasureID {
+            let scheduledInkSnapshot = currentCanvasInkSnapshot()
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.autoApplyRhythmicNotationIfReady(
+                    for: selectedMeasureID,
+                    scheduledInkSnapshot: scheduledInkSnapshot
+                )
+            }
+            pendingInkPersistWorkItem = workItem
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + LeadSheetRhythmicNotationAutoApplyPolicy.idleDelay,
+                execute: workItem
+            )
+            return
+        }
+
         let workItem = DispatchWorkItem { [weak self] in
             self?.persistActiveInkIfNeeded()
         }
@@ -874,16 +1573,30 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         let isChordInkScope: Bool
+        let isRhythmicNotationScope: Bool
         if case .chords = activeInkScope {
             isChordInkScope = true
         } else {
             isChordInkScope = false
+        }
+        if case .rhythmicMeasure = activeInkScope {
+            isRhythmicNotationScope = true
+        } else {
+            isRhythmicNotationScope = false
+        }
+
+        if case .freehandSymbols(let frame) = activeInkScope {
+            persistFreehandSymbolInkIfNeeded(canvasFrame: frame)
+            return
         }
 
         let drawingData = currentCanvasDrawingData()
         guard let updatedChart = activeInkScope.chartByPersistingDrawingData(drawingData, in: chart) else {
             if isChordInkScope {
                 hasUnpersistedChordInk = false
+            }
+            if isRhythmicNotationScope {
+                hasUnpersistedRhythmicNotationInk = false
             }
             return
         }
@@ -892,6 +1605,9 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         onChartChanged?(updatedChart)
         if isChordInkScope {
             hasUnpersistedChordInk = false
+        }
+        if isRhythmicNotationScope {
+            hasUnpersistedRhythmicNotationInk = false
         }
     }
 
@@ -1044,6 +1760,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                for: measureID,
                in: workingChart
            ) {
+            hasUnpersistedRhythmicNotationInk = false
             chart = updatedChart
             onChartChanged?(updatedChart)
             workingChart = updatedChart
@@ -1053,41 +1770,270 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
               let drawingData = measure.handwrittenRhythmicNotationData,
               !drawingData.isEmpty,
               let measureLayout = measureLayout(for: measureID) else {
+            clearRhythmicNotationUnreadInkFeedback()
             return true
         }
 
         do {
-            let quantizedValues = try LeadSheetRhythmicNotationFinalization.quantize(
+            let requiresNaturalExactFitAfterErase = rhythmicNotationEraseRecovery.requiresNaturalExactFit(
+                for: measureID
+            )
+            let decision = try LeadSheetRhythmicNotationFinalization.recognitionDecision(
                 drawingData: drawingData,
                 measure: measure,
                 defaultMeter: chart.defaultMeter,
                 measureLayout: measureLayout
             )
-
-            if let onRhythmicNotationProposal {
-                onRhythmicNotationProposal(measureID, quantizedValues, drawingData)
+            guard case .commit(let proposal, _) = decision else {
+                showRhythmicNotationUnreadInkFeedback(for: decision, measureID: measureID)
+                let message = requiresNaturalExactFitAfterErase
+                    ? "After erasing, this measure is still missing or ambiguous. Write the replacement rhythm or erase the extra symbol before it renders."
+                    : "This rhythm needs a clearer full-measure read before it renders. The measure is still selected so you can adjust or rewrite it."
+                onRhythmicNotationValidationError?(message)
                 return false
             }
+            guard LeadSheetRhythmicNotationAutoApplyPolicy.canAutoApplyProposal(
+                proposal,
+                requiresNaturalExactFitAfterErase: requiresNaturalExactFitAfterErase
+            ) else {
+                showRhythmicNotationUnreadInkFeedback(for: decision, measureID: measureID)
+                let message = requiresNaturalExactFitAfterErase
+                    ? "After erasing, this measure is still missing or ambiguous. Write the replacement rhythm or erase the extra symbol before it renders."
+                    : "This rhythm needs a clearer full-measure read before it renders. The measure is still selected so you can adjust or rewrite it."
+                onRhythmicNotationValidationError?(message)
+                return false
+            }
+            let quantizedValues = proposal.values
 
             if let updatedChart = LeadSheetRhythmicNotationFinalization.chartByApplyingQuantizedRhythmMap(
                 quantizedValues,
                 drawingData: drawingData,
                 for: measureID,
+                measureLayout: measureLayout,
                 in: workingChart
             ) {
+                clearRhythmicNotationUnreadInkFeedback()
+                clearRhythmicNotationCanvas()
                 chart = updatedChart
                 onChartChanged?(updatedChart)
+                setNeedsDisplay()
             }
 
             return true
         } catch let error as RhythmicNotationQuantizationError {
+            clearRhythmicNotationUnreadInkFeedback()
             onRhythmicNotationValidationError?(error.userFacingMessage)
             return false
         } catch {
+            clearRhythmicNotationUnreadInkFeedback()
             onRhythmicNotationValidationError?(
                 "That rhythm couldn’t be matched yet. The measure is still selected so you can adjust or rewrite it."
             )
             return false
+        }
+    }
+
+    private func autoApplyRhythmicNotationIfReady(
+        for measureID: UUID,
+        scheduledInkSnapshot: LeadSheetRhythmicNotationInkSnapshot?
+    ) {
+        guard let candidate = liveRhythmicNotationCandidate(
+            for: measureID,
+            scheduledInkSnapshot: scheduledInkSnapshot
+        ) else {
+            return
+        }
+
+        scheduleRhythmicNotationCommitGrace(
+            for: measureID,
+            scheduledInkSnapshot: candidate.inkSnapshot,
+            requiresExtendedStability: candidate.requiresExtendedStability
+        )
+    }
+
+    private struct LiveRhythmicNotationCandidate {
+        var drawingData: Data
+        var inkSnapshot: LeadSheetRhythmicNotationInkSnapshot
+        var values: [RhythmValue]
+        var requiresExtendedStability: Bool
+    }
+
+    private func liveRhythmicNotationCandidate(
+        for measureID: UUID,
+        scheduledInkSnapshot: LeadSheetRhythmicNotationInkSnapshot?
+    ) -> LiveRhythmicNotationCandidate? {
+        let requiresNaturalExactFitAfterErase = rhythmicNotationEraseRecovery.requiresNaturalExactFit(
+            for: measureID
+        )
+        guard interactionMode.allowsDirectRhythmicNotationInk else {
+            return nil
+        }
+        guard selectedMeasureID == measureID else {
+            return nil
+        }
+        guard let measure = chart.measure(id: measureID) else {
+            return nil
+        }
+        guard let drawingData = currentCanvasDrawingData(),
+              let inkSnapshot = currentCanvasInkSnapshot() else {
+            return nil
+        }
+        guard LeadSheetRhythmicNotationAutoApplyPolicy.canAttemptAutoApply(
+            currentInkSnapshot: inkSnapshot,
+            scheduledInkSnapshot: scheduledInkSnapshot
+        ) else {
+            return nil
+        }
+        guard let measureLayout = measureLayout(for: measureID) else {
+            return nil
+        }
+
+        let decision: RhythmRecognitionDecision
+        do {
+            decision = try LeadSheetRhythmicNotationFinalization.recognitionDecision(
+                drawingData: drawingData,
+                measure: measure,
+                defaultMeter: chart.defaultMeter,
+                measureLayout: measureLayout
+            )
+        } catch {
+            clearRhythmicNotationUnreadInkFeedback()
+            return nil
+        }
+
+        guard case .commit(let proposal, _) = decision else {
+            showRhythmicNotationUnreadInkFeedback(for: decision, measureID: measureID)
+            return nil
+        }
+        guard LeadSheetRhythmicNotationAutoApplyPolicy.canAutoApplyProposal(
+            proposal,
+            requiresNaturalExactFitAfterErase: requiresNaturalExactFitAfterErase
+        ) else {
+            showRhythmicNotationUnreadInkFeedback(for: decision, measureID: measureID)
+            return nil
+        }
+        guard RhythmicNotationCompendium.accepts(
+            proposal.values,
+            in: measure.resolvedMeter(defaultMeter: chart.defaultMeter)
+        ) else {
+            clearRhythmicNotationUnreadInkFeedback()
+            return nil
+        }
+
+        clearRhythmicNotationUnreadInkFeedback()
+        return LiveRhythmicNotationCandidate(
+            drawingData: drawingData,
+            inkSnapshot: inkSnapshot,
+            values: proposal.values,
+            requiresExtendedStability: proposal.requiresExtendedStability
+        )
+    }
+
+    private func scheduleRhythmicNotationCommitGrace(
+        for measureID: UUID,
+        scheduledInkSnapshot: LeadSheetRhythmicNotationInkSnapshot,
+        requiresExtendedStability: Bool
+    ) {
+        pendingRhythmicNotationCommitWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.commitAutoAppliedRhythmicNotationIfReady(
+                for: measureID,
+                scheduledInkSnapshot: scheduledInkSnapshot
+            )
+        }
+        pendingRhythmicNotationCommitWorkItem = workItem
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + LeadSheetRhythmicNotationAutoApplyPolicy.exactFitGraceDelay(
+                requiresExtendedStability: requiresExtendedStability
+            ),
+            execute: workItem
+        )
+    }
+
+    private func commitAutoAppliedRhythmicNotationIfReady(
+        for measureID: UUID,
+        scheduledInkSnapshot: LeadSheetRhythmicNotationInkSnapshot
+    ) {
+        guard let candidate = liveRhythmicNotationCandidate(
+            for: measureID,
+            scheduledInkSnapshot: scheduledInkSnapshot
+        ),
+              let measureLayout = measureLayout(for: measureID),
+              let updatedChart = LeadSheetRhythmicNotationFinalization.chartByApplyingQuantizedRhythmMap(
+                candidate.values,
+                drawingData: candidate.drawingData,
+                for: measureID,
+                measureLayout: measureLayout,
+                in: chart
+              ) else {
+            return
+        }
+
+        pendingRhythmicNotationCommitWorkItem = nil
+        clearRhythmicNotationCanvas()
+        chart = updatedChart
+        onChartChanged?(updatedChart)
+        setNeedsDisplay()
+    }
+
+    private func cancelPendingRhythmicNotationAutoApply() {
+        pendingInkPersistWorkItem?.cancel()
+        pendingInkPersistWorkItem = nil
+        pendingRhythmicNotationCommitWorkItem?.cancel()
+        pendingRhythmicNotationCommitWorkItem = nil
+    }
+
+    private func clearRhythmicNotationCanvas() {
+        guard !pageInkCanvasView.drawing.strokes.isEmpty else {
+            clearRhythmicNotationUnreadInkFeedback()
+            return
+        }
+
+        rhythmicNotationEraseRecovery.reset()
+        clearRhythmicNotationUnreadInkFeedback()
+        isSyncingInkCanvasFromModel = true
+        pageInkCanvasView.drawing = PKDrawing()
+        isSyncingInkCanvasFromModel = false
+        hasUnpersistedRhythmicNotationInk = false
+        pendingRhythmicNotationCommitWorkItem = nil
+    }
+
+    private func showRhythmicNotationUnreadInkFeedback(
+        for decision: RhythmRecognitionDecision,
+        measureID: UUID
+    ) {
+        guard LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(for: decision),
+              let reason = decision.reason,
+              let feedbackFrame = LeadSheetRhythmicNotationFeedbackPolicy.unreadInkFrame(
+                for: pageInkCanvasView.drawing,
+                decision: decision,
+                canvasFrame: pageInkCanvasView.frame
+              ) else {
+            clearRhythmicNotationUnreadInkFeedback()
+            return
+        }
+
+        rhythmicNotationUnreadInkFeedback = LeadSheetRhythmicNotationUnreadInkFeedback(
+            measureID: measureID,
+            reason: reason,
+            frame: feedbackFrame
+        )
+    }
+
+    private func clearRhythmicNotationUnreadInkFeedback() {
+        rhythmicNotationUnreadInkFeedback = nil
+    }
+
+    private func recordRhythmicNotationDrawingChange() {
+        guard let selectedMeasureID else {
+            return
+        }
+
+        if rhythmicNotationEraseRecovery.recordDrawingChange(
+            selectedMeasureID: selectedMeasureID,
+            inkToolMode: inkToolMode
+        ) {
+            cancelPendingRhythmicNotationAutoApply()
         }
     }
 
@@ -1117,8 +2063,157 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         return drawing.strokes.isEmpty ? nil : drawing.dataRepresentation()
     }
 
+    private func currentCanvasInkSnapshot() -> LeadSheetRhythmicNotationInkSnapshot? {
+        LeadSheetRhythmicNotationInkSnapshot(drawing: pageInkCanvasView.drawing)
+    }
+
+    private func persistFreehandSymbolInkIfNeeded(canvasFrame: CGRect) {
+        guard !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty,
+              let pageLayout,
+              !pageInkCanvasView.drawing.strokes.isEmpty else {
+            return
+        }
+
+        let groups = freehandSymbolStrokeGroups(
+            from: pageInkCanvasView.drawing,
+            canvasFrame: canvasFrame,
+            pageLayout: pageLayout
+        )
+        clearFreehandSymbolCanvas()
+        guard !groups.isEmpty else {
+            return
+        }
+
+        var updatedChart = chart
+        var didCommitSymbol = false
+        for group in groups {
+            let groupDrawing = PKDrawing(strokes: group.strokes)
+            let localBounds = groupDrawing.bounds
+                .standardized
+                .insetBy(dx: -4, dy: -4)
+            guard localBounds.width > 0,
+                  localBounds.height > 0 else {
+                continue
+            }
+
+            let pageFrame = localBounds.offsetBy(dx: canvasFrame.minX, dy: canvasFrame.minY)
+            let normalizedFrame = FreehandSymbolNormalizedFrame(frame: pageFrame, in: group.laneFrame)
+            let translatedDrawing = groupDrawing.transformed(
+                using: CGAffineTransform(translationX: -localBounds.minX, y: -localBounds.minY)
+            )
+            guard updatedChart.addFreehandSymbol(
+                anchorMeasureID: group.measureID,
+                lane: group.lane,
+                normalizedFrame: normalizedFrame,
+                drawingData: translatedDrawing.dataRepresentation()
+            ) != nil else {
+                continue
+            }
+
+            didCommitSymbol = true
+        }
+
+        guard didCommitSymbol else {
+            return
+        }
+
+        chart = updatedChart
+        onChartChanged?(updatedChart)
+        setNeedsDisplay()
+    }
+
+    private struct FreehandSymbolStrokeGroupKey: Hashable {
+        var measureID: UUID
+        var lane: FreehandSymbolLane
+    }
+
+    private struct FreehandSymbolStrokeGroup {
+        var measureID: UUID
+        var lane: FreehandSymbolLane
+        var laneFrame: CGRect
+        var strokes: [PKStroke]
+    }
+
+    private func freehandSymbolStrokeGroups(
+        from drawing: PKDrawing,
+        canvasFrame: CGRect,
+        pageLayout: LeadSheetPageLayout
+    ) -> [FreehandSymbolStrokeGroup] {
+        var groupsByKey: [FreehandSymbolStrokeGroupKey: FreehandSymbolStrokeGroup] = [:]
+
+        for stroke in drawing.strokes {
+            guard let firstPoint = stroke.path.first?.location else {
+                continue
+            }
+
+            let pageStart = CGPoint(
+                x: firstPoint.x + canvasFrame.minX,
+                y: firstPoint.y + canvasFrame.minY
+            )
+            guard let target = freehandSymbolTarget(at: pageStart, in: pageLayout) else {
+                continue
+            }
+
+            let key = FreehandSymbolStrokeGroupKey(measureID: target.measureID, lane: target.lane)
+            var group = groupsByKey[key] ?? FreehandSymbolStrokeGroup(
+                measureID: target.measureID,
+                lane: target.lane,
+                laneFrame: target.laneFrame,
+                strokes: []
+            )
+            group.strokes.append(stroke)
+            groupsByKey[key] = group
+        }
+
+        return groupsByKey.values.sorted {
+            if $0.measureID.uuidString == $1.measureID.uuidString {
+                return $0.lane.rawValue < $1.lane.rawValue
+            }
+
+            return $0.measureID.uuidString < $1.measureID.uuidString
+        }
+    }
+
+    private func freehandSymbolTarget(
+        at pagePoint: CGPoint,
+        in pageLayout: LeadSheetPageLayout
+    ) -> (measureID: UUID, lane: FreehandSymbolLane, laneFrame: CGRect)? {
+        for measure in pageLayout.systems.flatMap(\.measures) {
+            guard let measureID = measure.sourceMeasureID else {
+                continue
+            }
+
+            if let aboveFrame = measure.freehandAboveFrame,
+               aboveFrame.contains(pagePoint) {
+                return (measureID, .aboveMeasure, aboveFrame)
+            }
+
+            if let belowFrame = measure.freehandBelowFrame,
+               belowFrame.contains(pagePoint) {
+                return (measureID, .belowMeasure, belowFrame)
+            }
+        }
+
+        return nil
+    }
+
+    private func clearFreehandSymbolCanvas() {
+        guard !pageInkCanvasView.drawing.strokes.isEmpty else {
+            return
+        }
+
+        isClearingFreehandSymbolInk = true
+        isSyncingInkCanvasFromModel = true
+        pageInkCanvasView.drawing = PKDrawing()
+        isSyncingInkCanvasFromModel = false
+        isClearingFreehandSymbolInk = false
+    }
+
     private func updateInteractionMode() {
-        let policy = LeadSheetInteractionModeStatePolicy.resolve(for: interactionMode)
+        let policy = LeadSheetInteractionModeStatePolicy.resolve(
+            for: interactionMode,
+            inkToolMode: inkToolMode
+        )
         selectionTapRecognizer.isEnabled = policy.selectionTapEnabled
         inkSelectionTapRecognizer.isEnabled = policy.inkSelectionTapEnabled
         measureResizePanRecognizer.isEnabled = policy.measureResizePanEnabled
@@ -1128,7 +2223,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         chordEditHitOverlayView.isUserInteractionEnabled = policy.chordEditOverlayInteractionEnabled
         pageInkCanvasView.isUserInteractionEnabled = policy.pageInkCanvasInteractionEnabled
         pageInkCanvasView.drawingPolicy = policy.drawingPolicy
-        pageInkCanvasView.tool = policy.inkTool
+        pageInkCanvasView.tool = policy.canvasTool
 
         if policy.clearsMeasureResizeDrag {
             activeMeasureResizeDrag = nil
@@ -1170,6 +2265,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private func activeInkScope() -> LeadSheetActiveInkScope? {
         LeadSheetActiveInkScope.resolve(
             interactionMode: interactionMode,
+            chartLayoutStyle: chart.layoutStyle,
             selectedMeasureID: selectedMeasureID,
             selectedMeasureLayout: selectedMeasureID.flatMap { measureLayout(for: $0) },
             pageLayout: pageLayout
@@ -1184,6 +2280,21 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if gestureRecognizer === chordMovePanRecognizer {
             let location = gestureRecognizer.location(in: self)
+            if interactionMode.allowsPageInkEditing,
+               !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
+                let translation = chordMovePanRecognizer.translation(in: self)
+                let startLocation = CGPoint(
+                    x: location.x - translation.x,
+                    y: location.y - translation.y
+                )
+                if let hitTarget = freehandSymbolEditHitTarget(at: startLocation) {
+                    return hitTarget.action != .delete
+                }
+
+                return lastFreehandSymbolDragHitTarget() != nil
+                    || selectedFreehandSymbolID != nil
+            }
+
             return chordEditHitTarget(at: location)?.action == .move
         }
 
@@ -1194,7 +2305,43 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        gestureRecognizer === inkSelectionTapRecognizer || otherGestureRecognizer === inkSelectionTapRecognizer
+        gestureRecognizer === inkSelectionTapRecognizer
+            || otherGestureRecognizer === inkSelectionTapRecognizer
+            || gestureRecognizer === chordMovePanRecognizer
+            || otherGestureRecognizer === chordMovePanRecognizer
+    }
+}
+
+private final class RhythmicNotationFeedbackOverlayView: UIView {
+    var feedback: LeadSheetRhythmicNotationUnreadInkFeedback? {
+        didSet {
+            isHidden = feedback == nil
+            setNeedsDisplay()
+        }
+    }
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        false
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard let feedback else {
+            return
+        }
+
+        let highlightFrame = feedback.frame.intersection(bounds)
+        guard !highlightFrame.isNull,
+              !highlightFrame.isEmpty else {
+            return
+        }
+
+        let path = UIBezierPath(roundedRect: highlightFrame, cornerRadius: 7)
+        UIColor(red: 0.92, green: 0.12, blue: 0.18, alpha: 0.09).setFill()
+        path.fill()
+        UIColor(red: 0.92, green: 0.12, blue: 0.18, alpha: 0.76).setStroke()
+        path.lineWidth = 1.5
+        path.setLineDash([5, 3], count: 2, phase: 0)
+        path.stroke()
     }
 }
 

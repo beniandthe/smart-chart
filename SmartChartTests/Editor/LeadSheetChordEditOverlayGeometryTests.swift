@@ -7,7 +7,8 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
         let chordLayout = LeadSheetChordLayout(
             id: UUID(),
             text: "G/B",
-            frame: CGRect(x: 120, y: 72, width: 42, height: 36)
+            frame: CGRect(x: 120, y: 72, width: 42, height: 36),
+            snapGuideTarget: CGPoint(x: 141, y: 132)
         )
 
         let controls = LeadSheetChordEditOverlayGeometry.controlFrames(for: chordLayout)
@@ -25,7 +26,8 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
         let chordLayout = LeadSheetChordLayout(
             id: chordID,
             text: "Db7(b9)",
-            frame: CGRect(x: 160, y: 88, width: 76, height: 36)
+            frame: CGRect(x: 160, y: 88, width: 76, height: 36),
+            snapGuideTarget: CGPoint(x: 198, y: 132)
         )
         let pageLayout = pageLayout(measureID: measureID, chordLayout: chordLayout)
         let controls = LeadSheetChordEditOverlayGeometry.controlFrames(for: chordLayout)
@@ -53,7 +55,8 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
         let chordLayout = LeadSheetChordLayout(
             id: chordID,
             text: "Absus",
-            frame: CGRect(x: 140, y: 90, width: 58, height: 34)
+            frame: CGRect(x: 140, y: 90, width: 58, height: 34),
+            snapGuideTarget: CGPoint(x: 169, y: 132)
         )
         let pageLayout = pageLayout(measureID: measureID, chordLayout: chordLayout)
 
@@ -91,6 +94,8 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
             index: 1,
             frame: CGRect(x: 100, y: 80, width: 180, height: 90),
             staffFrame: CGRect(x: 108, y: 116, width: 164, height: 34),
+            freehandAboveFrame: nil,
+            freehandBelowFrame: nil,
             chordBandFrame: CGRect(x: 104, y: 84, width: 172, height: 34),
             writableFrame: CGRect(x: 104, y: 84, width: 172, height: 72),
             chordLayouts: [chordLayout],
@@ -108,6 +113,7 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
             frame: CGRect(x: 100, y: 80, width: 180, height: 90),
             staffLineYPositions: [],
             clefFrame: nil,
+            keySignatureLayouts: [],
             timeSignatureFrame: nil,
             sectionTextFrame: nil,
             sectionText: nil,

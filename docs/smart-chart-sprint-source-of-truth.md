@@ -26,7 +26,7 @@ The active app runtime implementation state is the merged recovery branch from P
 - PR review follow-through checkpoint: `66dc5d2 Document chord ink clear decision`
 - PR readiness checkpoint: `61caeb9 Open sprint nine merge readiness`
 - previous runtime checkpoint: `a738ed3 Close sprint seven text variant extraction`
-- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, Sprint 55 chord-first product polish, Sprint 56 chord field validation, Sprint 57 chord placement/edit loop, Sprint 58 wrong render recovery, Sprint 59 confirmation/direct-input polish, Sprint 60 general candidate availability hardening, Sprint 61 raster/render handoff polish, and Sprint 62 chord-first release-candidate pass are complete; Sprint 63 chart layout goals are active
+- implementation state: recognition recovery, product/editor polish audit, PR review follow-through, PR [#4](https://github.com/beniandthe/smart-chart/pull/4) merge, Sprint 12 post-merge app audit, Sprint 13 local hygiene/product smoke, Sprint 14 editor boundary cleanup, Sprint 15 recognition corpus debloat, Sprint 16 app-shell debloat, Sprint 17 working Library debloat, Sprint 18 chord sheet extraction, Sprint 19 rhythm confirmation extraction, Sprint 20 chord edit overlay geometry extraction, Sprint 21 measure resize geometry extraction, Sprint 22 active ink-scope extraction, Sprint 23 saved ink renderer extraction, Sprint 24 active ink persistence extraction, Sprint 25 chord ink image renderer extraction, Sprint 26 interaction targeting extraction, Sprint 27 note-selection lasso targeting extraction, Sprint 28 chord ink recognition targeting extraction, Sprint 29 chord recognition timing extraction, Sprint 30 chord recognition scheduling extraction, Sprint 31 rhythmic notation finalization policy extraction, Sprint 32 interaction-mode state policy extraction, Sprint 33 chord recognition request-state extraction, Sprint 34 editor/recognition execution audit, Sprint 35 recognition-session boundary design, Sprint 36 recognition generalization policy reset, Sprint 37 recognition-session boundary implementation, Sprint 38 recognition-session OCR gate test hardening, Sprint 39 bounded renderer product proof, Sprint 40 visual renderer QA, Sprint 41 writing-to-render commit contract, Sprint 42 writing-to-render readiness QA, Sprint 43 real Pencil field-test evidence, Sprint 44 renderer/iPad export availability, Sprint 45 post-export field-test validation, Sprint 46 recognition latency/trust triage, Sprint 47 confidence/performance split triage, Sprint 48 persistent timing telemetry, Sprint 49 flat-root candidate availability, Sprint 50 post-stroke responsiveness, Sprint 51 real-life polish, Sprint 52 chord confirmation/user loop UX, Sprint 53 validation speed, Sprint 54 confirmation UX polish, Sprint 55 chord-first product polish, Sprint 56 chord field validation, Sprint 57 chord placement/edit loop, Sprint 58 wrong render recovery, Sprint 59 confirmation/direct-input polish, Sprint 60 general candidate availability hardening, Sprint 61 raster/render handoff polish, Sprint 62 chord-first release-candidate pass, Sprint 63 chart layout goals, Sprint 64 New Chart layout-style chooser, Sprint 65 layout-profile contracts, Sprint 66 profile-driven structure defaults, Sprint 67 Rhythm Section current workflow lock, and Rhythm Section side sprint core authoring are complete locally on `codex/rhythm-section-core-authoring`; deferred chart-style systems are definition-gated.
 - supporting audit: `docs/repo-github-recognition-audit-2026-05-20.md`
 - Sprint 12 audit artifact: `docs/smart-chart-post-merge-app-audit-2026-05-23.md`
 - Sprint 34 audit artifact: `docs/smart-chart-editor-recognition-execution-audit-2026-05-24.md`
@@ -56,7 +56,31 @@ The active app runtime implementation state is the merged recovery branch from P
 - Sprint 61 raster/render handoff polish artifact: `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`
 - Sprint 62 chord-first release-candidate pass artifact: `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`
 - Sprint 63 chart layout goals artifact: `docs/smart-chart-sprint-63-chart-layout-goals-2026-05-27.md`
-- latest local verification: Sprint 63 chart layout goals were documented and wired into the source-of-truth and README; `git diff --check` passed. Sprint 62 pass metadata showed active chart `9F9DD955-91BF-4361-9B02-177B49C48A0C` committed `C`, `G/B`, `Db7(b9)`, and `Absus` with matched placement, structured `ChordEvent`s, and render handoff at `15-40ms`; fresh export evidence at `2026-05-27 12:23:13 -0700` produced a one-page PDF rendered in Preview with all four chords visible.
+- Sprint 64 New Chart layout-style chooser artifact: `docs/smart-chart-sprint-64-new-chart-layout-style-chooser-2026-05-27.md`
+- Sprint 65 layout-profile contracts artifact: `docs/smart-chart-sprint-65-layout-profile-contracts-2026-05-27.md`
+- Sprint 66 profile-driven structure defaults artifact: `docs/smart-chart-sprint-66-profile-driven-structure-defaults-2026-05-27.md`
+- Sprint 67 Rhythm Section current workflow lock artifact: `docs/smart-chart-sprint-67-rhythm-section-current-workflow-lock-2026-05-27.md`
+- Rhythm Section side sprint plan artifact: `docs/smart-chart-rhythm-section-side-sprint-plan-2026-05-27.md`
+- Rhythm Section chart plan artifact: `docs/smart-chart-rhythm-section-chart-plan-2026-05-27.md`
+- Rhythm recognition rebuild plan artifact: `docs/smart-chart-rhythm-recognition-rebuild-plan-2026-05-28.md`
+- Lead Sheet pitched-note baseline artifact: `docs/smart-chart-lead-sheet-pitched-note-baseline-2026-05-29.md`
+- Rhythm Section V4 closeout audit: `docs/smart-chart-rhythm-section-v4-closeout-audit-2026-05-29.md`
+- Rhythm Section progress log: `docs/smart-chart-rhythm-section-progress-log-2026-05-29.md`
+- latest local verification: Rhythm Section side sprint core authoring is complete and locally verified on `codex/rhythm-section-core-authoring`. Rhythm Recognition V3 is implemented locally through the targeted-unread-stroke-feedback slice, and Rhythm Recognition V4 is now implemented locally as a deterministic raster/template phrase gate ahead of the V3 safety bridge. Live rhythm auto-apply rechecks a stable stroke-shape snapshot instead of comparing serialized PencilKit `Data`; live auto-render and selection finalization require a trusted commit decision, while underfilled, review-only, ambiguous, uncovered, competing, non-visual-fallback, non-natural exact-fit, unsupported, or unread-crop paths preserve local ink. V4 normalizes live rhythm ink into measure-relative symbol crops, matches those crops against a writer-agnostic visual compendium, validates exact values through `RhythmicNotationCompendium` and `MeasureRhythmMap`, and commits only when visual evidence plus render alignment agree. Red unread-ink feedback now waits until a rhythm decision is completed-looking and can localize the unread item; V4 unread-symbol decisions target the failing crop when possible, V3 uncovered decisions target primitive bounds, and broad review/fallback states no longer frame the whole live ink area. Rhythm mode resolves a real authoring measure when entered. The latest live simulator pass after the stable snapshot repair committed `slash, slash, slash, slash` in measure 1 and `quarter, quarter, quarter, eighth, eighth` in measure 2; follow-up underfilled/ambiguous attempts stayed local. The latest saved-state check after a clear non-rendering quarter-note pass showed raw measure ink preserved without a rhythm map, confirming fail-closed behavior. Temporary runtime auto-apply trace logging and the one-off live-trace replay helper were removed after that evidence capture, leaving the stable snapshot guard without a new default diagnostic stream. XcodeBuildMCP focused simulator `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `80` tests and `0` failures after the V4 raster/template gate and crop-level unread feedback slice; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `125` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only and screenshot proof showed the app launched to Projects.
+- latest V4 semantic gate verification: stemmed notehead crops can no longer drive slash values, dotted values require detached dot evidence, and unflagged quarter-like stems can extend stability or require review but cannot force exact-fit live auto-render as eighths. XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `67` tests and `0` failures; grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `128` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only.
+- latest unread-feedback verification: red unread feedback now waits for completed-looking rhythm decisions and only draws localized unread symbol/primitive frames. XcodeBuildMCP `test_sim` for `LeadSheetInteractionModeStatePolicyTests` passed with `17` tests and `0` failures; grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `129` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only.
+- latest V4 rest-phrase verification: V4 now owns quarter-rest, half-rest, whole-rest review, dotted/long value, and adjacent eighth-rest phrase decisions through the raster/template gate when the visual evidence is complete. Rest crops filter out note alternatives when rest evidence is strongest, strong quarter/half/whole rest matches are not overwritten by generic eighth-rest hooks, and adjacent eighth-rest dot/tail crops stay paired after symbol splitting. XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `69` tests and `0` failures; grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `131` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` and screenshot capture succeeded with the existing headermap warning only.
+- latest V4 non-exact state verification: V4 now owns strong-template underfilled, overflow, and completed unsupported-crop states locally instead of handing them to older meter-fit paths. Single-unit unflagged-stem exact alternatives are manual review only, and beamed-template overcount cases still fall through to the proven visual bridge. XcodeBuildMCP focused `test_sim` passed with `5` tests and `0` failures; `RhythmicNotationQuantizerTests` passed with `72` tests and `0` failures; grouped `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `134` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` and screenshot capture succeeded with the existing headermap warning only.
+- latest V4 normalization and Lead Sheet baseline verification: V4 now rejects tiny isolated noise marks before crop grouping and has explicit render-comparison accept/reject coverage. Lead Sheet now renders treble/bass clef glyphs from setup and places transposed key-signature accidental glyphs before the first measure's time signature. The first pitched-note baseline is implemented locally: note-only Lead Sheet rhythm commits can use V4 visual note anchors to create clamped in-staff pitched-note events, and stem-down staff notes are protected from single-eighth misreads caused by upper notehead mass. XcodeBuildMCP focused `test_sim` for the new Lead Sheet pitched-note finalization cases passed with `2` tests and `0` failures; XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `76` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `182` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `360` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` and screenshot capture succeeded with the existing headermap warning only.
+- latest Lead Sheet mixed note/rest verification: Lead Sheet pitched-note commit now accepts mixed note/rest phrases by storing pitched events only on note-capable rhythm slots while preserving rest glyphs on rest slots. V4 visual note anchors feed those note-capable slots, so a phrase like `quarter, quarterRest, quarter, quarterRest` can commit two clamped staff-position notes without treating rests as pitched notes. Partial or duplicate pitch coverage is rejected, so note-capable slots do not fall back to slash placeholders or stale note events. Beamed-eighth V4 crops can also supply separate pitch anchors for each accepted eighth. `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests --filter LeadSheetPageLayoutTests` passed with `86` tests and `0` failures; XcodeBuildMCP focused `test_sim` for mixed Lead Sheet note/rest finalization passed with `1` test and `0` failures; XcodeBuildMCP focused `test_sim` for beamed-eighth pitch-anchor finalization passed with `1` test and `0` failures; XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `78` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `186` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest Lead Sheet pitch-coverage guard verification: `Chart.setLeadSheetRhythmMap` now rejects partial, duplicate, or rest-slot pitch coverage so mixed note/rest Lead Sheet commits only land when every note-capable slot has exactly one V4 visual note anchor. `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `48` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `186` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest profile-interaction audit: `ChartLayoutProfile` now owns user-facing rhythm-note editing availability, keeping Rhythm Section and Simple editing off for now while Lead Sheet can use the existing note/rhythm edit surface. This removes an editor-local style exception and preserves the Rhythm Section contract that individual rhythm editing is not enabled yet. `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `48` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `186` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest freehand availability guard: `ChartLayoutProfile` now exposes profile-owned freehand symbol ink availability. Simple and Rhythm Section still resolve freehand symbol ink scopes because they have lanes; Lead Sheet resolves no freehand page-ink scope for now, matching the no-freehand-symbol-lane contract. XcodeBuildMCP focused `test_sim` for `LeadSheetInteractionModeStatePolicyTests` and `ChartEditingTests` passed with `66` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `187` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest rhythm-notation tool availability guard: `ChartLayoutProfile` now owns rhythmic-notation ink availability. Simple Chord Sheet resolves no rhythmic-notation active ink scope and the editor tab is guarded/disabled for that style; Rhythm Section and Lead Sheet keep rhythmic-notation ink scopes. `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `48` tests and `0` failures; XcodeBuildMCP focused `test_sim` for `LeadSheetInteractionModeStatePolicyTests` and `ChartEditingTests` passed with `67` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `188` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest V4 architecture audit: the raster/template core has been extracted into `RhythmicNotationRasterTemplateRecognizer.swift` beside the quantizer. `RhythmicNotationQuantizer` remains the public entrypoint and V3/visual/fallback bridge, while the sibling core owns V4 raster input, symbol crops, template matches, phrase decisions, render comparison, and visual note anchors. XcodeBuildMCP focused simulator `test_sim` for `RhythmicNotationQuantizerTests` passed with `78` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `188` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest rhythm recognition type audit: shared rhythm proposal, phrase, primitive, decision, reason, candidate, and candidate-path contracts now live in `RhythmicNotationRecognitionTypes.swift`, leaving `RhythmicNotationQuantizer` focused on orchestration/bridging and keeping V3/V4 decision shapes auditable from their own file. XcodeBuildMCP focused simulator `test_sim` for `RhythmicNotationQuantizerTests` passed with `78` tests and `0` failures; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `188` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- latest side-sprint closure audit: `docs/smart-chart-rhythm-section-v4-closeout-audit-2026-05-29.md` records implemented Rhythm Section core authoring, V3/V4 recognition, profile-owned tool policies, the resumed Lead Sheet baseline, verification evidence, and the product-definition-gated deferred systems.
+- latest local breadcrumb log: `docs/smart-chart-rhythm-section-progress-log-2026-05-29.md` preserves the final implementation checkpoints and verification trail for regression hunting.
 - latest GitHub verification: main commit `6e8ae16 Close sprint 62 release candidate pass` passed `SwiftPM tests`, `iOS simulator tests`, and `Analyze Swift` on 2026-05-27. Direct-main `Analyze Swift` completed quickly and reported the intentional CodeQL defer; real CodeQL remains on pull requests, weekly schedule, and manual dispatch. Supabase and Expo suites may remain queued with zero check runs and are not treated as current required app health.
 
 `c60bb46` remains the trusted checkpoint reference. It represents the last known-good altered-chord trust polish baseline before the symbol-ledger drift/recovery work. Do not treat `c60bb46` as the active implementation baseline unless a future sprint explicitly chooses a reset.
@@ -152,48 +176,341 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 
 ## Active Sprint
 
-### Sprint 63: Chart Layout Goals
+### Rhythm Section Side Sprint: Core Authoring
 
-Status: active planning outline.
+Status: core implementation complete locally on `codex/rhythm-section-core-authoring`; deferred product systems are definition-gated.
 
-Goal: define the chart layout taxonomy and the new-chart choice before implementing layout-specific systems.
+Goal: implement the first dedicated Rhythm Section core authoring slice after Sprint 67 locked the current workflow designation.
 
 Current state:
 
-- The chord-first side-sprint lane from Sprint 57 through Sprint 62 is complete.
-- The latest release-candidate pass validated write -> recognize -> auto-render or confirm -> clear ink -> export for `C`, `G/B`, `Db7(b9)`, and `Absus`.
-- The next product step is to make `New Chart` choose a layout family before the editor opens.
-- Existing app docs already point to strong one-page charts, chart metadata, systems/measures, section labels, roadmap objects, cue text, and export as core product systems.
+- Sprint 67 is the lock checkpoint: Rhythm Section remains keyless at setup/header, keeps staff-line measures, keeps the chord lane above staff, and keeps rhythm-map chord snapping plus beat fallback.
+- This side sprint adds profile-owned free-hand symbol lanes: Simple Chord Sheet supports above/below lanes, Rhythm Section supports below-measure articulations only, and Lead Sheet supports no free-hand symbol lanes for now.
+- Measures can now be inserted at the beginning through a chart-editing API that reindexes existing measures and preserves existing measure IDs/anchors.
+- The Measures tab is being split into explicit menu actions for edit, add at beginning, and add after selected.
+- Rhythm auto-render is the current loop: exact-fit rhythm passes arm a short grace window and recheck the same live canvas snapshot before committing, while underfilled/overflow/unsupported passes stay local during writing. Exact-fit passes that end on a quarter-like stem with an eighth alternative now request an additional stability window before auto-render so the user can finish a last-beat beam.
+- `RhythmicNotationCompendium` gates committed rhythm maps to the supported v1 rhythm vocabulary and exact meter fit.
+- Rhythm ink now has the same dirty live-canvas ownership guard as chord ink, and rhythm auto-render reads from a stable live-canvas snapshot instead of persisting raw rhythm ink to the chart model on every idle tick. The exact-fit commit waits through an additional grace window so final beams, dots, or rest cleanup strokes can cancel and reschedule the render.
+- Beamed eighth recognition now includes focused sloped and folded-beam grouping rules: a simple upward/downward beam stroke can seed a beamed-eighth event only when it spans two rhythm stems, and a folded beam/right-stem stroke can seed a beamed-eighth event only when paired with notehead evidence.
+- The latest simulator ink diagnosis showed a folded beamed-eighth pair plus a quarter being falsely accepted as `dottedHalf, quarter`. Visual beamed-eighth reads now block fallback reinterpretation when they are underfilled, so visible beamed ink cannot be stretched into a longer dotted value just to satisfy exact meter fit.
+- The follow-up simulator pass showed beamed eighths still failing when the first eighth of a last-beat pair looked like a complete quarter. Auto-render now uses `RhythmicNotationMeasureProposal` instead of only raw values: the compendium can still find exact-fit values, but the host delays ink clearing for terminal quarter-like stems that could still become an eighth pair.
+- Rhythm Recognition V2 has started as an auto-render safety gate: exact meter fit is still required, but no longer sufficient for live ink clearing. A proposal now carries `autoApply`, `extendedStability`, or `manualReview` safety, and the host commits only proposals that can auto-apply. Single whole-note or whole-rest measure proposals stay available to manual quantize/finalization but require review before live auto-render until stronger visual/template evidence exists.
+- All live ink canvas tools now expose a left-side ink tool tab with write and erase boxes. Opening an ink tool resets the tab to write mode; erase mode swaps the active `PKCanvasView` to a bitmap eraser so the stylus wipes only live ink strokes, not rendered chords, rhythm maps, or saved free-hand symbols.
+- Rhythm erasing cancels stale pending auto-render work and enters a stricter post-erase gate: auto-render and explicit finalization can still commit when erasing an extra symbol makes the remaining ink naturally exact-fit, but they will not commit a stretched/reinterpreted exact-fit path just to fill missing beats.
+- The latest raw-ink simulator trace found the actual beamed-eighth failure in the visual pass: a single notehead was being claimed as an eighth rest before its attached stem/dot could form a dotted-half note, and a touched-up right stem in a beamed pair could be left uncovered, forcing fallback reinterpretation. The visual layer now blocks that notehead steal and folds local beamed touch-up strokes into the beamed-eighth event, so the traced raw ink proposes `dottedHalf, eighth, eighth` as a natural exact fit.
+- The follow-up simulator pass showed the larger recognizer problem: a later measure had `visual=nil`, then fallback meter-fit selected `quarter, dottedQuarter, dottedQuarter` even though the raw ink should not have been trusted as that phrase. Rhythm Recognition V3 is now opened as a bottom-up rebuild plan; the immediate safety gate blocks all non-natural exact-fit proposals from live auto-render and selection finalization.
+- Rhythm Recognition V3 first slice is now implemented locally. It adds ordered ink primitives, symbol hypotheses, phrase hypotheses, and explicit `commit` / `keepWriting` / `needsReview` decisions; live auto-render and selection finalization require `commit`, while fallback-created exact fits cannot clear ink.
+- Rhythm Recognition V3 visual-rest slice is now implemented locally. Quarter rests, half rests, and whole rests are first-class visual hypotheses; quarter/half rest phrases can commit when naturally exact, single whole-rest measures remain review-only, and clear quarter-rest bodies are protected from eighth-rest or beamed-eighth stealing.
+- Rhythm Recognition V3 phrase-ambiguity slice is now implemented locally. Tight adjacent rest/note clusters can still be manually quantized, but live auto-render marks them `needsReview(.ambiguousPhrase)` so visually entangled ink is not cleared by an overconfident exact-fit pass.
+- Rhythm entry now auto-resolves a measure target. If Rhythm mode starts or resumes with no selected measure, the editor chooses the current valid selection, the open measure, or the last measure so live rhythm ink has a measure-owned canvas before writing.
+- Rhythm auto-apply stability now compares a stroke-shape snapshot instead of serialized PencilKit `Data`, preventing unchanged visible ink from going stale because of PencilKit metadata changes.
+- Temporary runtime auto-apply trace logging and the one-off live-trace replay helper were removed after the stable snapshot pass was verified, so no new default rhythm diagnostic stream remains in the app path.
+- Rhythm Recognition V3 now reports uncovered visual strokes explicitly. If an otherwise exact visual phrase has leftover visible ink, the decision stays in the V3 path as `keepWriting(.uncoveredStrokes)` and preserves the live ink instead of falling through to legacy meter fitting.
+- Rhythm Recognition V3 now reports close full-measure alternatives as `needsReview(.competingExactPhrases)`, keeping near-tied exact phrase reads out of the confident auto-render path while preserving low-information whole-measure marks as generic manual review.
+- Rhythm Recognition V3 now keeps non-visual fallback exact fits local as `keepWriting(.nonVisualFallback)` with no proposal. Manual quantize can still use the legacy fitter for tooling and diagnostics, but live auto-render and selection finalization do not get fallback-created exact-fit proposals.
+- Rhythm unread-ink feedback now highlights completed-looking non-commit rhythm ink only when it can target a localized unread symbol or primitive. Underfilled/no-ink states stay quiet; V3 uncovered-stroke decisions target unread primitive bounds directly, and broad review/fallback states do not fall back to whole-measure framing. The feedback does not persist, train the recognizer, retune scores, or add a default diagnostic stream.
+- Rhythm Recognition V4 is now implemented locally as a raster/template phrase gate. It builds measure-relative symbol crops from live rhythm ink, matches those crops against a deterministic visual compendium for the v1 vocabulary, validates exact phrases through `RhythmicNotationCompendium` and `MeasureRhythmMap`, and requires render alignment before auto-commit. V3 remains the fail-closed bridge for states V4 cannot naturally own.
+- Rhythm unread-ink feedback now prefers V4 unread-symbol crop bounds when a crop has no accepted value and the phrase is completed-looking, then uses V3 uncovered-stroke bounds when available; broad review states stay quiet until they can localize the unread item.
+- V4 semantic visual gating is now implemented locally. Slashes require slash evidence instead of notehead/stem evidence, dotted values require detached dots, and single eighth values require flag or beam evidence; unflagged quarter-like stems can delay/review but cannot auto-render as eighths by meter fit alone.
+- V4 rest and long-value phrase coverage is now broadened locally. Quarter rests, half rests, whole-rest review, dotted quarter, dotted half, adjacent eighth rests, and mixed long-value phrases can be owned by the raster/template source when the crops are complete. Rest-owned crops no longer carry note alternatives into the exact-fit competition, and adjacent eighth-rest dots are reattached to their following tails after compound symbol splitting.
+- V4 non-exact phrase ownership is now implemented locally. Strong template underfills and overflows stay local, completed unsupported crops can surface localized unread-symbol evidence, single-unit unflagged-stem exact alternatives are manual review only, and beamed-template overcount cases fall back to the existing visual bridge rather than blocking known-good beamed reads.
+- V4 raster normalization now rejects tiny isolated noise marks before crop grouping, and V4 render-comparison tests cover both bad-spacing rejection and aligned exact-fit acceptance.
+- V4 internals now live in `RhythmicNotationRasterTemplateRecognizer.swift` beside the quantizer, preserving the current public rhythm proposal entrypoint while separating raster/template authority from the older bridge.
+- Rhythm recognition proposal/decision/phrase/candidate types now live in `RhythmicNotationRecognitionTypes.swift`, preserving behavior while making V3/V4 contracts explicit.
+- The closeout audit for Rhythm Section V4 is recorded in `docs/smart-chart-rhythm-section-v4-closeout-audit-2026-05-29.md`; remaining chart-style system work is explicitly definition-gated.
+- Chord layouts now expose a snap-guide target so the active chord move can show the resolved beat/rhythm attack connection.
+- Main layout work has resumed after the Rhythm Section detour. Lead Sheet now renders selected treble/bass clefs, places transposed key-signature accidentals before the first measure's time signature, and has the first pitched-entry proof: accepted Lead Sheet rhythm ink can create clamped in-staff pitched-note events through V4 visual note anchors, including mixed note/rest phrases where only note-capable slots become pitched notes and every note-capable slot must have an anchor. Ledger lines, named pitches, and individual note editing remain deferred.
+- User-facing rhythm-note editing, freehand symbol ink availability, and rhythmic-notation ink availability are now `ChartLayoutProfile` contracts instead of editor-local style branches. Rhythm Section and Simple keep rhythm-note editing disabled; Simple has no rhythmic-notation ink scope; Rhythm Section and Lead Sheet keep rhythm-notation ink scopes; Lead Sheet keeps access to the existing note/rhythm edit surface but has no freehand ink scope until that product slice is defined.
 
-Sprint 63 product decision:
+Step-by-step plan:
 
-- Tapping `New Chart` should present three choices: `Simple Chord Sheet`, `Rhythm Section Sheet`, and `Lead Sheet`.
-- `Simple Chord Sheet` should feel like a fast iReal Pro-style chord grid: dense, chord-first, roadmap-aware, compact, and transposition-friendly.
-- `Rhythm Section Sheet` should keep chords primary but make hits, rhythmic slashes, pushes, stops, groove cues, and beat placement more explicit.
-- `Lead Sheet` should use the most formal staff/page presentation Smart Chart supports while staying inside the current chord-first, rhythm-aware v1 boundary.
-- Each layout choice should eventually drive setup defaults, toolbar emphasis, measure/system layout, notation lanes, export rendering, and future feature availability.
+1. Branch/docs first. Status: complete.
+   - Branch from the current Sprint 64-67 working tree.
+   - Add the Rhythm Section side-sprint plan and dedicated chart-plan artifacts.
+2. Profile-owned free-hand symbol lanes. Status: implemented locally; focused tests passing.
+   - Drive add/move/delete and layout resolution from `ChartLayoutProfile.freehandSymbolLanes`.
+   - Keep Rhythm Section free-hand symbols below-staff only.
+3. Measure menu and beginning insertion. Status: implemented locally; focused tests passing.
+   - Add explicit Measures menu actions.
+   - Add beginning insertion without changing the one-measure invariant.
+4. Rhythm pipeline auto-render. Status: complete locally through the V3 fail-closed bridge and V4 raster/template phrase gate.
+   - Auto-commit exact-fit rhythm passes only after the first exact-fit candidate survives the grace-window recheck.
+   - Require `RhythmicNotationMeasureProposal.canAutoApply` before the live host clears ink and commits a rhythm map.
+   - Keep `MeasureRhythmMap`, `RhythmicNotationCompendium`, and resolved slots as the placement authority.
+   - Preserve dirty rhythm ink in the active `PKCanvasView` when model data is stale during fast writing.
+   - Do not persist raw rhythm ink during idle auto-render checks; only grace-confirmed exact-fit commit or explicit finalization touches the chart model.
+   - Treat sloped and folded handwritten beams as beamed-eighth connectors when they carry local stem/notehead evidence; keep the compendium and exact meter fit as the final commit gate.
+   - Route auto-render through `RhythmicNotationMeasureProposal` so terminal quarter-like stems with an eighth alternative get an extra stability window instead of clearing before a last-beat beam can land.
+   - Add the write/erase ink tool tab to every active canvas ink mode while keeping eraser effects inside the live ink layer only.
+   - After erasing rhythm ink, require the next auto-render or explicit finalization proposal to be a natural exact-fit path unless the user writes replacement ink.
+   - Keep the visual rhythm pass from stealing a stemmed notehead as an eighth rest, and include local beamed touch-up strokes in the protected beamed-eighth event before falling back to per-symbol exact-fit stretching.
+   - Treat exact meter fit as a validation gate only: live auto-render and selection finalization now require the proposal's natural left-to-right read to be the exact measure, so fallback meter-fit rewrites cannot clear ink.
+   - Rebuild the recognizer around raw ink primitives, symbol hypotheses, phrase hypotheses, and explicit `commit` / `keepWriting` / `needsReview` decisions before further symbol tuning.
+   - Route the live host through V3 decisions: only `.commit` can schedule render/clear, while `.keepWriting` and `.needsReview` preserve local ink.
+   - Surface completed-looking non-commit rhythm decisions with a local red dashed unread-ink overlay only when the unread item can be localized, without highlighting underfilled/no-ink states or changing recognizer authority.
+   - Use V3 uncovered-stroke evidence to target unread primitive bounds when available; do not fall back to the full live-ink frame for broader review/fallback decisions.
+   - Route strong visual rhythm evidence through the V4 raster/template phrase gate before V3: crop live ink left-to-right, match against the v1 visual compendium, validate exact values through the rhythm compendium and `MeasureRhythmMap`, and require render alignment before clearing ink.
+   - Keep legacy fallback from auto-rendering live exact fits; unsupported crops and ambiguous or non-authoritative phrases stay local with targeted unread feedback when available.
+   - Require semantic visual evidence before V4 exact-fit commits: stemmed notehead crops cannot become slashes, dotted values need detached dot evidence, and single eighth values need flag or beam evidence unless the result is review/stability-only.
+   - Keep V4 rest crops rest-owned when rest evidence is strongest, protect strong quarter/half/whole rest matches from generic eighth-rest hooks, and reattach adjacent eighth-rest dots to their following tails after compound symbol splitting.
+   - Reject tiny isolated raster noise before V4 crop grouping without letting meaningful unsupported strokes disappear, and pin render comparison with both aligned and bad-spacing tests.
+   - Keep the V4 raster/template core separated in `RhythmicNotationRasterTemplateRecognizer.swift` so future symbol work does not re-bloat the public quantizer entrypoint.
+   - Keep shared rhythm recognition contracts and candidate/path structs separated in `RhythmicNotationRecognitionTypes.swift`.
+5. Chord snap guide. Status: implemented locally; focused tests passing.
+   - Attach chord layouts to resolved snap targets.
+   - Draw the active moving chord guide line to the resolved target.
+6. Lead Sheet baseline continuation. Status: implemented locally for key signature, clef glyph layout, and first mixed pitched-note/rest proof.
+   - Render treble/bass clefs from `Chart.defaultClef`.
+   - Place transposed key-signature sharp/flat glyphs between the clef and first measure time signature.
+   - Commit Lead Sheet rhythm phrases as clamped in-staff pitched-note events when V4 visual note anchors match the note-capable slots in the accepted values.
+   - Keep ledger lines, named pitches, and note editing deferred.
+   - Preserve Rhythm Section keyless setup and Simple blank-measure rendering.
+7. Verify. Status: complete locally.
 
-Sprint 63 tasks:
+Non-goals:
 
-- Create `docs/smart-chart-sprint-63-chart-layout-goals-2026-05-27.md`.
-- Define each chart layout's user intent, default behavior, and core systems.
-- Identify shared chart-structure systems needed by all three layouts.
-- Decide that Sprint 64 should implement the first thin layout chooser slice unless the user changes priority.
+- No chord-recognition retuning.
+- No OCR expansion.
+- No handwriting fixture expansion.
+- No default symbol-ledger diagnostics cost.
+- No Section/System layout behavior.
+- No Lead Sheet ledger-line, named-pitch, or note-editing implementation.
+
+Current local verification:
+
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `43` tests, `0` failures.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `33` tests, `0` failures.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter MeasureRhythmMappingTests` passed with `17` tests, `0` failures.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `352` tests, `36` skipped, `0` failures.
+- XcodeBuildMCP focused `test_sim` for terminal quarter-like stem proposal gating, completed last-beat folded beams, folded beamed-eighth success, and ambiguous-stem grace policy passed with `4` tests, `0` failures.
+- XcodeBuildMCP focused `test_sim` for Rhythm Recognition V2 whole-measure safety passed with `4` tests, `0` failures: single whole-note values remain quantizable, single whole-measure proposals require manual review before auto-apply, tiny whole-like marks cannot auto-apply, completed last-beat beams still auto-apply, and terminal quarter-like stems still request extended stability.
+- XcodeBuildMCP focused `test_sim` for ink write/erase policy passed with `3` tests, `0` failures: write mode preserves the original chord pen, erase mode uses a PencilKit eraser for ink modes, and non-ink modes ignore erase mode.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `56` tests, `0` failures, including connected, loose, direct, sloped, folded, false-exact-fit, last-beat beam, extended-stability auto-apply, V2 manual-review safety, ink write/erase policy, and post-erase natural exact-fit coverage.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `46` tests, and `0` failures after adding the touched-up trailing beamed-eighth regression and verifying the copied simulator raw-ink trace now proposes `dottedHalf, eighth, eighth` naturally for the previously misrendered measure.
+- Latest raw-ink trace for the new bad pass showed measure 2 rendered from `visual=nil` through fallback exact-fit `quarter, dottedQuarter, dottedQuarter`; after the natural-exact-fit safety gate, the same proposal reports `proposal.canAutoApply=false`.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `57` tests, and `0` failures after blocking non-natural exact-fit rhythm commits.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `352` tests, `36` skipped, and `0` failures after the fail-closed rhythm safety gate; `git diff --check` passed.
+- Earlier XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetChordEditOverlayGeometryTests`, and `LeadSheetFreehandSymbolEditOverlayGeometryTests` passed with `45` tests, `0` failures.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `51` tests, and `0` failures after the V3 visual-rest slice.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `62` tests, and `0` failures after the V3 visual-rest slice.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `63` tests, and `0` failures after the V3 phrase-ambiguity slice.
+- XcodeBuildMCP focused `test_sim` passed with `4` tests and `0` failures after adding rhythm-entry measure resolution and V3 slash-decision regressions.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `110` tests, and `0` failures after the rhythm-entry measure selection repair.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the rhythm-entry measure selection repair.
+- XcodeBuildMCP `test_sim` for `LeadSheetInteractionModeStatePolicyTests` passed with `12` tests and `0` failures after replacing serialized-data equality with stable rhythm ink snapshots.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `111` tests, and `0` failures after adding stable rhythm auto-apply snapshots.
+- Latest live simulator pass after the stable snapshot repair matched the expected outcome: measure 1 committed `slash, slash, slash, slash`; measure 2 committed `quarter, quarter, quarter, eighth, eighth`; follow-up underfilled/ambiguous attempts stayed local.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the stable rhythm auto-apply snapshot repair; `git diff --check` passed.
+- After removing temporary runtime auto-apply trace logging and the one-off live-trace replay helper, XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` still passed with `111` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` still passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded and relaunched the app.
+- XcodeBuildMCP focused `test_sim` for non-visual fallback exact-fit handling passed with `1` test and `0` failures after confirming fallback-created exact fits stay local with no proposal; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `115` tests and `0` failures.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the non-visual-fallback slice; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only and screenshot capture succeeded.
+- XcodeBuildMCP focused `test_sim` for unread rhythm ink feedback policy and frame geometry passed with `2` tests and `0` failures after the unread-ink-feedback slice.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `117` tests and `0` failures after the unread-ink-feedback slice.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the unread-ink-feedback slice; `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the unread-ink-feedback slice with the existing headermap warning only; screenshot proof showed the app launched to the Projects library.
+- XcodeBuildMCP focused `test_sim` for unread rhythm ink feedback policy, full-frame fallback, and targeted uncovered-stroke frame geometry passed with `3` tests and `0` failures after the targeted-unread-stroke-feedback slice.
+- XcodeBuildMCP focused `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `80` tests and `0` failures after the V4 raster/template phrase gate and crop-level unread feedback slice.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `125` tests and `0` failures after the V4 raster/template phrase gate.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the V4 raster/template phrase gate.
+- `git diff --check` passed after the V4 raster/template phrase gate, and XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only; screenshot proof showed the app launched to Projects.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `67` tests and `0` failures after the V4 semantic visual gate.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `128` tests and `0` failures after the V4 semantic visual gate.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the V4 semantic visual gate; `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the V4 semantic visual gate with the existing headermap warning only.
+- XcodeBuildMCP `test_sim` for `LeadSheetInteractionModeStatePolicyTests` passed with `17` tests and `0` failures after tightening unread feedback to completed-looking, localized targets only.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `129` tests and `0` failures after the unread-feedback targeting rule.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the unread-feedback targeting rule; `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the unread-feedback targeting rule with the existing headermap warning only.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `69` tests and `0` failures after broadening V4 rest, dotted, and long-value phrase coverage.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `131` tests and `0` failures after the V4 rest-crop ownership slice.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the V4 rest-crop ownership slice; `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the V4 rest-crop ownership slice with the existing headermap warning only; screenshot capture succeeded.
+- XcodeBuildMCP focused `test_sim` for V4 underfill, overflow, unsupported-crop, and unflagged-eighth review gates passed with `5` tests and `0` failures after the V4 non-exact ownership slice.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `72` tests and `0` failures after the V4 non-exact ownership slice.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `134` tests and `0` failures after the V4 non-exact ownership slice.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the V4 non-exact ownership slice.
+- `git diff --check` passed after the V4 non-exact ownership slice, and XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- XcodeBuildMCP focused `test_sim` for V4 noise rejection plus Lead Sheet key-signature layout, bass-clef key-signature positions, and key-header guard coverage passed with `4` tests and `0` failures after the V4 normalization and Lead Sheet baseline slice.
+- XcodeBuildMCP focused `test_sim` for Lead Sheet pitched-note finalization passed with `2` tests and `0` failures, and `RhythmicNotationQuantizerTests` passed with `76` tests and `0` failures after adding V4 visual note anchors and stem-down quarter protection.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `182` tests and `0` failures after the Lead Sheet pitched-note baseline.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `360` tests, `36` skipped, and `0` failures after the Lead Sheet pitched-note baseline; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `48` tests and `0` failures after tightening Lead Sheet pitch coverage to require every note-capable rhythm slot.
+- XcodeBuildMCP grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `176` tests and `0` failures after the V4 render-comparison acceptance coverage and Lead Sheet key-signature baseline.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `356` tests, `36` skipped, and `0` failures after the V4 render-comparison acceptance coverage and Lead Sheet key-signature baseline.
+- `git diff --check` passed after the V4 normalization and Lead Sheet key-signature baseline, and XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `118` tests and `0` failures after the targeted-unread-stroke-feedback slice.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures after the targeted-unread-stroke-feedback slice; `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the targeted-unread-stroke-feedback slice with the existing headermap warning only; screenshot proof showed the app launched to the Projects library.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `352` tests, `36` skipped, and `0` failures after the V3 phrase-ambiguity slice; `git diff --check` passed.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `352` tests, `36` skipped, and `0` failures after the V3 visual-rest slice; `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded and launched on `iPad Pro 13-inch (M5)` with the existing headermap warning only; the latest Rhythm Section chart was reopened in `Rhythmic Notation` mode, the left ink tool tab appeared in write mode, and tapping the eraser switched the highlighted mode.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the V3 decision slice with the existing headermap warning only; screenshot proof showed the app launched to the Projects library.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the V3 visual-rest slice with the existing headermap warning only; screenshot proof showed the app launched to the Projects library.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the V3 phrase-ambiguity slice with the existing headermap warning only; screenshot proof showed the app launched to the Projects library.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded after the rhythm-entry measure selection repair with the existing headermap warning only; screenshot proof showed the simulator on a Rhythm Section chart in `Rhythmic Notation` mode with write mode active and a measure selected.
+- XcodeBuildMCP focused `test_sim` for `RhythmicNotationQuantizerTests` passed with `78` tests and `0` failures after the behavior-preserving V4 core extraction; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `188` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+- XcodeBuildMCP focused `test_sim` for `RhythmicNotationQuantizerTests` passed with `78` tests and `0` failures after the shared recognition-type and candidate/path extraction; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, and `SmuflFontMetadataTests` passed with `188` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `362` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` plus screenshot capture succeeded with the existing headermap warning only.
+
+### Sprint 67: Rhythm Section Current Workflow Lock
+
+Status: complete locally; retained as the workflow-lock checkpoint before the completed Rhythm Section side sprint.
+
+Goal: make `Rhythm Section Sheet` explicitly mean the current basic Smart Chart workflow without changing renderer behavior.
+
+Current state:
+
+- Sprint 66 is complete locally: setup/profile defaults are wired, the first Simple Chord Sheet blank-measure branch is verified, and Simple above/below free-hand capture/render/select/move/delete is verified.
+- Rhythm Section Sheet has already been defined by the user as the existing basic chart workflow: no official key setup for now, starting time/starting measures, real staff-line measures, rhythms written between barlines, chords in the chord lane above the staff, rhythm-aware chord placement when rhythms exist, and beat-grid fallback when they do not.
+- Sprint 67 should lock that designation in tests/docs before any new rhythm-section system work.
+- The first Sprint 67 implementation checkpoint added a focused layout regression that pins key suppression, meter/header retention, staff lines, leading notation, no Simple Chord Sheet above-lane leakage, rhythm-map note layouts, chord lane above staff, and chord alignment to rhythm attack centers.
+
+Sprint 67 step-by-step plan:
+
+0. Close Sprint 66 locally. Status: complete.
+   - Keep Sprint 66 pending final commit in the current local change set.
+   - Preserve its verified Simple Chord Sheet capture/render/select/move/delete behavior.
+1. Add Rhythm Section workflow lock coverage. Status: complete.
+   - Pin the current workflow designation with a focused layout test.
+   - Avoid production behavior changes unless a test exposes real drift.
+2. Verify proportionally. Status: complete.
+   - Run the focused `LeadSheetPageLayoutTests` guard for Rhythm Section.
+   - Run the full SwiftPM suite after doc updates.
+   - Use simulator compile only if app-target behavior changes.
+3. Pause before new Rhythm Section systems. Status: complete; the active Rhythm Section side sprint now owns the next slice.
+   - New rhythm-section layout/system changes should be separately scoped with the user.
+   - Candidate future slices include rhythm cue editing polish, move-to-rhythm-slot UX, measure grouping, and section/cue surfaces.
+
+Non-goals:
+
+- No recognition, parser, compendium, OCR, symbol-ledger, or fixture changes.
+- No key setup reintroduction for Rhythm Section Sheet.
+- No Simple Chord Sheet above-measure free-hand lane leakage into Rhythm Section Sheet.
+- No Lead Sheet pitched-note work.
+- No broad renderer/export rewrite.
+
+Acceptance criteria:
+
+- `Rhythm Section Sheet` remains keyless at setup and in the header.
+- It still renders the current staff system with clef/time-signature leading notation.
+- Rhythms render between barlines when a rhythm map exists.
+- Chords render above the staff and align to written rhythm attack centers.
+- Above-measure free-hand lanes stay Simple-only; Rhythm Section below-measure articulation lanes are introduced only by the Rhythm Section side sprint.
+- The sprint source-of-truth remains the first routing document.
+
+Current local verification:
+
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests/testRhythmSectionSheetPreservesCurrentRhythmAndChordWorkflow` passed with `1` test, `0` failures after adding the Rhythm Section workflow lock guard.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `348` tests, `36` skipped, `0` failures after opening Sprint 67 and adding the Rhythm Section workflow guard.
+
+### Sprint 66: Profile-Driven Structure Defaults
+
+Status: complete locally; retained here as Sprint 67 context until the combined local change set is committed.
+
+Goal: decide whether the Sprint 65 layout-profile contracts should shape newly created chart structure and setup policy while keeping renderer/export behavior conservative.
+
+Current state:
+
+- Sprint 63 completed the chart-layout product taxonomy and selected `ChartLayoutStyle` as the implementation name.
+- Sprint 64 implemented the durable New Chart chooser slice and verified the simulator picker flow.
+- Sprint 65 implemented `ChartLayoutProfile` contracts for toolbar emphasis, measure defaults, notation-lane intent, and renderer routing.
+- The chord-first release-candidate path remains the current working app baseline.
+- Renderer branching has started only for the scoped `Simple Chord Sheet` blank-measure skeleton and Simple above/below free-hand symbol lane. Rhythm Section Sheet and Lead Sheet still use the current staff renderer path.
+- Further per-style renderer/system-layout work remains deferred until each slice is explicitly scoped with the user.
+- `Simple Chord Sheet` is now defined: no key at setup, starting time/starting measures, default one measure if no extras are chosen, empty barline-to-barline measure space, chord writing inside measure white space, free-hand zones above/below, free-hand symbols editable/moveable like chords, and base-meter-aware chord placement without requiring rhythm-aware snapping.
+- `Rhythm Section Sheet` is now defined as the current basic chart workflow: no official key setup for now, starting time/starting measures, real staff-line measures, rhythms written between barlines and snapped to the measure, chords written above in the chord lane, chords snapping to written rhythms and movable to other rhythms, and automatic beat-1 chord placement when no rhythm exists in a measure.
+- `Lead Sheet` is now defined as the future notation-like layout: key/time signature/starting measures/clef setup, treble and bass clef only, staff-line measures, key-signature accidentals plus time signature before the first measure, no ledger lines for now, eventual written note/rhythm snapping to rhythm and staff-line pitch, and the normal chord lane above the measure.
+- Sprint 66 has a model-level setup-policy contract: Simple Chord Sheet and Rhythm Section Sheet omit key/clef setup for now; Lead Sheet requires key and offers treble/bass clef only; all three keep time-signature and starting-measure setup.
+- Shared chart-style invariant: no chart layout may offer or create a zero-measure chart. Starting-measure defaults and controls must clamp to at least `1`.
+- The New Chart setup sheet now follows that setup policy: Simple Chord Sheet and Rhythm Section Sheet hide key/clef, Lead Sheet shows key and treble/bass clef, and all three keep time-signature plus starting-measure setup.
+- `Chart.defaultClef` is persisted with legacy decode defaulting to treble. Initial setup stores the selected clef and creates `max(1, startingMeasureCount)` measures.
+- New initial measures, appended/open measures, and `Chart.blank` measures now use the selected layout style's beat-grid default; initial/blank systems use the selected layout style's spacing mode.
+- Preferred measures per system remains a profile contract for now. Executable system regrouping is deferred because changing rebuild chunking would alter the current rhythm-section workflow before the layout renderer slice is explicitly scoped.
+- The first Simple Chord Sheet renderer slice now omits key header text, clef, leading time-signature glyphs, staff lines, slash/rhythm note rendering, and open-measure hint marks; it places the chord-writing band inside the blank measure body and keeps the blank space bounded by normal barlines.
+- Simple Chord Sheet now has a free-hand symbol object path: above/below lanes only, measure-anchored `FreehandSymbol` objects, normalized lane-relative frames, raw ink drawing data, z-order, editor/PDF rendering, stroke-start capture that ignores the chord lane, tap selection, lane-constrained drag/move, and delete controls.
+
+Sprint 66 step-by-step plan:
+
+0. Complete the user definition gate. Status: complete.
+   - `Simple Chord Sheet` is defined.
+   - `Rhythm Section Sheet` is defined as the current workflow designation.
+   - `Lead Sheet` is defined as a small lead-sheet baseline; richer melody editing, ledger lines, and named pitch behavior remain deferred.
+   - Record what stays common across all layouts before writing code.
+1. Apply profile defaults at initial chart setup. Status: complete for setup policy and initial measure creation.
+   - Use the selected layout style's setup policy for key visibility, time-signature visibility, starting-measure visibility, and clef options.
+   - Use the selected layout style's initial measure count when a draft chart becomes a blank page.
+   - Preserve existing lead-sheet behavior unless the profile explicitly says otherwise.
+2. Keep preferred system grouping as a profile contract for now. Status: deferred by design.
+   - Do not change rebuild chunking until the per-style renderer/layout slice is scoped.
+   - Keep existing lead-sheet grouping behavior on the current renderer path.
+3. Apply safe measure-level defaults. Status: complete.
+   - Use the profile's default beat-grid preset for newly created measures.
+   - Use the profile's default system spacing mode for newly created systems.
+4. Verify proportionally. Status: complete for this slice.
+   - Add focused model/editing tests for each layout style's initial structure.
+   - Run the full SwiftPM suite after focused tests pass.
+   - Run an iOS simulator compile if app-target coverage is touched.
+5. Implement the smallest Simple Chord Sheet layout branch. Status: complete for blank-measure skeleton.
+   - Hide key/staff/clef/leading time-signature visuals for Simple Chord Sheet.
+   - Put the chord-writing band inside the blank measure body.
+   - Keep rhythm-section refinement and richer lead-sheet melody/editing systems deferred.
+6. Implement the first Simple free-hand symbol object checkpoint. Status: complete for capture/render/edit.
+   - Store Simple free-hand symbols as measure-anchored raw ink objects in above/below lanes only.
+   - Render saved free-hand symbols in the editor and PDF export.
+   - Do not allow free-hand symbol capture in the chord lane.
+   - Select saved symbols, move them within their original above/below lane, and delete selected symbols.
+   - Keep resizing, semantic classification, and rhythm snapping deferred.
 
 Non-goals:
 
 - No personal handwriting fixture expansion.
 - No recognition score retuning from one writer's pass.
+- No parser or compendium authority change.
 - No default OCR expansion or symbol-ledger diagnostics cost.
-- No new recovery/audit sweep without a concrete blocker.
-- No full notation, melody-entry, playback, or broad renderer rewrite in Sprint 63.
+- No broad layout-specific renderer/export rewrite beyond the scoped Simple Chord Sheet blank-measure skeleton and above/below free-hand symbol rendering/editing.
+- No full notation, melody-entry, playback, or broad editor rewrite.
+- No layout-changing UI after chart creation until conversion rules exist.
+- Keep existing saved chart decode compatibility intact.
 
 Acceptance criteria:
 
-- The three new-chart layout choices are clearly named and defined.
-- The chart-structure systems for each layout are outlined.
+- Layout profiles define key, time-signature, starting-measure, and clef setup policy.
+- New draft setup uses layout-profile initial measure count.
+- No layout can offer or create a zero-measure chart.
+- New systems use layout-profile spacing mode.
+- Preferred measures per system is pinned in profile tests but remains deferred as executable regrouping.
+- New measures use layout-profile beat-grid defaults.
+- `Lead Sheet` remains compatible with the current renderer path and four-measure system grouping.
+- `Simple Chord Sheet` renders a blank barline-to-barline measure body without staff/key/clef/leading-time-signature visuals.
+- Simple free-hand symbols persist only in the above/below measure lanes and stay separate from the chord lane.
+- Simple free-hand symbols can be selected, moved within their original lane, and deleted without enabling chord-lane free-hand capture.
+- Tests pin all three layout families.
 - The sprint source-of-truth remains the first routing document.
 - Chord recognition stays writer-agnostic and proportional validation remains the default.
+
+Current local verification:
+
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `35` tests, `0` failures after updating the `Simple Chord Sheet` profile to match the user-defined default-one-measure rule.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `336` tests, `36` skipped, `0` failures after adding setup-policy contracts for key/time/starting-measure/clef behavior.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `36` tests, `0` failures after pinning the one-measure minimum invariant for layout defaults and blank charts.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `38` tests, `0` failures after wiring initial setup to starting-measure count, clef persistence, profile spacing, and profile beat-grid defaults.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `339` tests, `36` skipped, `0` failures after the setup/profile implementation.
+- `xcodegen generate` completed; XcodeBuildMCP `build_sim CODE_SIGNING_ALLOWED=NO` passed for the `SmartChart` scheme on the configured iPad simulator with one existing headermap warning and no errors.
+- XcodeBuildMCP live simulator smoke launched `SmartChart`, opened the New Chart picker, verified Simple Chord Sheet setup hides Key/Clef and defaults Starting Measures to `1`, verified Rhythm Section Sheet setup hides Key/Clef and defaults Starting Measures to `8`, verified Lead Sheet setup shows Key and Clef with Starting Measures defaulting to `4`, and confirmed the library summaries after creation showed Simple `1` measure, Rhythm `8` measures, and Lead Sheet `4` measures.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `30` tests, `0` failures after adding the Simple blank-measure renderer layout checks plus Rhythm/Lead header/staff guard checks.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `342` tests, `36` skipped, `0` failures after the Simple layout branch.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed for the `SmartChart` scheme on the configured iPad simulator with one existing headermap warning and no errors.
+- XcodeBuildMCP live simulator smoke opened a saved Simple Chord Sheet and confirmed the editor renders `4/4` only in the header area, no key text, no clef, no leading time-signature glyph, no staff lines, and one blank barline-to-barline measure space.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `40` tests, `0` failures after adding Simple-only `FreehandSymbol` persistence and guard tests.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `31` tests, `0` failures after adding above/below lane geometry and free-hand symbol layout resolution checks.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `345` tests, `36` skipped, `0` failures after the Simple free-hand symbol capture/render checkpoint.
+- XcodeBuildMCP `build_sim CODE_SIGNING_ALLOWED=NO` passed for the `SmartChart` scheme on the configured iPad simulator with one existing headermap warning and no errors.
+- XcodeBuildMCP live simulator smoke opened a saved Simple Chord Sheet, entered `Free-Hand`, showed above/below lane affordances around the blank measure, drew one upper-lane stroke, tapped `Done`, and confirmed the stroke persisted as rendered ink above the chord lane.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `42` tests, `0` failures after adding Simple free-hand symbol move/delete mutations and open-measure retention coverage.
+- XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetFreehandSymbolEditOverlayGeometryTests CODE_SIGNING_ALLOWED=NO` passed with `4` tests, `0` failures after adding Simple free-hand selection/control/clamping geometry checks.
+- `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `347` tests, `36` skipped, `0` failures after the Simple free-hand selection/move/delete checkpoint.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed for the `SmartChart` scheme on the configured iPad simulator with one existing headermap warning and no errors.
+- XcodeBuildMCP live simulator smoke opened a saved Simple Chord Sheet, entered `Free-Hand`, selected a saved upper-lane mark, deleted it, re-created/selected a new upper-lane mark, and moved it right inside the above-measure lane.
+- Sprint 66 has all three layout styles defined, the safe setup/profile defaults implemented, the first Simple Chord Sheet blank-measure renderer skeleton verified, Simple above/below free-hand capture/render/select/move/delete verified, and Lead Sheet verified locally through clef/key-signature rendering plus the first clamped pitched-note proof. Remaining implementation should wait for later slices explicitly scoped to Simple free-hand resizing/semantic classification/rhythm snapping, Rhythm workflow refinement, richer Lead Sheet melody editing, or executable per-style system grouping.
 
 ## Completed Sprints Log
 
@@ -868,6 +1185,46 @@ Append one entry here after each sprint completes. Each entry must include:
 - unresolved follow-up: no release-candidate blocker remains from the bounded pass. Future work should be chosen from product priorities rather than reopening the recovery/audit loop.
 - next sprint candidate: Sprint 63 chart layout goals.
 
+### Sprint 63: Chart Layout Goals
+
+- status: complete planning handoff
+- planning commit: `4ddaa27 Define sprint 63 chart layout goals`
+- summary: Defined the three New Chart layout styles: `Simple Chord Sheet`, `Rhythm Section Sheet`, and `Lead Sheet`; selected `ChartLayoutStyle` as the implementation name; and documented the shared chart-structure systems that future layout work should use.
+- tests and evidence: documentation/product planning pass; the Sprint 64 implementation slice now covers durable layout-style persistence, picker routing, and backward-compatible decode behavior.
+- behavior boundary: no recognition, parser, compendium, OCR, symbol-ledger, handwriting fixture, export renderer, or chord ink lifecycle changes.
+- unresolved follow-up: Sprint 64 owns the durable implementation, manual picker-flow validation, and the decision about whether to stop at the thin chooser slice or continue into layout-profile contracts.
+- next sprint candidate: Sprint 64 New Chart layout-style chooser.
+
+### Sprint 64: New Chart Layout Style Chooser
+
+- status: complete implementation slice
+- implementation commit: pending local Sprint 64/Sprint 65 change set
+- summary: Implemented `ChartLayoutStyle` as durable chart state; routed `New Chart` through the three-choice layout picker; applied safe style/engraving defaults per layout style; surfaced the selected style in library rows and setup; and kept existing charts backward-compatible by decoding missing layout style as `Lead Sheet`.
+- tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutstyle --filter 'ChartEditingTests|ChartLibraryStoreTests'` passed with `43` selected tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutstyle` passed with `334` tests, `36` skipped, and `0` failures; XcodeBuildMCP `build_sim CODE_SIGNING_ALLOWED=NO` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed and confirmed the three-choice picker, `Rhythm Section Sheet` setup handoff, and editor open from `Create Blank Page`; `git diff --check` passed.
+- behavior boundary: no recognition, parser, compendium, OCR, symbol-ledger, handwriting fixture, layout-specific renderer, export branch, or chord ink lifecycle changes.
+- unresolved follow-up: define layout-profile contracts before branching toolbar emphasis, measure defaults, or renderer/export behavior.
+- next sprint candidate: Sprint 65 layout-profile contracts.
+
+### Sprint 65: Layout Profile Contracts
+
+- status: complete implementation slice
+- implementation commit: pending local Sprint 64/Sprint 65 change set
+- summary: Added a computed `ChartLayoutProfile` contract for each `ChartLayoutStyle`. Profiles now define toolbar emphasis, primary tool focus, measure defaults, notation-lane intent, renderer route, and existing style/engraving defaults without persisting duplicate profile state on charts.
+- tests and evidence: focused `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `35` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `336` tests, `36` skipped, and `0` failures; `xcodegen generate` completed; XcodeBuildMCP `build_sim CODE_SIGNING_ALLOWED=NO` passed for the `SmartChart` scheme on the configured iPad simulator; `git diff --check` passed; `git clean -ndX` showed no ignored/generated debris.
+- behavior boundary: no recognition, parser, compendium, OCR, symbol-ledger, handwriting fixture, layout-specific renderer, export branch, editor UI branch, or chord ink lifecycle changes.
+- unresolved follow-up: decide whether to make the profile contracts executable by applying initial measure count, preferred measures per system, spacing mode, and beat-grid defaults to new chart structure.
+- next sprint candidate: Sprint 66 profile-driven structure defaults.
+
+### Sprint 66: Profile-Driven Structure Defaults
+
+- status: complete locally; pending final commit in the combined Sprint 64-67 local change set
+- implementation commit: pending local Sprint 64-67 change set
+- summary: Applied layout-profile setup policy and safe structure defaults, verified the New Chart setup differences for Simple/Rhythm/Lead, implemented the first Simple Chord Sheet blank-measure renderer branch, and added Simple above/below free-hand symbol capture, editor/PDF rendering, selection, lane-constrained move, and delete behavior while keeping the chord lane separate.
+- tests and evidence: focused `ChartEditingTests` passed with `42` tests and `0` failures; focused `LeadSheetPageLayoutTests` passed with `31` tests and `0` failures; XcodeBuildMCP focused `LeadSheetFreehandSymbolEditOverlayGeometryTests` passed with `4` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `347` tests, `36` skipped, and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` passed with the existing headermap warning; live simulator smoke selected, deleted, re-created, selected, and moved a saved Simple upper-lane mark.
+- behavior boundary: no recognition, parser, compendium, OCR, symbol-ledger, handwriting fixture, score tuning, broad renderer/export rewrite, Lead Sheet pitched-note work, or Rhythm Section workflow changes.
+- unresolved follow-up: Simple free-hand resizing, semantic classification, rhythm snapping, Rhythm workflow refinement, richer Lead Sheet melody editing/ledger-line/named-pitch behavior, and executable per-style system grouping remain separately scoped future work.
+- next sprint candidate: Sprint 67 Rhythm Section current workflow lock.
+
 ## Chord-First Side Sprint Queue
 
 Use this queue for chord-specific product work after Sprint 56. `docs/smart-chart-chord-first-side-sprints-2026-05-27.md` is the supporting route map; this file remains the active sprint authority.
@@ -929,6 +1286,14 @@ Current authority:
 - `docs/smart-chart-sprint-59-confirmation-direct-input-polish-2026-05-27.md`: Sprint 59 confirmation and direct-input polish.
 - `docs/smart-chart-sprint-60-general-candidate-availability-hardening-2026-05-27.md`: Sprint 60 general candidate availability hardening.
 - `docs/smart-chart-sprint-61-raster-render-handoff-polish-2026-05-27.md`: Sprint 61 raster/render handoff polish.
+- `docs/smart-chart-sprint-62-chord-first-release-candidate-pass-2026-05-27.md`: Sprint 62 chord-first release-candidate pass.
+- `docs/smart-chart-sprint-63-chart-layout-goals-2026-05-27.md`: Sprint 63 chart layout goals.
+- `docs/smart-chart-sprint-64-new-chart-layout-style-chooser-2026-05-27.md`: Sprint 64 New Chart layout-style chooser.
+- `docs/smart-chart-sprint-65-layout-profile-contracts-2026-05-27.md`: Sprint 65 layout-profile contracts.
+- `docs/smart-chart-sprint-66-profile-driven-structure-defaults-2026-05-27.md`: Sprint 66 profile-driven structure defaults.
+- `docs/smart-chart-sprint-67-rhythm-section-current-workflow-lock-2026-05-27.md`: Sprint 67 Rhythm Section current workflow lock.
+- `docs/smart-chart-rhythm-section-v4-closeout-audit-2026-05-29.md`: Rhythm Section V4 core authoring closeout audit.
+- `docs/smart-chart-rhythm-section-progress-log-2026-05-29.md`: Rhythm Section final integration breadcrumb log.
 - `docs/core-design-document.md`: product intent and design rules.
 - `docs/developer-mvp-spec.md`: MVP scope, subordinate to the core design document.
 - `docs/repo-github-recognition-audit-2026-05-20.md`: evidence snapshot for the current recovery plan.

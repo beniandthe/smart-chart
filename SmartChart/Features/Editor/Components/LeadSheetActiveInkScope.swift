@@ -7,21 +7,28 @@ enum LeadSheetActiveInkScope {
     case chords(frame: CGRect)
     case rhythmicMeasure(measureID: UUID, frame: CGRect)
     case noteSelection(frame: CGRect)
+    case freehandSymbols(frame: CGRect)
 
     var frame: CGRect {
         switch self {
-        case .page(let frame), .chords(let frame), .rhythmicMeasure(_, let frame), .noteSelection(let frame):
+        case .page(let frame),
+             .chords(let frame),
+             .rhythmicMeasure(_, let frame),
+             .noteSelection(let frame),
+             .freehandSymbols(let frame):
             return frame
         }
     }
 
     static func resolve(
         interactionMode: EditorCanvasMode,
+        chartLayoutStyle: ChartLayoutStyle,
         selectedMeasureID: UUID?,
         selectedMeasureLayout: LeadSheetMeasureLayout?,
         pageLayout: LeadSheetPageLayout?
     ) -> LeadSheetActiveInkScope? {
         if interactionMode.allowsDirectRhythmicNotationInk,
+           chartLayoutStyle.profile.allowsRhythmicNotationInk,
            let selectedMeasureID,
            let selectedMeasureLayout {
             return .rhythmicMeasure(
@@ -45,7 +52,11 @@ enum LeadSheetActiveInkScope {
             return nil
         }
 
-        return .page(frame: pageWritingFrame(for: pageLayout))
+        guard chartLayoutStyle.profile.allowsFreehandSymbolInk else {
+            return nil
+        }
+
+        return .freehandSymbols(frame: freehandSymbolWritingFrame(for: pageLayout))
     }
 
     static func pageWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
@@ -56,6 +67,25 @@ enum LeadSheetActiveInkScope {
         pageLayout.paperFrame.insetBy(dx: 10, dy: 10)
     }
 
+    static func freehandSymbolWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
+        let laneFrames = pageLayout.systems
+            .flatMap(\.measures)
+            .flatMap { measure -> [CGRect] in
+                [measure.freehandAboveFrame, measure.freehandBelowFrame].compactMap { $0 }
+            }
+
+        guard let firstFrame = laneFrames.first else {
+            return pageWritingFrame(for: pageLayout)
+        }
+
+        return laneFrames
+            .dropFirst()
+            .reduce(firstFrame) { partialFrame, laneFrame in
+                partialFrame.union(laneFrame)
+            }
+            .insetBy(dx: -8, dy: -8)
+    }
+
     func drawingData(in chart: Chart) -> Data? {
         switch self {
         case .page:
@@ -64,7 +94,7 @@ enum LeadSheetActiveInkScope {
             return chart.pageHandwrittenChordData
         case .rhythmicMeasure(let measureID, _):
             return chart.measure(id: measureID)?.handwrittenRhythmicNotationData
-        case .noteSelection:
+        case .noteSelection, .freehandSymbols:
             return nil
         }
     }
@@ -88,7 +118,7 @@ enum LeadSheetActiveInkScope {
                   updatedChart.setMeasureHandwrittenRhythmicNotationDrawing(drawingData, for: measureID) else {
                 return nil
             }
-        case .noteSelection:
+        case .noteSelection, .freehandSymbols:
             return nil
         }
 

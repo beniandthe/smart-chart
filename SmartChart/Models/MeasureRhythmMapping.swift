@@ -73,6 +73,36 @@ enum MeasureRhythmMapStatus: Hashable {
     case invalidSubdivision
 }
 
+enum RhythmicNotationCompendium {
+    static let supportedValues: Set<RhythmValue> = [
+        .slash,
+        .quarter,
+        .half,
+        .whole,
+        .eighth,
+        .dottedQuarter,
+        .dottedHalf,
+        .eighthRest,
+        .quarterRest,
+        .halfRest,
+        .wholeRest
+    ]
+
+    static func accepts(_ values: [RhythmValue], in meter: Meter) -> Bool {
+        guard !values.isEmpty,
+              values.allSatisfy(supportedValues.contains) else {
+            return false
+        }
+
+        let rhythmMap = MeasureRhythmMap(values: values)
+        guard case .exact = rhythmMap.status(for: meter) else {
+            return false
+        }
+
+        return rhythmMap.resolvedSlots(for: meter) != nil
+    }
+}
+
 struct MeasureRhythmSlot: Identifiable, Hashable {
     let index: Int
     let startPosition: BeatPosition
@@ -434,8 +464,12 @@ extension Measure {
     }
 
     mutating func clearInvalidRhythmSlotAssignments(defaultMeter: Meter) {
-        let playableIndices = resolvedRhythmSlots(defaultMeter: defaultMeter).map { slots in
+        let slots = resolvedRhythmSlots(defaultMeter: defaultMeter)
+        let playableIndices = slots.map { slots in
             Set(slots.indices.filter { slots[$0].isPlayable })
+        } ?? []
+        let pitchedNoteIndices = slots.map { slots in
+            Set(slots.indices.filter { slots[$0].duration.supportsPitchedLeadSheetNote })
         } ?? []
 
         chordEvents = chordEvents.map { chordEvent in
@@ -448,6 +482,8 @@ extension Measure {
             chordEvent.mappedRhythmSlotIndex = nil
             return chordEvent
         }
+
+        pitchedNoteEvents = pitchedNoteEvents.filter { pitchedNoteIndices.contains($0.rhythmSlotIndex) }
     }
 
     private func rawPlacement(for event: ChordEvent) -> MeasureChordPlacement {
@@ -485,6 +521,15 @@ extension Measure {
 }
 
 extension RhythmValue {
+    var supportsPitchedLeadSheetNote: Bool {
+        switch self {
+        case .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole:
+            return true
+        case .slash, .eighthRest, .quarterRest, .halfRest, .wholeRest, .tiedContinuation:
+            return false
+        }
+    }
+
     static var sketchPalette: [RhythmValue] {
         [.slash, .eighth, .quarter, .dottedQuarter, .half, .dottedHalf, .whole]
     }

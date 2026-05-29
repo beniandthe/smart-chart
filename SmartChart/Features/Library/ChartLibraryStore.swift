@@ -59,12 +59,15 @@ final class ChartLibraryStore: ObservableObject {
     }
 
     @discardableResult
-    func createBlankChart(in key: DocumentKey = .cMajor) -> Bool {
+    func createBlankChart(
+        in key: DocumentKey = .cMajor,
+        layoutStyle: ChartLayoutStyle = .leadSheet
+    ) -> Bool {
         guard canCreateChart else {
             return false
         }
 
-        let newChart = Chart.draft(title: "Untitled Chart", key: key)
+        let newChart = Chart.draft(title: "Untitled Chart", key: key, layoutStyle: layoutStyle)
         charts.insert(newChart, at: 0)
         selectedChartID = newChart.id
         return true

@@ -11,6 +11,26 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
         XCTAssertEqual(policy.inkTool.width, 2.5, accuracy: 0.001)
     }
 
+    func testInkToolPolicyUsesEraserForInkEraseMode() {
+        let policy = LeadSheetInteractionModeStatePolicy.resolve(
+            for: .rhythmicNotationEdit,
+            inkToolMode: .erase
+        )
+
+        XCTAssertEqual(policy.inkToolMode, .erase)
+        XCTAssertTrue(policy.canvasTool is PKEraserTool)
+    }
+
+    func testInkToolPolicyIgnoresEraseModeWhenCanvasIsNotInking() {
+        let policy = LeadSheetInteractionModeStatePolicy.resolve(
+            for: .browse,
+            inkToolMode: .erase
+        )
+
+        XCTAssertEqual(policy.inkToolMode, .write)
+        XCTAssertTrue(policy.canvasTool is PKInkingTool)
+    }
+
     func testChordEntryKeepsSimulatorPointerInputForAutomation() {
         let policy = LeadSheetInteractionModeStatePolicy.resolve(for: .chordEntry)
 
@@ -19,6 +39,464 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
         #else
         XCTAssertEqual(policy.drawingPolicy, .pencilOnly)
         #endif
+    }
+
+    func testInkCanvasSyncPolicyPreservesDirtyChordInkFromStaleModelReload() {
+        XCTAssertTrue(
+            LeadSheetInkCanvasSyncPolicy.shouldPreserveActiveCanvas(
+                activeInkScope: .chords(frame: CGRect(x: 0, y: 0, width: 100, height: 40)),
+                interactionMode: .chordEntry,
+                hasUnpersistedChordInk: true,
+                hasUnpersistedRhythmicNotationInk: false,
+                currentDrawingData: Data([0x01]),
+                desiredDrawingData: Data([0x02])
+            )
+        )
+    }
+
+    func testInkCanvasSyncPolicyPreservesDirtyRhythmInkFromStaleModelReload() {
+        XCTAssertTrue(
+            LeadSheetInkCanvasSyncPolicy.shouldPreserveActiveCanvas(
+                activeInkScope: .rhythmicMeasure(
+                    measureID: UUID(),
+                    frame: CGRect(x: 0, y: 0, width: 100, height: 40)
+                ),
+                interactionMode: .rhythmicNotationEdit,
+                hasUnpersistedChordInk: false,
+                hasUnpersistedRhythmicNotationInk: true,
+                currentDrawingData: Data([0x01]),
+                desiredDrawingData: Data([0x02])
+            )
+        )
+    }
+
+    func testInkCanvasSyncPolicyAllowsModelReloadWhenRhythmInkIsCleanOrAlreadySynced() {
+        let activeScope = LeadSheetActiveInkScope.rhythmicMeasure(
+            measureID: UUID(),
+            frame: CGRect(x: 0, y: 0, width: 100, height: 40)
+        )
+
+        XCTAssertFalse(
+            LeadSheetInkCanvasSyncPolicy.shouldPreserveActiveCanvas(
+                activeInkScope: activeScope,
+                interactionMode: .rhythmicNotationEdit,
+                hasUnpersistedChordInk: false,
+                hasUnpersistedRhythmicNotationInk: false,
+                currentDrawingData: Data([0x01]),
+                desiredDrawingData: Data([0x02])
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetInkCanvasSyncPolicy.shouldPreserveActiveCanvas(
+                activeInkScope: activeScope,
+                interactionMode: .rhythmicNotationEdit,
+                hasUnpersistedChordInk: false,
+                hasUnpersistedRhythmicNotationInk: true,
+                currentDrawingData: Data([0x01]),
+                desiredDrawingData: Data([0x01])
+            )
+        )
+    }
+
+    func testFreehandActiveInkScopeRequiresProfileSymbolLanes() {
+        let simplePage = LeadSheetPageLayoutEngine.pageLayout(
+            for: Chart.blank(title: "Simple", measureCount: 1, layoutStyle: .simpleChordSheet),
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let rhythmPage = LeadSheetPageLayoutEngine.pageLayout(
+            for: Chart.blank(title: "Rhythm", measureCount: 1, layoutStyle: .rhythmSectionSheet),
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let leadPage = LeadSheetPageLayoutEngine.pageLayout(
+            for: Chart.blank(title: "Lead", measureCount: 1, layoutStyle: .leadSheet),
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let simpleScope = LeadSheetActiveInkScope.resolve(
+            interactionMode: .freeHand,
+            chartLayoutStyle: .simpleChordSheet,
+            selectedMeasureID: nil,
+            selectedMeasureLayout: nil,
+            pageLayout: simplePage
+        )
+        let rhythmScope = LeadSheetActiveInkScope.resolve(
+            interactionMode: .freeHand,
+            chartLayoutStyle: .rhythmSectionSheet,
+            selectedMeasureID: nil,
+            selectedMeasureLayout: nil,
+            pageLayout: rhythmPage
+        )
+        let leadScope = LeadSheetActiveInkScope.resolve(
+            interactionMode: .freeHand,
+            chartLayoutStyle: .leadSheet,
+            selectedMeasureID: nil,
+            selectedMeasureLayout: nil,
+            pageLayout: leadPage
+        )
+
+        guard case .freehandSymbols = simpleScope,
+              case .freehandSymbols = rhythmScope else {
+            XCTFail("Simple and Rhythm Section should resolve freehand symbol ink scopes")
+            return
+        }
+        XCTAssertNil(leadScope)
+    }
+
+    func testRhythmicNotationActiveInkScopeRequiresProfileRhythmTool() throws {
+        let simpleChart = Chart.blank(title: "Simple", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let rhythmChart = Chart.blank(title: "Rhythm", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let leadChart = Chart.blank(title: "Lead", measureCount: 1, layoutStyle: .leadSheet)
+        let simplePage = LeadSheetPageLayoutEngine.pageLayout(
+            for: simpleChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let rhythmPage = LeadSheetPageLayoutEngine.pageLayout(
+            for: rhythmChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let leadPage = LeadSheetPageLayoutEngine.pageLayout(
+            for: leadChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let simpleMeasureLayout = try XCTUnwrap(simplePage.systems.first?.measures.first)
+        let rhythmMeasureLayout = try XCTUnwrap(rhythmPage.systems.first?.measures.first)
+        let leadMeasureLayout = try XCTUnwrap(leadPage.systems.first?.measures.first)
+        let simpleMeasureID = try XCTUnwrap(simpleChart.measures.first?.id)
+        let rhythmMeasureID = try XCTUnwrap(rhythmChart.measures.first?.id)
+        let leadMeasureID = try XCTUnwrap(leadChart.measures.first?.id)
+
+        let simpleScope = LeadSheetActiveInkScope.resolve(
+            interactionMode: .rhythmicNotationEdit,
+            chartLayoutStyle: .simpleChordSheet,
+            selectedMeasureID: simpleMeasureID,
+            selectedMeasureLayout: simpleMeasureLayout,
+            pageLayout: simplePage
+        )
+        let rhythmScope = LeadSheetActiveInkScope.resolve(
+            interactionMode: .rhythmicNotationEdit,
+            chartLayoutStyle: .rhythmSectionSheet,
+            selectedMeasureID: rhythmMeasureID,
+            selectedMeasureLayout: rhythmMeasureLayout,
+            pageLayout: rhythmPage
+        )
+        let leadScope = LeadSheetActiveInkScope.resolve(
+            interactionMode: .rhythmicNotationEdit,
+            chartLayoutStyle: .leadSheet,
+            selectedMeasureID: leadMeasureID,
+            selectedMeasureLayout: leadMeasureLayout,
+            pageLayout: leadPage
+        )
+
+        XCTAssertNil(simpleScope)
+        guard case .rhythmicMeasure(rhythmMeasureID, _) = rhythmScope,
+              case .rhythmicMeasure(leadMeasureID, _) = leadScope else {
+            XCTFail("Rhythm Section and Lead Sheet should resolve rhythm ink scopes")
+            return
+        }
+        XCTAssertEqual(rhythmMeasureID, rhythmChart.measures.first?.id)
+        XCTAssertEqual(leadMeasureID, leadChart.measures.first?.id)
+    }
+
+    func testRhythmAutoApplyRequiresStableNonEmptyScheduledSnapshot() {
+        let snapshot = LeadSheetRhythmicNotationInkSnapshot(testValues: [1, 2])
+
+        XCTAssertTrue(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAttemptAutoApply(
+                currentInkSnapshot: snapshot,
+                scheduledInkSnapshot: snapshot
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAttemptAutoApply(
+                currentInkSnapshot: LeadSheetRhythmicNotationInkSnapshot(testValues: [1, 3]),
+                scheduledInkSnapshot: snapshot
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAttemptAutoApply(
+                currentInkSnapshot: nil,
+                scheduledInkSnapshot: snapshot
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAttemptAutoApply(
+                currentInkSnapshot: nil,
+                scheduledInkSnapshot: nil
+            )
+        )
+    }
+
+    func testRhythmAutoApplySnapshotIgnoresSerializedDrawingMetadata() {
+        let firstDrawing = PKDrawing(strokes: [snapshotStroke(creationDate: Date(timeIntervalSince1970: 10))])
+        let secondDrawing = PKDrawing(strokes: [snapshotStroke(creationDate: Date(timeIntervalSince1970: 20))])
+        let firstSnapshot = LeadSheetRhythmicNotationInkSnapshot(drawing: firstDrawing)
+        let secondSnapshot = LeadSheetRhythmicNotationInkSnapshot(drawing: secondDrawing)
+
+        XCTAssertNotNil(firstSnapshot)
+        XCTAssertNotNil(secondSnapshot)
+        XCTAssertTrue(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAttemptAutoApply(
+                currentInkSnapshot: firstSnapshot,
+                scheduledInkSnapshot: secondSnapshot
+            )
+        )
+    }
+
+    func testRhythmAutoApplyRequiresNaturalExactFit() {
+        let naturallyExactProposal = RhythmicNotationMeasureProposal(
+            values: [.quarter, .quarter, .half],
+            safety: .autoApply,
+            isNaturalExactFit: true
+        )
+        let stretchedProposal = RhythmicNotationMeasureProposal(
+            values: [.quarter, .quarter, .half],
+            safety: .autoApply,
+            isNaturalExactFit: false
+        )
+
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAutoApplyProposal(
+                stretchedProposal,
+                requiresNaturalExactFitAfterErase: true
+            )
+        )
+        XCTAssertTrue(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAutoApplyProposal(
+                naturallyExactProposal,
+                requiresNaturalExactFitAfterErase: true
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationAutoApplyPolicy.canAutoApplyProposal(
+                stretchedProposal,
+                requiresNaturalExactFitAfterErase: false
+            )
+        )
+    }
+
+    func testRhythmAutoApplyKeepsGraceWindowAfterFirstExactFitSnapshot() {
+        let totalAutoApplyDelay = LeadSheetRhythmicNotationAutoApplyPolicy.idleDelay
+            + LeadSheetRhythmicNotationAutoApplyPolicy.exactFitGraceDelay
+
+        XCTAssertGreaterThanOrEqual(totalAutoApplyDelay, 1.0)
+        XCTAssertLessThanOrEqual(totalAutoApplyDelay, 1.4)
+    }
+
+    func testRhythmAutoApplyExtendsGraceForAmbiguousTerminalStem() {
+        let normalAutoApplyDelay = LeadSheetRhythmicNotationAutoApplyPolicy.idleDelay
+            + LeadSheetRhythmicNotationAutoApplyPolicy.exactFitGraceDelay(
+                requiresExtendedStability: false
+            )
+        let ambiguousAutoApplyDelay = LeadSheetRhythmicNotationAutoApplyPolicy.idleDelay
+            + LeadSheetRhythmicNotationAutoApplyPolicy.exactFitGraceDelay(
+                requiresExtendedStability: true
+            )
+
+        XCTAssertGreaterThan(
+            ambiguousAutoApplyDelay,
+            normalAutoApplyDelay
+        )
+        XCTAssertLessThanOrEqual(ambiguousAutoApplyDelay, 2.3)
+    }
+
+    func testRhythmUnreadInkFeedbackWaitsForCompletedTargetedDecision() {
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(
+                for: .keepWriting(.nonVisualFallback, nil)
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(
+                for: .needsReview(.ambiguousPhrase, nil, nil)
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(
+                for: .keepWriting(.underfilled, nil)
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(
+                for: .keepWriting(.noInk, nil)
+            )
+        )
+    }
+
+    func testRhythmUnreadInkFeedbackDoesNotFallbackToWholeCanvasFrame() {
+        let drawing = PKDrawing(strokes: [snapshotStroke(creationDate: Date(timeIntervalSince1970: 10))])
+        let feedbackFrame = LeadSheetRhythmicNotationFeedbackPolicy.unreadInkFrame(
+            for: drawing,
+            decision: .keepWriting(.nonVisualFallback, nil),
+            canvasFrame: CGRect(x: 30, y: 40, width: 120, height: 80)
+        )
+
+        XCTAssertNil(feedbackFrame)
+    }
+
+    func testRhythmUnreadInkFeedbackTargetsUncoveredStrokeFrameWhenAvailable() {
+        let drawing = PKDrawing(strokes: [snapshotStroke(creationDate: Date(timeIntervalSince1970: 10))])
+        let phrase = RhythmPhraseHypothesis(
+            source: .visual,
+            primitives: [
+                RhythmInkPrimitive(
+                    strokeIndex: 0,
+                    kind: .slash,
+                    bounds: CGRect(x: 8, y: 52, width: 12, height: 18)
+                ),
+                RhythmInkPrimitive(
+                    strokeIndex: 1,
+                    kind: .unknown,
+                    bounds: CGRect(x: 78, y: 20, width: 6, height: 24)
+                )
+            ],
+            symbols: [],
+            uncoveredStrokeIndices: [1],
+            naturalValues: [.slash, .slash, .slash, .slash],
+            naturalUnits: 8,
+            targetUnits: 8,
+            passesCompendium: true
+        )
+
+        let feedbackFrame = LeadSheetRhythmicNotationFeedbackPolicy.unreadInkFrame(
+            for: drawing,
+            decision: .keepWriting(.uncoveredStrokes, phrase),
+            canvasFrame: CGRect(x: 30, y: 40, width: 140, height: 90),
+            padding: 4
+        )
+
+        XCTAssertNotNil(feedbackFrame)
+        XCTAssertTrue(feedbackFrame?.contains(CGPoint(x: 111, y: 72)) ?? false)
+        XCTAssertFalse(feedbackFrame?.contains(CGPoint(x: 44, y: 101)) ?? true)
+    }
+
+    func testRhythmUnreadInkFeedbackDoesNotTargetUnreadV4SymbolBeforeMeasureIsComplete() {
+        let drawing = PKDrawing(strokes: [snapshotStroke(creationDate: Date(timeIntervalSince1970: 10))])
+        let phrase = RhythmPhraseHypothesis(
+            source: .rasterTemplate,
+            primitives: [],
+            symbols: [
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [0],
+                    bounds: CGRect(x: 12, y: 48, width: 16, height: 22),
+                    candidateValues: [.quarter],
+                    selectedValue: .quarter
+                ),
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [1],
+                    bounds: CGRect(x: 86, y: 18, width: 10, height: 30),
+                    candidateValues: [],
+                    selectedValue: nil
+                )
+            ],
+            uncoveredStrokeIndices: [],
+            naturalValues: [.quarter],
+            naturalUnits: 2,
+            targetUnits: 8,
+            passesCompendium: false
+        )
+
+        XCTAssertFalse(
+            LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(
+                for: .keepWriting(.unsupported, phrase)
+            )
+        )
+        let feedbackFrame = LeadSheetRhythmicNotationFeedbackPolicy.unreadInkFrame(
+            for: drawing,
+            decision: .keepWriting(.unsupported, phrase),
+            canvasFrame: CGRect(x: 30, y: 40, width: 140, height: 90),
+            padding: 4
+        )
+
+        XCTAssertNil(feedbackFrame)
+    }
+
+    func testRhythmUnreadInkFeedbackTargetsUnreadV4SymbolFrameWhenMeasureIsComplete() {
+        let drawing = PKDrawing(strokes: [snapshotStroke(creationDate: Date(timeIntervalSince1970: 10))])
+        let phrase = RhythmPhraseHypothesis(
+            source: .rasterTemplate,
+            primitives: [],
+            symbols: [
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [0],
+                    bounds: CGRect(x: 12, y: 48, width: 16, height: 22),
+                    candidateValues: [.quarter],
+                    selectedValue: .quarter
+                ),
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [1],
+                    bounds: CGRect(x: 46, y: 48, width: 16, height: 22),
+                    candidateValues: [.quarter],
+                    selectedValue: .quarter
+                ),
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [2],
+                    bounds: CGRect(x: 80, y: 48, width: 16, height: 22),
+                    candidateValues: [.quarter],
+                    selectedValue: .quarter
+                ),
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [3],
+                    bounds: CGRect(x: 114, y: 48, width: 16, height: 22),
+                    candidateValues: [.quarter],
+                    selectedValue: .quarter
+                ),
+                RhythmSymbolHypothesis(
+                    coveredStrokeIndices: [4],
+                    bounds: CGRect(x: 150, y: 18, width: 10, height: 30),
+                    candidateValues: [],
+                    selectedValue: nil
+                )
+            ],
+            uncoveredStrokeIndices: [],
+            naturalValues: [.quarter, .quarter, .quarter, .quarter],
+            naturalUnits: 8,
+            targetUnits: 8,
+            passesCompendium: true
+        )
+
+        XCTAssertTrue(
+            LeadSheetRhythmicNotationFeedbackPolicy.shouldHighlightUnreadInk(
+                for: .keepWriting(.unsupported, phrase)
+            )
+        )
+        let feedbackFrame = LeadSheetRhythmicNotationFeedbackPolicy.unreadInkFrame(
+            for: drawing,
+            decision: .keepWriting(.unsupported, phrase),
+            canvasFrame: CGRect(x: 30, y: 40, width: 180, height: 90),
+            padding: 4
+        )
+
+        XCTAssertNotNil(feedbackFrame)
+        XCTAssertTrue(feedbackFrame?.contains(CGPoint(x: 184, y: 62)) ?? false)
+        XCTAssertFalse(feedbackFrame?.contains(CGPoint(x: 45, y: 93)) ?? true)
+    }
+
+    private func snapshotStroke(creationDate: Date) -> PKStroke {
+        let points = [
+            PKStrokePoint(
+                location: CGPoint(x: 8, y: 52),
+                timeOffset: 0,
+                size: CGSize(width: 2, height: 2),
+                opacity: 1,
+                force: 1,
+                azimuth: 0,
+                altitude: .pi / 2
+            ),
+            PKStrokePoint(
+                location: CGPoint(x: 20, y: 28),
+                timeOffset: 0.05,
+                size: CGSize(width: 2, height: 2),
+                opacity: 1,
+                force: 1,
+                azimuth: 0,
+                altitude: .pi / 2
+            )
+        ]
+        return PKStroke(
+            ink: PKInk(.pen, color: .black),
+            path: PKStrokePath(controlPoints: points, creationDate: creationDate)
+        )
     }
 }
 #endif

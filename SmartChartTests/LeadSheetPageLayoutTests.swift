@@ -201,6 +201,266 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
     }
 
+    func testSimpleChordSheetLayoutUsesBlankMeasureSpaceWithoutStaffOrLeadingSymbols() throws {
+        var chart = Chart.blank(title: "Simple Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                ChordSymbol(root: .c, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil),
+                rawInput: "C",
+                to: measureID,
+                atFraction: 0.48
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let firstChord = try XCTUnwrap(firstMeasure.chordLayouts.first)
+
+        XCTAssertNil(layout.header.keyFrame)
+        XCTAssertNotNil(layout.header.meterFrame)
+        XCTAssertTrue(firstSystem.staffLineYPositions.isEmpty)
+        XCTAssertNil(firstSystem.clefFrame)
+        XCTAssertNil(firstSystem.timeSignatureFrame)
+        XCTAssertEqual(firstSystem.frame.minX, firstMeasure.frame.minX, accuracy: 0.001)
+        let aboveFrame = try XCTUnwrap(firstMeasure.freehandAboveFrame)
+        let belowFrame = try XCTUnwrap(firstMeasure.freehandBelowFrame)
+        XCTAssertLessThanOrEqual(aboveFrame.maxY, firstMeasure.chordBandFrame.minY)
+        XCTAssertGreaterThanOrEqual(belowFrame.minY, firstMeasure.chordBandFrame.maxY)
+        XCTAssertTrue(firstMeasure.staffFrame.contains(firstMeasure.chordBandFrame))
+        XCTAssertGreaterThanOrEqual(firstChord.frame.minY, firstMeasure.staffFrame.minY)
+        XCTAssertLessThanOrEqual(firstChord.frame.maxY, firstMeasure.staffFrame.maxY)
+        XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
+    }
+
+    func testRhythmSectionSheetLayoutOmitsKeyHeaderButKeepsStaffSystem() throws {
+        let chart = Chart.blank(title: "Pocket", measureCount: 4, layoutStyle: .rhythmSectionSheet)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+
+        XCTAssertNil(layout.header.keyFrame)
+        XCTAssertNotNil(layout.header.meterFrame)
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertNotNil(firstSystem.clefFrame)
+        XCTAssertNotNil(firstSystem.timeSignatureFrame)
+        XCTAssertTrue(firstSystem.keySignatureLayouts.isEmpty)
+        XCTAssertNil(try XCTUnwrap(firstSystem.measures.first).freehandAboveFrame)
+        XCTAssertNotNil(try XCTUnwrap(firstSystem.measures.first).freehandBelowFrame)
+    }
+
+    func testRhythmSectionSheetPreservesCurrentRhythmAndChordWorkflow() throws {
+        var chart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        XCTAssertTrue(chart.setMeasureRhythmMap([.quarter, .quarter, .quarter, .quarter], for: measureID))
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                try ChordSymbolParser.parse("C"),
+                rawInput: "C",
+                to: measureID,
+                atFraction: 0.03
+            )
+        )
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                try ChordSymbolParser.parse("G"),
+                rawInput: "G",
+                to: measureID,
+                atFraction: 0.62
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+
+        XCTAssertNil(layout.header.keyFrame)
+        XCTAssertNotNil(layout.header.meterFrame)
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertNotNil(firstSystem.clefFrame)
+        XCTAssertNotNil(firstSystem.timeSignatureFrame)
+        XCTAssertTrue(firstSystem.keySignatureLayouts.isEmpty)
+        XCTAssertNil(firstMeasure.freehandAboveFrame)
+        XCTAssertNotNil(firstMeasure.freehandBelowFrame)
+        XCTAssertLessThan(firstMeasure.chordBandFrame.maxY, firstMeasure.staffFrame.minY)
+        XCTAssertEqual(firstMeasure.noteLayouts.count, 4)
+        XCTAssertEqual(firstMeasure.chordLayouts.map(\.text), ["C", "G"])
+        XCTAssertEqual(firstMeasure.chordLayouts[0].frame.midX, firstMeasure.noteLayouts[0].noteheadFrame.midX, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.chordLayouts[1].frame.midX, firstMeasure.noteLayouts[2].noteheadFrame.midX, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.chordLayouts[0].snapGuideTarget.x, firstMeasure.noteLayouts[0].noteheadFrame.midX, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.chordLayouts[1].snapGuideTarget.x, firstMeasure.noteLayouts[2].noteheadFrame.midX, accuracy: 0.001)
+        XCTAssertTrue(layout.freehandSymbolLayouts(for: chart).isEmpty)
+    }
+
+    func testRhythmSectionFreehandSymbolLayoutsResolveBelowStaffOnly() throws {
+        var chart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let belowFrame = FreehandSymbolNormalizedFrame(x: 0.15, y: 0.2, width: 0.4, height: 0.5)
+
+        XCTAssertNotNil(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureID,
+                lane: .belowMeasure,
+                normalizedFrame: belowFrame,
+                drawingData: Data([4, 5, 6])
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        let symbolLayout = try XCTUnwrap(layout.freehandSymbolLayouts(for: chart).first)
+        let expectedBelowLane = try XCTUnwrap(firstMeasure.freehandBelowFrame)
+
+        XCTAssertNil(firstMeasure.freehandAboveFrame)
+        XCTAssertTrue(expectedBelowLane.contains(symbolLayout.frame))
+        XCTAssertFalse(firstMeasure.chordBandFrame.intersects(symbolLayout.frame))
+        XCTAssertFalse(firstMeasure.staffFrame.intersects(symbolLayout.frame))
+    }
+
+    func testSimpleFreehandSymbolLayoutsResolveInsideAboveAndBelowLanes() throws {
+        var chart = Chart.blank(title: "Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let aboveFrame = FreehandSymbolNormalizedFrame(x: 0.2, y: 0.1, width: 0.3, height: 0.4)
+        let belowFrame = FreehandSymbolNormalizedFrame(x: 0.4, y: 0.2, width: 0.2, height: 0.3)
+
+        XCTAssertNotNil(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureID,
+                lane: .aboveMeasure,
+                normalizedFrame: aboveFrame,
+                drawingData: Data([1, 2, 3])
+            )
+        )
+        XCTAssertNotNil(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureID,
+                lane: .belowMeasure,
+                normalizedFrame: belowFrame,
+                drawingData: Data([4, 5, 6])
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let symbolLayouts = layout.freehandSymbolLayouts(for: chart)
+        XCTAssertEqual(symbolLayouts.count, 2)
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        let resolvedAbove = try XCTUnwrap(symbolLayouts.first { $0.symbol.lane == .aboveMeasure })
+        let resolvedBelow = try XCTUnwrap(symbolLayouts.first { $0.symbol.lane == .belowMeasure })
+        let expectedAboveLane = try XCTUnwrap(firstMeasure.freehandAboveFrame)
+        let expectedBelowLane = try XCTUnwrap(firstMeasure.freehandBelowFrame)
+
+        XCTAssertTrue(expectedAboveLane.contains(resolvedAbove.frame))
+        XCTAssertTrue(expectedBelowLane.contains(resolvedBelow.frame))
+        XCTAssertFalse(firstMeasure.chordBandFrame.intersects(resolvedAbove.frame))
+        XCTAssertFalse(firstMeasure.chordBandFrame.intersects(resolvedBelow.frame))
+    }
+
+    func testLeadSheetLayoutKeepsKeyHeaderAndLeadingNotation() throws {
+        let chart = Chart.blank(title: "Lead", measureCount: 4, layoutStyle: .leadSheet)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+
+        XCTAssertNotNil(layout.header.keyFrame)
+        XCTAssertNotNil(layout.header.meterFrame)
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertNotNil(firstSystem.clefFrame)
+        XCTAssertNotNil(firstSystem.timeSignatureFrame)
+        XCTAssertTrue(firstSystem.keySignatureLayouts.isEmpty)
+        XCTAssertNil(try XCTUnwrap(firstSystem.measures.first).freehandAboveFrame)
+        XCTAssertNil(try XCTUnwrap(firstSystem.measures.first).freehandBelowFrame)
+    }
+
+    func testLeadSheetLayoutPlacesKeySignatureBeforeFirstMeasure() throws {
+        let chart = Chart.blank(
+            title: "Lead Key",
+            key: DocumentKey(tonic: .d, accidental: .natural, mode: .major),
+            measureCount: 4,
+            layoutStyle: .leadSheet
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let clefFrame = try XCTUnwrap(firstSystem.clefFrame)
+        let timeSignatureFrame = try XCTUnwrap(firstSystem.timeSignatureFrame)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+
+        XCTAssertEqual(firstSystem.keySignatureLayouts.map(\.symbol), [.accidentalSharp, .accidentalSharp])
+        XCTAssertGreaterThan(try XCTUnwrap(firstSystem.keySignatureLayouts.first).frame.minX, clefFrame.maxX)
+        XCTAssertLessThan(try XCTUnwrap(firstSystem.keySignatureLayouts.last).frame.maxX, timeSignatureFrame.minX)
+        XCTAssertLessThan(timeSignatureFrame.maxX, firstMeasure.frame.minX)
+    }
+
+    func testLeadSheetBassClefKeySignatureUsesBassPositions() throws {
+        let key = DocumentKey(tonic: .d, accidental: .natural, mode: .major)
+        var trebleChart = Chart.draft(title: "Treble", key: key, layoutStyle: .leadSheet)
+        trebleChart.completeInitialSetup(
+            title: "Treble",
+            key: key,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
+            startingMeasureCount: 4,
+            clef: .treble
+        )
+        var bassChart = Chart.draft(title: "Bass", key: key, layoutStyle: .leadSheet)
+        bassChart.completeInitialSetup(
+            title: "Bass",
+            key: key,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
+            startingMeasureCount: 4,
+            clef: .bass
+        )
+
+        let trebleLayout = LeadSheetPageLayoutEngine.pageLayout(
+            for: trebleChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let bassLayout = LeadSheetPageLayoutEngine.pageLayout(
+            for: bassChart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let trebleSharp = try XCTUnwrap(trebleLayout.systems.first?.keySignatureLayouts.first)
+        let bassSharp = try XCTUnwrap(bassLayout.systems.first?.keySignatureLayouts.first)
+
+        XCTAssertEqual(trebleSharp.symbol, .accidentalSharp)
+        XCTAssertEqual(bassSharp.symbol, .accidentalSharp)
+        XCTAssertEqual(trebleSharp.staffOffset, 0, accuracy: 0.001)
+        XCTAssertEqual(bassSharp.staffOffset, 1, accuracy: 0.001)
+        XCTAssertGreaterThan(bassSharp.frame.midY, trebleSharp.frame.midY)
+    }
+
     func testEngravingPresetChangesDefaultMeasureSpacing() throws {
         var compactChart = makeBlankLeadSheet()
         compactChart.setEngravingPreset(.compact)
@@ -375,6 +635,93 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         let beatStep = usableWidth / 4
         XCTAssertEqual(slashPlaceholder.noteheadFrame.midX, firstMeasure.staffFrame.minX + 8 + beatStep * 0.5, accuracy: 0.001)
         XCTAssertEqual(firstMeasure.noteLayouts[1].noteheadFrame.midX, firstMeasure.staffFrame.minX + 8 + beatStep * 1.25, accuracy: 0.001)
+    }
+
+    func testLeadSheetLayoutRendersPitchedNotesOnStaffPositions() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        XCTAssertTrue(
+            chart.setLeadSheetPitchedNotes(
+                [
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 0)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 2)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 8))
+                ],
+                for: firstMeasureID
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let staffSpace = firstSystem.staffLineYPositions[1] - firstSystem.staffLineYPositions[0]
+        let topLineY = firstSystem.staffLineYPositions[0]
+
+        XCTAssertEqual(firstMeasure.noteLayouts.count, 4)
+        XCTAssertEqual(firstMeasure.noteLayouts.map(\.symbolStyle), Array(repeating: .pitchedNote, count: 4))
+        XCTAssertEqual(firstMeasure.noteLayouts.map(\.noteheadSymbol), Array(repeating: .noteheadBlack, count: 4))
+        XCTAssertEqual(firstMeasure.noteLayouts[0].noteheadFrame.midY, topLineY, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.noteLayouts[1].noteheadFrame.midY, topLineY + staffSpace, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.noteLayouts[2].noteheadFrame.midY, topLineY + staffSpace * 2, accuracy: 0.001)
+        XCTAssertEqual(firstMeasure.noteLayouts[3].noteheadFrame.midY, topLineY + staffSpace * 4, accuracy: 0.001)
+        XCTAssertFalse(firstMeasure.noteLayouts[0].stemGoesUp)
+        XCTAssertTrue(firstMeasure.noteLayouts[3].stemGoesUp)
+    }
+
+    func testLeadSheetLayoutRendersMixedPitchedNotesAndRests() throws {
+        var chart = makeBlankLeadSheet()
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        XCTAssertTrue(
+            chart.setLeadSheetRhythmMap(
+                [.quarter, .quarterRest, .quarter, .quarterRest],
+                pitchedNotes: [
+                    LeadSheetPitchedNoteSlotInput(
+                        rhythmSlotIndex: 0,
+                        staffPosition: LeadSheetStaffPosition(staffStep: 1)
+                    ),
+                    LeadSheetPitchedNoteSlotInput(
+                        rhythmSlotIndex: 2,
+                        staffPosition: LeadSheetStaffPosition(staffStep: 7)
+                    )
+                ],
+                for: firstMeasureID
+            )
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        XCTAssertEqual(
+            firstMeasure.noteLayouts.map(\.symbolStyle),
+            [.pitchedNote, .quarterRest, .pitchedNote, .quarterRest]
+        )
+        XCTAssertEqual(firstMeasure.noteLayouts[0].noteheadSymbol, .noteheadBlack)
+        XCTAssertNil(firstMeasure.noteLayouts[1].noteheadSymbol)
+        XCTAssertEqual(firstMeasure.noteLayouts[2].noteheadSymbol, .noteheadBlack)
+        XCTAssertNil(firstMeasure.noteLayouts[3].noteheadSymbol)
+    }
+
+    func testRhythmSectionLayoutKeepsRhythmMapAsSlashNotationWhenLeadPitchEventsExistOnlyOnLeadSheets() throws {
+        var chart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = chart.setMeasureRhythmMap([.quarter, .quarter, .quarter, .quarter], for: measureID)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        XCTAssertEqual(firstMeasure.noteLayouts.map(\.symbolStyle), Array(repeating: .slash, count: 4))
+        XCTAssertEqual(firstMeasure.noteLayouts.map(\.noteheadSymbol), Array(repeating: .slashNotehead, count: 4))
     }
 
     func testLeadSheetLayoutKeepsRestGlyphsUprightInsideStaffBody() throws {

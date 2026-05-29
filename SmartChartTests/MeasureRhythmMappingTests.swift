@@ -154,6 +154,31 @@ final class MeasureRhythmMappingTests: XCTestCase {
         XCTAssertEqual(overflow.status(for: meter), .overflow(1))
     }
 
+    func testRhythmicNotationCompendiumAcceptsSupportedExactMeasureValues() {
+        let meter = Meter(numerator: 4, denominator: 4)
+
+        XCTAssertTrue(
+            RhythmicNotationCompendium.accepts(
+                [.eighth, .eighth, .dottedQuarter, .eighthRest, .quarter],
+                in: meter
+            )
+        )
+        XCTAssertTrue(
+            RhythmicNotationCompendium.accepts(
+                [.slash, .quarterRest, .half],
+                in: meter
+            )
+        )
+    }
+
+    func testRhythmicNotationCompendiumRejectsUnsupportedOrIncompleteValues() {
+        let meter = Meter(numerator: 4, denominator: 4)
+
+        XCTAssertFalse(RhythmicNotationCompendium.accepts([.half, .quarter], in: meter))
+        XCTAssertFalse(RhythmicNotationCompendium.accepts([.whole, .quarter], in: meter))
+        XCTAssertFalse(RhythmicNotationCompendium.accepts([.quarter, .tiedContinuation, .half], in: meter))
+    }
+
     func testSuggestedChordInsertionUsesNextOpenRhythmSlot() {
         let meter = Meter(numerator: 4, denominator: 4)
         var secondChord = demoChord(root: .f)

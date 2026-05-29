@@ -77,6 +77,17 @@ final class ChartLibraryStoreTests: XCTestCase {
         XCTAssertEqual(store.charts.first?.hasCompletedInitialSetup, false)
     }
 
+    func testCreateBlankChartUsesSelectedLayoutStyle() {
+        let store = ChartLibraryStore(charts: ChartSamples.previewCharts)
+
+        let didCreateChart = store.createBlankChart(layoutStyle: .rhythmSectionSheet)
+
+        XCTAssertTrue(didCreateChart)
+        XCTAssertEqual(store.charts.first?.layoutStyle, .rhythmSectionSheet)
+        XCTAssertEqual(store.charts.first?.engravingPreset, .wide)
+        XCTAssertEqual(store.charts.first?.stylePreset, .gigSheet)
+    }
+
     #if DEBUG
     func testCreateChordWritingTestChartResetsDisposablePreparedChart() throws {
         let existingTestChart = Chart.blank(title: "Chord Writing Test Chart", measureCount: 2)

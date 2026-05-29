@@ -3,6 +3,7 @@ import SwiftUI
 struct LibraryView: View {
     @EnvironmentObject private var store: ChartLibraryStore
     let onOpenChart: (Chart.ID, EditorCanvasMode) -> Void
+    @State private var showingLayoutPicker = false
 
     private var chartCountText: String {
         let count = store.charts.count
@@ -16,7 +17,9 @@ struct LibraryView: View {
                     chartCountText: chartCountText,
                     capacityText: store.chartCapacityText,
                     canCreateChart: store.canCreateChart,
-                    onCreateChart: createNewChart
+                    onCreateChart: {
+                        showingLayoutPicker = true
+                    }
                 )
                 projectsSection
                 #if DEBUG || targetEnvironment(simulator)
@@ -36,6 +39,12 @@ struct LibraryView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .sheet(isPresented: $showingLayoutPicker) {
+            NewChartLayoutPickerView { layoutStyle in
+                showingLayoutPicker = false
+                createNewChart(layoutStyle: layoutStyle)
+            }
+        }
     }
 
     private var projectsSection: some View {
@@ -111,18 +120,18 @@ struct LibraryView: View {
 
     private func chartSummary(for chart: Chart) -> String {
         if !chart.hasCompletedInitialSetup {
-            return "Setup pending"
+            return "\(chart.layoutStyle.displayText) · setup pending"
         }
 
         if chart.measures.isEmpty {
-            return "\(chart.documentKey.displayText) · \(chart.defaultMeter.displayText) · blank page"
+            return "\(chart.layoutStyle.displayText) · \(chart.documentKey.displayText) · \(chart.defaultMeter.displayText) · blank page"
         }
 
-        return "\(chart.documentKey.displayText) · \(chart.defaultMeter.displayText) · \(chart.measures.count) measures"
+        return "\(chart.layoutStyle.displayText) · \(chart.documentKey.displayText) · \(chart.defaultMeter.displayText) · \(chart.measures.count) measures"
     }
 
-    private func createNewChart() {
-        guard store.createBlankChart(), let chartID = store.selectedChartID else {
+    private func createNewChart(layoutStyle: ChartLayoutStyle) {
+        guard store.createBlankChart(layoutStyle: layoutStyle), let chartID = store.selectedChartID else {
             return
         }
 
@@ -135,6 +144,66 @@ struct LibraryView: View {
         onOpenChart(chartID, .chordEntry)
     }
     #endif
+}
+
+private struct NewChartLayoutPickerView: View {
+    @Environment(\.dismiss) private var dismiss
+    let onSelect: (ChartLayoutStyle) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(ChartLayoutStyle.allCases) { layoutStyle in
+                        Button {
+                            onSelect(layoutStyle)
+                        } label: {
+                            HStack(alignment: .top, spacing: 14) {
+                                Image(systemName: layoutStyle.systemImageName)
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 28, height: 28)
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(layoutStyle.displayText)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+
+                                    Text(layoutStyle.detailText)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.leading)
+                                }
+
+                                Spacer(minLength: 12)
+
+                                Image(systemName: "chevron.right")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 4)
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(uiColor: .secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(20)
+            }
+            .navigationTitle("New Chart")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 private struct LibraryHeaderView: View {

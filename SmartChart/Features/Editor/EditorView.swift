@@ -49,6 +49,7 @@ struct EditorView: View {
     @State private var pendingTimeSignaturePlacement: PendingTimeSignaturePlacement?
     @State private var freeHandReturnMode: EditorCanvasMode = .browse
     @State private var canvasMode: EditorCanvasMode = .browse
+    @State private var inkToolMode: EditorInkToolMode = .write
     @State private var pendingChordDiagnosticReconciliationWorkItem: DispatchWorkItem?
     private let exporter: any ChartExporting
     private let chordInkUserCorrectionMemoryStore: ChordInkUserCorrectionMemoryStore
@@ -265,7 +266,8 @@ struct EditorView: View {
             if selection == nil {
                 isNoteEditMenuPresented = false
                 noteEditMenuStage = .actions
-            } else if canvasMode == .noteEdit {
+            } else if canvasMode == .noteEdit,
+                      allowsUserFacingRhythmNoteEditing {
                 noteEditMenuStage = .actions
                 isNoteEditMenuPresented = true
             }
@@ -274,6 +276,9 @@ struct EditorView: View {
             if mode != .noteEdit {
                 isNoteEditMenuPresented = false
                 noteEditMenuStage = .actions
+            }
+            if mode.allowsAnyInkEditing {
+                inkToolMode = .write
             }
         }
         .onChange(of: chart) { _, updatedChart in
@@ -313,8 +318,24 @@ struct EditorView: View {
                 }
                 .buttonStyle(.plain)
 
-                Button {
-                    handleMeasureTabTapped()
+                Menu {
+                    Button {
+                        handleMeasureEditRequested()
+                    } label: {
+                        Label("Edit Measures", systemImage: "slider.horizontal.3")
+                    }
+
+                    Button {
+                        handleAddMeasureAtBeginning()
+                    } label: {
+                        Label("Add Measure at Beginning", systemImage: "backward.end")
+                    }
+
+                    Button {
+                        handleAddMeasureAfterSelected()
+                    } label: {
+                        Label("Add Measure After Selected", systemImage: "forward.end")
+                    }
                 } label: {
                     EditorMenuTabLabel(
                         title: "Measures",
@@ -346,7 +367,7 @@ struct EditorView: View {
                         isSelected: canvasMode == .rhythmicNotationEdit
                     )
                 }
-                .disabled(canvasMode.locksDocumentActions)
+                .disabled(canvasMode.locksDocumentActions || !chart.layoutStyle.profile.allowsRhythmicNotationInk)
                 .buttonStyle(.plain)
 
                 Button {
@@ -358,7 +379,7 @@ struct EditorView: View {
                         isSelected: canvasMode == .noteEdit
                     )
                 }
-                .disabled(canvasMode.locksDocumentActions && canvasMode != .noteEdit)
+                .disabled((canvasMode.locksDocumentActions && canvasMode != .noteEdit) || !allowsUserFacingRhythmNoteEditing)
                 .buttonStyle(.plain)
                 .popover(
                     isPresented: $isNoteEditMenuPresented,
@@ -402,6 +423,7 @@ struct EditorView: View {
                 .disabled(
                     (canvasMode.locksDocumentActions && canvasMode != .freeHand)
                         || (!chart.hasCompletedInitialSetup && canvasMode != .freeHand)
+                        || !chart.layoutStyle.profile.allowsFreehandSymbolInk
                 )
                 .buttonStyle(.plain)
 
@@ -489,19 +511,30 @@ struct EditorView: View {
 
     @ViewBuilder
     private var canvasView: some View {
-        LeadSheetCanvasHostView(
-            chart: $chart,
-            selectedMeasureID: $selectedMeasureID,
-            selectedNoteSelection: $selectedNoteSelection,
-            interactionMode: canvasMode,
-            onTimeSignatureTargetRequested: handleTimeSignatureTargetRequested,
-            onRhythmicNotationProposal: handleRhythmicNotationProposal,
-            onRhythmicNotationValidationError: handleRhythmicNotationValidationError,
-            onChordInkRecognitionProposal: handleChordInkRecognitionProposal,
-            onChordCorrectionRequested: handleChordCorrectionRequested,
-            onChordDeleted: handleChordDeleted,
-            onNoteSelectionChanged: handleNoteSelectionChanged
-        )
+        ZStack(alignment: .topLeading) {
+            LeadSheetCanvasHostView(
+                chart: $chart,
+                selectedMeasureID: $selectedMeasureID,
+                selectedNoteSelection: $selectedNoteSelection,
+                interactionMode: canvasMode,
+                inkToolMode: inkToolMode,
+                onTimeSignatureTargetRequested: handleTimeSignatureTargetRequested,
+                onRhythmicNotationProposal: handleRhythmicNotationProposal,
+                onRhythmicNotationValidationError: handleRhythmicNotationValidationError,
+                onChordInkRecognitionProposal: handleChordInkRecognitionProposal,
+                onChordCorrectionRequested: handleChordCorrectionRequested,
+                onChordDeleted: handleChordDeleted,
+                onNoteSelectionChanged: handleNoteSelectionChanged
+            )
+
+            if canvasMode.allowsAnyInkEditing {
+                InkToolModeTab(mode: $inkToolMode)
+                    .padding(.leading, 10)
+                    .padding(.top, 18)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+        }
+        .animation(.easeOut(duration: 0.16), value: canvasMode.allowsAnyInkEditing)
     }
 
     private var exportButtonTitle: String {
@@ -539,29 +572,53 @@ struct EditorView: View {
         }
     }
 
-    private func handleMeasureTabTapped() {
+    private var allowsUserFacingRhythmNoteEditing: Bool {
+        chart.layoutStyle.profile.allowsUserFacingRhythmNoteEditing
+    }
+
+    @discardableResult
+    private func enterMeasureEditMode() -> Bool {
         guard chart.hasCompletedInitialSetup else {
             showingSetupSheet = true
-            return
+            return false
         }
 
-        let targetMeasureID = resolvedMeasureActionTargetID()
         selectedMeasureID = nil
         selectedNoteSelection = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
         freeHandReturnMode = .browse
         canvasMode = .measureEdit
+        return true
+    }
+
+    private func handleMeasureEditRequested() {
+        _ = enterMeasureEditMode()
+    }
+
+    private func handleAddMeasureAtBeginning() {
+        guard enterMeasureEditMode() else {
+            return
+        }
+
+        selectedMeasureID = chart.insertMeasureAtBeginning()
+    }
+
+    private func handleAddMeasureAfterSelected() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode() else {
+            return
+        }
 
         guard let targetMeasureID else {
-            _ = chart.appendMeasure(authoringState: .open)
+            selectedMeasureID = chart.appendMeasure(authoringState: .open)
             return
         }
 
         if chart.measure(id: targetMeasureID)?.authoringState == .open {
-            _ = chart.commitOpenMeasure()
+            selectedMeasureID = chart.commitOpenMeasure()
         } else {
-            _ = chart.positionOpenMeasure(after: targetMeasureID)
+            selectedMeasureID = chart.positionOpenMeasure(after: targetMeasureID)
         }
     }
 
@@ -583,6 +640,15 @@ struct EditorView: View {
             showingSetupSheet = true
             return
         }
+        guard chart.layoutStyle.profile.allowsRhythmicNotationInk else {
+            selectedMeasureID = nil
+            selectedNoteSelection = nil
+            pendingTimeSignatureSourceMeasureID = nil
+            pendingTimeSignaturePlacement = nil
+            freeHandReturnMode = .browse
+            canvasMode = .browse
+            return
+        }
 
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
@@ -590,10 +656,18 @@ struct EditorView: View {
         freeHandReturnMode = .browse
 
         if canvasMode == .rhythmicNotationEdit {
+            if selectedMeasureID == nil {
+                selectedMeasureID = resolvedMeasureActionTargetID()
+                inkToolMode = .write
+                return
+            }
+
             showingRhythmicNotationAcceptanceSheet = true
             return
         }
 
+        inkToolMode = .write
+        selectedMeasureID = resolvedMeasureActionTargetID()
         canvasMode = .rhythmicNotationEdit
 
         if !hasPresentedRhythmicNotationGuide {
@@ -613,13 +687,7 @@ struct EditorView: View {
     }
 
     private func resolvedMeasureActionTargetID() -> UUID? {
-        if let selectedMeasureID,
-           chart.measure(id: selectedMeasureID) != nil {
-            return selectedMeasureID
-        }
-
-        return chart.measures.first(where: { $0.authoringState == .open })?.id
-            ?? chart.measures.last?.id
+        chart.resolvedAuthoringMeasureID(preferredMeasureID: selectedMeasureID)
     }
 
     private func toggleFreeHandMode() {
@@ -636,11 +704,18 @@ struct EditorView: View {
             }
             return
         }
+        guard chart.layoutStyle.profile.allowsFreehandSymbolInk else {
+            selectedNoteSelection = nil
+            freeHandReturnMode = .browse
+            canvasMode = .browse
+            return
+        }
 
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
         selectedNoteSelection = nil
         freeHandReturnMode = canvasMode
+        inkToolMode = .write
         canvasMode = .freeHand
     }
 
@@ -656,12 +731,23 @@ struct EditorView: View {
         pendingTimeSignaturePlacement = nil
         freeHandReturnMode = .browse
 
-        canvasMode = canvasMode == .chordEntry ? .browse : .chordEntry
+        if canvasMode == .chordEntry {
+            canvasMode = .browse
+        } else {
+            inkToolMode = .write
+            canvasMode = .chordEntry
+        }
     }
 
     private func handleEditTabTapped() {
         guard chart.hasCompletedInitialSetup else {
             showingSetupSheet = true
+            return
+        }
+        guard allowsUserFacingRhythmNoteEditing else {
+            selectedNoteSelection = nil
+            noteEditMenuStage = .actions
+            isNoteEditMenuPresented = false
             return
         }
 
@@ -674,6 +760,7 @@ struct EditorView: View {
             selectedNoteSelection = nil
             canvasMode = .browse
         } else {
+            inkToolMode = .write
             canvasMode = .noteEdit
         }
     }

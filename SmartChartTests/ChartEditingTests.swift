@@ -53,10 +53,155 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.documentKey, .bFlatMajor)
         XCTAssertEqual(chart.defaultMeter, Meter(numerator: 6, denominator: 8))
         XCTAssertEqual(chart.staffStyle, .fiveLine)
+        XCTAssertEqual(chart.defaultClef, .treble)
         XCTAssertTrue(chart.hasCompletedInitialSetup)
         XCTAssertEqual(chart.systems.count, 1)
+        XCTAssertEqual(chart.systems[0].spacingMode, .automatic)
         XCTAssertEqual(chart.systems[0].measures.count, 1)
         XCTAssertEqual(chart.systems[0].measures[0].authoringState, .open)
+        XCTAssertEqual(chart.systems[0].measures[0].beatGridPreset, .simple)
+    }
+
+    func testCompleteInitialSetupAppliesStartingMeasureCountAndLayoutDefaults() {
+        var chart = Chart.draft(title: "Pocket Chart", layoutStyle: .rhythmSectionSheet)
+
+        chart.completeInitialSetup(
+            title: "Pocket Chart",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
+            startingMeasureCount: 8,
+            clef: .bass
+        )
+
+        XCTAssertEqual(chart.defaultClef, .bass)
+        XCTAssertEqual(chart.systems.count, 1)
+        XCTAssertEqual(chart.systems[0].spacingMode, .relaxed)
+        XCTAssertEqual(chart.measures.count, 8)
+        XCTAssertTrue(chart.measures.allSatisfy { $0.beatGridPreset == .eighthSubdivision })
+        XCTAssertTrue(chart.measures.dropLast().allSatisfy { $0.authoringState == .committed })
+        XCTAssertEqual(chart.measures.last?.authoringState, .open)
+    }
+
+    func testCompleteInitialSetupNeverCreatesZeroStartingMeasures() {
+        var chart = Chart.draft(title: "No Zero Measures", layoutStyle: .simpleChordSheet)
+
+        chart.completeInitialSetup(
+            title: "No Zero Measures",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine,
+            startingMeasureCount: 0
+        )
+
+        XCTAssertEqual(chart.systems.count, 1)
+        XCTAssertEqual(chart.measures.count, 1)
+        XCTAssertEqual(chart.measures[0].authoringState, .open)
+    }
+
+    func testDraftStoresSelectedLayoutStyleAndDefaults() {
+        let chordSheet = Chart.draft(title: "Quick Roadmap", layoutStyle: .simpleChordSheet)
+        let rhythmSheet = Chart.draft(title: "Pocket Chart", layoutStyle: .rhythmSectionSheet)
+        let leadSheet = Chart.draft(title: "Lead Sheet", layoutStyle: .leadSheet)
+
+        XCTAssertEqual(chordSheet.layoutStyle, .simpleChordSheet)
+        XCTAssertEqual(chordSheet.engravingPreset, .compact)
+        XCTAssertEqual(chordSheet.stylePreset, .cleanStudio)
+        XCTAssertEqual(rhythmSheet.layoutStyle, .rhythmSectionSheet)
+        XCTAssertEqual(rhythmSheet.engravingPreset, .wide)
+        XCTAssertEqual(rhythmSheet.stylePreset, .gigSheet)
+        XCTAssertEqual(leadSheet.layoutStyle, .leadSheet)
+        XCTAssertEqual(leadSheet.engravingPreset, .balanced)
+        XCTAssertEqual(leadSheet.stylePreset, .cleanStudio)
+    }
+
+    func testLayoutProfilesDefineSeparateChartStructureContracts() {
+        let chordProfile = ChartLayoutStyle.simpleChordSheet.profile
+        let rhythmProfile = ChartLayoutStyle.rhythmSectionSheet.profile
+        let leadProfile = ChartLayoutStyle.leadSheet.profile
+
+        XCTAssertEqual(chordProfile.toolbarEmphasis, .chordRoadmap)
+        XCTAssertEqual(chordProfile.primaryToolFocus, [.chordEntry, .sectionRoadmap, .measureLayout, .appearance])
+        XCTAssertEqual(chordProfile.setupPolicy.includesKeySelection, false)
+        XCTAssertEqual(chordProfile.setupPolicy.includesTimeSignatureSelection, true)
+        XCTAssertEqual(chordProfile.setupPolicy.includesStartingMeasureSelection, true)
+        XCTAssertEqual(chordProfile.setupPolicy.clefOptions, [])
+        XCTAssertEqual(chordProfile.notationLanePolicy, .chordGrid)
+        XCTAssertEqual(chordProfile.freehandSymbolLanes, [.aboveMeasure, .belowMeasure])
+        XCTAssertTrue(chordProfile.allowsFreehandSymbolInk)
+        XCTAssertFalse(chordProfile.allowsRhythmicNotationInk)
+        XCTAssertFalse(chordProfile.allowsUserFacingRhythmNoteEditing)
+        XCTAssertEqual(chordProfile.measureDefaults.initialMeasureCount, 1)
+        XCTAssertEqual(chordProfile.measureDefaults.preferredMeasuresPerSystem, 4)
+        XCTAssertEqual(chordProfile.measureDefaults.systemSpacingMode, .compact)
+        XCTAssertEqual(chordProfile.measureDefaults.beatGridPreset, .simple)
+
+        XCTAssertEqual(rhythmProfile.toolbarEmphasis, .rhythmAndHits)
+        XCTAssertEqual(rhythmProfile.primaryToolFocus, [.chordEntry, .rhythmNotation, .cueText, .measureLayout])
+        XCTAssertEqual(rhythmProfile.setupPolicy.includesKeySelection, false)
+        XCTAssertEqual(rhythmProfile.setupPolicy.includesTimeSignatureSelection, true)
+        XCTAssertEqual(rhythmProfile.setupPolicy.includesStartingMeasureSelection, true)
+        XCTAssertEqual(rhythmProfile.setupPolicy.clefOptions, [])
+        XCTAssertEqual(rhythmProfile.notationLanePolicy, .rhythmHits)
+        XCTAssertEqual(rhythmProfile.freehandSymbolLanes, [.belowMeasure])
+        XCTAssertTrue(rhythmProfile.allowsFreehandSymbolInk)
+        XCTAssertTrue(rhythmProfile.allowsRhythmicNotationInk)
+        XCTAssertFalse(rhythmProfile.allowsUserFacingRhythmNoteEditing)
+        XCTAssertEqual(rhythmProfile.measureDefaults.initialMeasureCount, 8)
+        XCTAssertEqual(rhythmProfile.measureDefaults.preferredMeasuresPerSystem, 3)
+        XCTAssertEqual(rhythmProfile.measureDefaults.systemSpacingMode, .relaxed)
+        XCTAssertEqual(rhythmProfile.measureDefaults.beatGridPreset, .eighthSubdivision)
+
+        XCTAssertEqual(leadProfile.toolbarEmphasis, .leadSheetPage)
+        XCTAssertEqual(leadProfile.primaryToolFocus, [.pageSetup, .chordEntry, .rhythmNotation, .appearance])
+        XCTAssertEqual(leadProfile.setupPolicy.includesKeySelection, true)
+        XCTAssertEqual(leadProfile.setupPolicy.includesTimeSignatureSelection, true)
+        XCTAssertEqual(leadProfile.setupPolicy.includesStartingMeasureSelection, true)
+        XCTAssertEqual(leadProfile.setupPolicy.clefOptions, [.treble, .bass])
+        XCTAssertEqual(leadProfile.notationLanePolicy, .leadSheetStaff)
+        XCTAssertEqual(leadProfile.freehandSymbolLanes, [])
+        XCTAssertFalse(leadProfile.allowsFreehandSymbolInk)
+        XCTAssertTrue(leadProfile.allowsRhythmicNotationInk)
+        XCTAssertTrue(leadProfile.allowsUserFacingRhythmNoteEditing)
+        XCTAssertEqual(leadProfile.measureDefaults.initialMeasureCount, 4)
+        XCTAssertEqual(leadProfile.measureDefaults.preferredMeasuresPerSystem, 4)
+        XCTAssertEqual(leadProfile.measureDefaults.systemSpacingMode, .automatic)
+        XCTAssertEqual(leadProfile.measureDefaults.beatGridPreset, .simple)
+    }
+
+    func testLayoutProfilesOwnDefaultsWithoutBranchingRendererYet() {
+        let profiles = ChartLayoutStyle.allCases.map(\.profile)
+        let rendererRoutes = Set(profiles.map(\.rendererRoute))
+
+        XCTAssertEqual(rendererRoutes, [.currentLeadSheetRenderer])
+        XCTAssertEqual(ChartLayoutStyle.simpleChordSheet.defaultStylePreset, ChartLayoutStyle.simpleChordSheet.profile.defaultStylePreset)
+        XCTAssertEqual(ChartLayoutStyle.simpleChordSheet.defaultEngravingPreset, ChartLayoutStyle.simpleChordSheet.profile.defaultEngravingPreset)
+        XCTAssertEqual(ChartLayoutStyle.rhythmSectionSheet.defaultStylePreset, ChartLayoutStyle.rhythmSectionSheet.profile.defaultStylePreset)
+        XCTAssertEqual(ChartLayoutStyle.rhythmSectionSheet.defaultEngravingPreset, ChartLayoutStyle.rhythmSectionSheet.profile.defaultEngravingPreset)
+        XCTAssertEqual(ChartLayoutStyle.leadSheet.defaultStylePreset, ChartLayoutStyle.leadSheet.profile.defaultStylePreset)
+        XCTAssertEqual(ChartLayoutStyle.leadSheet.defaultEngravingPreset, ChartLayoutStyle.leadSheet.profile.defaultEngravingPreset)
+    }
+
+    func testLayoutMeasureDefaultsAndBlankChartsNeverAllowZeroMeasures() {
+        let sanitizedDefaults = ChartLayoutMeasureDefaults(
+            initialMeasureCount: 0,
+            preferredMeasuresPerSystem: 0,
+            systemSpacingMode: .compact,
+            beatGridPreset: .simple
+        )
+        let blankChart = Chart.blank(title: "No Zero Measures", measureCount: 0)
+        let rhythmChart = Chart.blank(
+            title: "Rhythm Defaults",
+            measureCount: 2,
+            layoutStyle: .rhythmSectionSheet
+        )
+
+        XCTAssertEqual(sanitizedDefaults.initialMeasureCount, 1)
+        XCTAssertEqual(sanitizedDefaults.preferredMeasuresPerSystem, 1)
+        XCTAssertTrue(ChartLayoutStyle.allCases.allSatisfy { $0.profile.measureDefaults.initialMeasureCount >= 1 })
+        XCTAssertEqual(blankChart.measures.count, 1)
+        XCTAssertEqual(rhythmChart.systems[0].spacingMode, .relaxed)
+        XCTAssertTrue(rhythmChart.measures.allSatisfy { $0.beatGridPreset == .eighthSubdivision })
     }
 
     func testAppearanceSettersUpdateDocumentAppearanceChoices() {
@@ -75,14 +220,18 @@ final class ChartEditingTests: XCTestCase {
         let chart = Chart.blank(title: "Older Snapshot")
         let encodedData = try JSONEncoder().encode(chart)
         var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encodedData) as? [String: Any])
+        object.removeValue(forKey: "layoutStyle")
         object.removeValue(forKey: "notationFont")
         object.removeValue(forKey: "engravingPreset")
+        object.removeValue(forKey: "defaultClef")
         let legacyData = try JSONSerialization.data(withJSONObject: object)
 
         let decodedChart = try JSONDecoder().decode(Chart.self, from: legacyData)
 
+        XCTAssertEqual(decodedChart.layoutStyle, .leadSheet)
         XCTAssertEqual(decodedChart.notationFont, .petaluma)
         XCTAssertEqual(decodedChart.engravingPreset, .balanced)
+        XCTAssertEqual(decodedChart.defaultClef, .treble)
     }
 
     func testChordEventDecodingDefaultsMissingSourceCandidateSignature() throws {
@@ -120,6 +269,7 @@ final class ChartEditingTests: XCTestCase {
 
     func testNotationGlyphCatalogProvidesSemanticSmuflSymbols() {
         XCTAssertEqual(NotationGlyphCatalog.trebleClef, "\u{E050}")
+        XCTAssertEqual(NotationGlyphCatalog.bassClef, "\u{E062}")
         XCTAssertEqual(NotationGlyphCatalog.noteheadWhole, "\u{E0A2}")
         XCTAssertEqual(NotationGlyphCatalog.noteheadHalf, "\u{E0A3}")
         XCTAssertEqual(NotationGlyphCatalog.noteheadBlack, "\u{E0A4}")
@@ -133,9 +283,14 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(NotationGlyphCatalog.halfRest, "\u{E4E4}")
         XCTAssertEqual(NotationGlyphCatalog.quarterRest, "\u{E4E5}")
         XCTAssertEqual(NotationGlyphCatalog.eighthRest, "\u{E4E6}")
+        XCTAssertEqual(NotationGlyphCatalog.accidentalFlat, "\u{E260}")
+        XCTAssertEqual(NotationGlyphCatalog.accidentalSharp, "\u{E262}")
         XCTAssertEqual(NotationGlyphCatalog.timeSignatureDigit(4), "\u{E084}")
         XCTAssertNil(NotationGlyphCatalog.timeSignatureDigit(12))
         XCTAssertEqual(NotationGlyphCatalog.glyph(for: .trebleClef), NotationGlyphCatalog.trebleClef)
+        XCTAssertEqual(NotationGlyphCatalog.glyph(for: .bassClef), NotationGlyphCatalog.bassClef)
+        XCTAssertEqual(NotationGlyphCatalog.glyph(for: .accidentalFlat), NotationGlyphCatalog.accidentalFlat)
+        XCTAssertEqual(NotationGlyphCatalog.glyph(for: .accidentalSharp), NotationGlyphCatalog.accidentalSharp)
         XCTAssertEqual(NotationGlyphCatalog.glyph(for: .noteheadBlack), NotationGlyphCatalog.noteheadBlack)
         XCTAssertEqual(NotationGlyphCatalog.glyph(for: .timeSignatureDigit(4)), "\u{E084}")
         XCTAssertNil(NotationGlyphCatalog.glyph(for: .timeSignatureDigit(12)))
@@ -190,6 +345,132 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(chart.measure(id: measureID)?.handwrittenRhythmicNotationData)
     }
 
+    func testAddFreehandSymbolStoresSimpleAboveBelowMeasureInkObjects() throws {
+        var chart = Chart.blank(title: "Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let drawingData = Data([9, 7, 5, 3])
+        let frame = FreehandSymbolNormalizedFrame(x: 0.1, y: 0.2, width: 0.35, height: 0.4)
+
+        let aboveID = try XCTUnwrap(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureID,
+                lane: .aboveMeasure,
+                normalizedFrame: frame,
+                drawingData: drawingData
+            )
+        )
+        let belowID = try XCTUnwrap(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureID,
+                lane: .belowMeasure,
+                normalizedFrame: frame,
+                drawingData: drawingData
+            )
+        )
+
+        let aboveSymbol = try XCTUnwrap(chart.freehandSymbol(id: aboveID))
+        let belowSymbol = try XCTUnwrap(chart.freehandSymbol(id: belowID))
+        XCTAssertEqual(aboveSymbol.anchorMeasureID, measureID)
+        XCTAssertEqual(aboveSymbol.lane, .aboveMeasure)
+        XCTAssertEqual(aboveSymbol.drawingData, drawingData)
+        XCTAssertEqual(aboveSymbol.zIndex, 0)
+        XCTAssertEqual(belowSymbol.lane, .belowMeasure)
+        XCTAssertEqual(belowSymbol.zIndex, 1)
+    }
+
+    func testFreehandSymbolsFollowLayoutProfileLanesAndRejectEmptyDrawingData() throws {
+        var simpleChart = Chart.blank(title: "Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
+        var rhythmChart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        var leadChart = Chart.blank(title: "Lead", measureCount: 1, layoutStyle: .leadSheet)
+        let simpleMeasureID = try XCTUnwrap(simpleChart.measures.first?.id)
+        let rhythmMeasureID = try XCTUnwrap(rhythmChart.measures.first?.id)
+        let leadMeasureID = try XCTUnwrap(leadChart.measures.first?.id)
+        let frame = FreehandSymbolNormalizedFrame(x: 0, y: 0, width: 0.5, height: 0.5)
+
+        XCTAssertNil(
+            simpleChart.addFreehandSymbol(
+                anchorMeasureID: simpleMeasureID,
+                lane: .aboveMeasure,
+                normalizedFrame: frame,
+                drawingData: Data()
+            )
+        )
+        XCTAssertNil(
+            rhythmChart.addFreehandSymbol(
+                anchorMeasureID: rhythmMeasureID,
+                lane: .aboveMeasure,
+                normalizedFrame: frame,
+                drawingData: Data([1])
+            )
+        )
+        let rhythmSymbolID = try XCTUnwrap(
+            rhythmChart.addFreehandSymbol(
+                anchorMeasureID: rhythmMeasureID,
+                lane: .belowMeasure,
+                normalizedFrame: frame,
+                drawingData: Data([1])
+            )
+        )
+        XCTAssertNil(
+            leadChart.addFreehandSymbol(
+                anchorMeasureID: leadMeasureID,
+                lane: .aboveMeasure,
+                normalizedFrame: frame,
+                drawingData: Data([1])
+            )
+        )
+        XCTAssertTrue(simpleChart.freehandSymbols.isEmpty)
+        XCTAssertEqual(rhythmChart.freehandSymbols.map(\.lane), [.belowMeasure])
+        XCTAssertTrue(
+            rhythmChart.moveFreehandSymbol(
+                rhythmSymbolID,
+                to: FreehandSymbolNormalizedFrame(x: 0.2, y: 0.2, width: 0.4, height: 0.4)
+            )
+        )
+        XCTAssertTrue(rhythmChart.deleteFreehandSymbol(rhythmSymbolID))
+        XCTAssertTrue(rhythmChart.freehandSymbols.isEmpty)
+        XCTAssertTrue(leadChart.freehandSymbols.isEmpty)
+    }
+
+    func testMoveAndDeleteFreehandSymbolUpdatesSimpleInkObject() throws {
+        var chart = Chart.blank(title: "Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let originalFrame = FreehandSymbolNormalizedFrame(x: 0.1, y: 0.2, width: 0.35, height: 0.4)
+        let movedFrame = FreehandSymbolNormalizedFrame(x: 0.45, y: 0.25, width: 0.30, height: 0.35)
+        let symbolID = try XCTUnwrap(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureID,
+                lane: .aboveMeasure,
+                normalizedFrame: originalFrame,
+                drawingData: Data([4, 5, 6])
+            )
+        )
+
+        XCTAssertTrue(chart.moveFreehandSymbol(symbolID, to: movedFrame))
+        XCTAssertEqual(chart.freehandSymbol(id: symbolID)?.normalizedFrame, movedFrame)
+        XCTAssertTrue(chart.deleteFreehandSymbol(symbolID))
+        XCTAssertNil(chart.freehandSymbol(id: symbolID))
+        XCTAssertTrue(chart.freehandSymbols.isEmpty)
+    }
+
+    func testInsertMeasureAtBeginningReindexesWithoutDroppingExistingMeasures() throws {
+        var chart = Chart.blank(title: "Pocket", measureCount: 2, layoutStyle: .rhythmSectionSheet)
+        let originalFirstID = try XCTUnwrap(chart.measures.first?.id)
+        let originalSecondID = try XCTUnwrap(chart.measures.last?.id)
+        chart.addSectionLabel(text: "A")
+
+        let insertedID = chart.insertMeasureAtBeginning()
+
+        XCTAssertEqual(chart.measures.count, 3)
+        XCTAssertEqual(chart.measures.map(\.index), [1, 2, 3])
+        XCTAssertEqual(chart.measures.first?.id, insertedID)
+        XCTAssertEqual(chart.measures[1].id, originalFirstID)
+        XCTAssertEqual(chart.measures[2].id, originalSecondID)
+        XCTAssertEqual(chart.measures.first?.beatGridPreset, .eighthSubdivision)
+        XCTAssertEqual(chart.measure(id: originalFirstID)?.index, 2)
+        XCTAssertEqual(chart.sectionLabels.first?.anchorMeasureID, originalFirstID)
+    }
+
     func testSetMeasureRhythmMapStoresAndClearsQuantizedRhythm() throws {
         var chart = Chart.draft(title: "New Chart")
         chart.completeInitialSetup(
@@ -214,6 +495,127 @@ final class ChartEditingTests: XCTestCase {
 
         XCTAssertTrue(chart.clearMeasureRhythmicNotation(for: measureID, clearRhythmMap: true))
         XCTAssertNil(chart.measure(id: measureID)?.rhythmMap)
+    }
+
+    func testSetLeadSheetPitchedNotesStoresExactRhythmAndClampedStaffPositions() throws {
+        var chart = Chart.draft(title: "Lead", layoutStyle: .leadSheet)
+        chart.completeInitialSetup(
+            title: "Lead",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+
+        XCTAssertTrue(
+            chart.setLeadSheetPitchedNotes(
+                [
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: -2)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 8)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 12))
+                ],
+                for: measureID
+            )
+        )
+
+        let measure = try XCTUnwrap(chart.measure(id: measureID))
+        XCTAssertEqual(measure.rhythmMap?.values, [.quarter, .quarter, .quarter, .quarter])
+        XCTAssertEqual(measure.pitchedNoteEvents.map(\.rhythmSlotIndex), [0, 1, 2, 3])
+        XCTAssertEqual(measure.pitchedNoteEvents.map(\.staffPosition.staffStep), [0, 4, 8, 8])
+        XCTAssertNil(measure.handwrittenRhythmicNotationData)
+
+        XCTAssertTrue(chart.clearMeasureRhythmicNotation(for: measureID, clearRhythmMap: true))
+        XCTAssertTrue(chart.measure(id: measureID)?.pitchedNoteEvents.isEmpty == true)
+    }
+
+    func testSetLeadSheetPitchedNotesRejectsNonLeadSheetAndUnsupportedDurations() throws {
+        var rhythmChart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let rhythmMeasureID = try XCTUnwrap(rhythmChart.measures.first?.id)
+        XCTAssertFalse(
+            rhythmChart.setLeadSheetPitchedNotes(
+                [LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4))],
+                for: rhythmMeasureID
+            )
+        )
+
+        var leadChart = Chart.blank(title: "Lead", measureCount: 1, layoutStyle: .leadSheet)
+        let leadMeasureID = try XCTUnwrap(leadChart.measures.first?.id)
+        XCTAssertFalse(
+            leadChart.setLeadSheetPitchedNotes(
+                [
+                    LeadSheetPitchedNoteInput(rhythmValue: .slash, staffPosition: LeadSheetStaffPosition(staffStep: 4)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4))
+                ],
+                for: leadMeasureID
+            )
+        )
+        XCTAssertFalse(
+            leadChart.setLeadSheetPitchedNotes(
+                [
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4)),
+                    LeadSheetPitchedNoteInput(rhythmValue: .quarter, staffPosition: LeadSheetStaffPosition(staffStep: 4))
+                ],
+                for: leadMeasureID
+            )
+        )
+        XCTAssertTrue(leadChart.measure(id: leadMeasureID)?.pitchedNoteEvents.isEmpty == true)
+    }
+
+    func testSetLeadSheetRhythmMapAllowsMixedNotesAndRestsWithPitchedSlotsOnly() throws {
+        var chart = Chart.blank(title: "Lead", measureCount: 1, layoutStyle: .leadSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+
+        XCTAssertTrue(
+            chart.setLeadSheetRhythmMap(
+                [.quarter, .quarterRest, .quarter, .quarterRest],
+                pitchedNotes: [
+                    LeadSheetPitchedNoteSlotInput(
+                        rhythmSlotIndex: 0,
+                        staffPosition: LeadSheetStaffPosition(staffStep: 1)
+                    ),
+                    LeadSheetPitchedNoteSlotInput(
+                        rhythmSlotIndex: 2,
+                        staffPosition: LeadSheetStaffPosition(staffStep: 7)
+                    )
+                ],
+                for: measureID
+            )
+        )
+
+        let measure = try XCTUnwrap(chart.measure(id: measureID))
+        XCTAssertEqual(measure.rhythmMap?.values, [.quarter, .quarterRest, .quarter, .quarterRest])
+        XCTAssertEqual(measure.pitchedNoteEvents.map(\.rhythmSlotIndex), [0, 2])
+        XCTAssertEqual(measure.pitchedNoteEvents.map(\.staffPosition.staffStep), [1, 7])
+
+        XCTAssertFalse(
+            chart.setLeadSheetRhythmMap(
+                [.quarter, .quarterRest, .quarter, .quarterRest],
+                pitchedNotes: [
+                    LeadSheetPitchedNoteSlotInput(
+                        rhythmSlotIndex: 1,
+                        staffPosition: LeadSheetStaffPosition(staffStep: 4)
+                    )
+                ],
+                for: measureID
+            ),
+            "Rest slots cannot carry pitched-note events"
+        )
+        XCTAssertFalse(
+            chart.setLeadSheetRhythmMap(
+                [.quarter, .quarterRest, .quarter, .quarterRest],
+                pitchedNotes: [
+                    LeadSheetPitchedNoteSlotInput(
+                        rhythmSlotIndex: 0,
+                        staffPosition: LeadSheetStaffPosition(staffStep: 4)
+                    )
+                ],
+                for: measureID
+            ),
+            "Every note-capable Lead Sheet rhythm slot needs a pitched-note event"
+        )
     }
 
     func testAppendRecognizedChordAddsCleanChordSymbolAtRequestedFraction() throws {
@@ -510,6 +912,45 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.measures[1].index, 2)
     }
 
+    func testResolvedAuthoringMeasurePreservesValidPreferredMeasure() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        let openMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+
+        XCTAssertEqual(
+            chart.resolvedAuthoringMeasureID(preferredMeasureID: firstMeasureID),
+            firstMeasureID
+        )
+        XCTAssertNotEqual(firstMeasureID, openMeasureID)
+    }
+
+    func testResolvedAuthoringMeasureFallsBackToOpenMeasureThenLastMeasure() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        let openMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+
+        XCTAssertEqual(
+            chart.resolvedAuthoringMeasureID(preferredMeasureID: UUID()),
+            openMeasureID
+        )
+
+        chart.systems[0].measures[1].authoringState = .committed
+        XCTAssertEqual(chart.resolvedAuthoringMeasureID(), openMeasureID)
+        XCTAssertNotEqual(firstMeasureID, openMeasureID)
+    }
+
     func testPositionOpenMeasureAfterCommittedMeasureMovesBlankOpenSlotBehindSelection() throws {
         var chart = Chart.draft(title: "New Chart")
         chart.completeInitialSetup(
@@ -551,6 +992,35 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.measures.map(\.id), [firstMeasureID, secondMeasureID, trailingOpenMeasureID])
         XCTAssertEqual(chart.measure(id: trailingOpenMeasureID)?.authoringState, .open)
         XCTAssertEqual(chart.measure(id: secondMeasureID)?.authoringState, .committed)
+    }
+
+    func testPositionOpenMeasureKeepsOpenMeasureWithFreehandSymbolInPlace() throws {
+        var chart = Chart.draft(title: "New Chart", layoutStyle: .simpleChordSheet)
+        chart.completeInitialSetup(
+            title: "Roadmap",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        let secondMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+        let trailingOpenMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+        XCTAssertNotNil(
+            chart.addFreehandSymbol(
+                anchorMeasureID: trailingOpenMeasureID,
+                lane: .aboveMeasure,
+                normalizedFrame: FreehandSymbolNormalizedFrame(x: 0.2, y: 0.2, width: 0.3, height: 0.3),
+                drawingData: Data([1, 2, 3])
+            )
+        )
+
+        let resolvedOpenMeasureID = try XCTUnwrap(chart.positionOpenMeasure(after: firstMeasureID))
+
+        XCTAssertEqual(resolvedOpenMeasureID, trailingOpenMeasureID)
+        XCTAssertEqual(chart.measures.map(\.id), [firstMeasureID, secondMeasureID, trailingOpenMeasureID])
+        XCTAssertEqual(chart.measure(id: trailingOpenMeasureID)?.authoringState, .open)
+        XCTAssertNotNil(chart.freehandSymbols.first { $0.anchorMeasureID == trailingOpenMeasureID })
     }
 
     func testPositionOpenMeasureReanchorsAnnotationsWhenLaterMeasureShiftsSystems() throws {
