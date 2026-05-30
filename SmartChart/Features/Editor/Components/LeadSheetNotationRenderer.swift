@@ -817,8 +817,8 @@ private struct LeadSheetNotationStyle {
             return 18
         }
 
-        var size = min(36, max(20, frame.height * 0.62))
-        while size > 18 {
+        var size = min(56, max(24, frame.height * 0.92))
+        while size > 16 {
             let font = chordFont(size: size)
             let renderedWidth = (text as NSString).size(withAttributes: [.font: font]).width
             if renderedWidth <= frame.width {

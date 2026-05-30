@@ -512,12 +512,22 @@ Implemented slice:
 - Simple section labels render as black badges sized to their label text. One-letter sections keep the square iReal-style look; longer labels such as `Intro` remain readable and searchable in PDF export.
 - The pass keeps Rhythm Section and Lead Sheet visual behavior separate from Simple Chord Sheet.
 
+Follow-up chord-fit slice:
+
+- Simple Chord Sheet chords now render into the available snapped measure segment instead of a text-width-sized box.
+- A single downbeat chord uses nearly the whole measure cell, matching the iReal-style chord-grid read.
+- Multiple chords in one measure divide the cell by their snapped attack positions, so two chords read as two large half-measure chord regions instead of small labels near beat centers.
+- Simple chord font sizing ignores the selected notation font/style and scales bold text into the segment, shrinking only when a longer chord symbol would overflow.
+
 Verification:
 
 - Focused SwiftPM `LeadSheetPageLayoutTests` passed with `58` tests and `0` failures.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `417` tests, `36` skipped, and `0` failures.
 - Focused simulator layout/PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `63` tests and `0` failures.
 - Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only, and screenshot capture succeeded.
+- Follow-up chord-fit focused SwiftPM `LeadSheetPageLayoutTests` passed with `60` tests and `0` failures.
+- Follow-up chord-fit full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `419` tests, `36` skipped, and `0` failures.
+- Follow-up chord-fit simulator layout/PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `65` tests and `0` failures.
 
 Verification:
 

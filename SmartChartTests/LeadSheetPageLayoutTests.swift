@@ -291,6 +291,44 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
     }
 
+    func testSimpleChordSheetSingleChordUsesMeasureFitFrame() throws {
+        var chart = Chart.blank(title: "Simple Chord Fit", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        try appendChord("C", to: measureID, in: &chart, atFraction: 0.05)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        let chordLayout = try XCTUnwrap(firstMeasure.chordLayouts.first)
+
+        XCTAssertEqual(chordLayout.frame.minX, firstMeasure.chordBandFrame.minX + 6, accuracy: 0.001)
+        XCTAssertGreaterThan(chordLayout.frame.width, firstMeasure.chordBandFrame.width * 0.9)
+        XCTAssertLessThanOrEqual(chordLayout.frame.maxX, firstMeasure.chordBandFrame.maxX)
+    }
+
+    func testSimpleChordSheetMultipleChordsFitMeasureSegments() throws {
+        var chart = Chart.blank(title: "Simple Chord Fit", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        try appendChord("C", to: measureID, in: &chart, atFraction: 0.05)
+        try appendChord("D7", to: measureID, in: &chart, atFraction: 0.62)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
+        let chordLayouts = firstMeasure.chordLayouts
+
+        XCTAssertEqual(chordLayouts.map(\.text), ["C", "D7"])
+        XCTAssertLessThanOrEqual(chordLayouts[0].frame.maxX, firstMeasure.chordBandFrame.midX)
+        XCTAssertGreaterThanOrEqual(chordLayouts[1].frame.minX, firstMeasure.chordBandFrame.midX)
+        XCTAssertEqual(chordLayouts[0].frame.width, chordLayouts[1].frame.width, accuracy: 0.001)
+    }
+
     func testSimpleChordSheetMeterGutterAlignsAcrossRows() throws {
         var chart = Chart.blank(title: "Manual Rows", measureCount: 6, layoutStyle: .simpleChordSheet)
         let measureIDs = chart.measures.map(\.id)

@@ -207,8 +207,7 @@ enum LeadSheetPageLayoutEngine {
         var simpleLeadingMeterGutterWidth: CGFloat { 42 }
         var simpleTitleFrameHeight: CGFloat { 36 }
         var simpleMetadataHeight: CGFloat { 24 }
-        var simpleChordTextWidthScale: CGFloat { 2.1 }
-        var simpleMinimumChordTextWidth: CGFloat { 46 }
+        var simpleChordHorizontalInset: CGFloat { 6 }
 
         func headerTitleFrame(in frame: CGRect) -> CGRect {
             guard layoutStyle == .simpleChordSheet else {
@@ -242,15 +241,6 @@ enum LeadSheetPageLayoutEngine {
 
         var showsHeaderMeter: Bool {
             layoutStyle != .simpleChordSheet
-        }
-
-        func estimatedChordTextWidth(for text: String) -> CGFloat {
-            let baseWidth = LeadSheetPageLayoutEngine.estimatedChordTextWidth(for: text)
-            guard layoutStyle == .simpleChordSheet else {
-                return baseWidth
-            }
-
-            return max(simpleMinimumChordTextWidth, baseWidth * simpleChordTextWidthScale)
         }
 
         func simpleInitialTimeSignatureFrame(
@@ -1114,9 +1104,14 @@ enum LeadSheetPageLayoutEngine {
                     ($1.startPosition.startOffset(in: meter) ?? 0)
             }
 
-        let chordLayouts = displayedPlacements.map { placement in
-            chordLayout(
+        let chordLayouts = displayedPlacements.enumerated().map { placementIndex, placement in
+            let nextPlacementIndex = placementIndex + 1
+            let nextPlacement = displayedPlacements.indices.contains(nextPlacementIndex)
+                ? displayedPlacements[nextPlacementIndex]
+                : nil
+            return chordLayout(
                 for: placement,
+                nextPlacement: nextPlacement,
                 chart: chart,
                 meter: meter,
                 chordBandFrame: chordBandFrame,
@@ -1168,6 +1163,7 @@ enum LeadSheetPageLayoutEngine {
 
     private static func chordLayout(
         for placement: MeasureChordPlacement,
+        nextPlacement: MeasureChordPlacement?,
         chart: Chart,
         meter: Meter,
         chordBandFrame: CGRect,
@@ -1175,7 +1171,6 @@ enum LeadSheetPageLayoutEngine {
         visualPolicy: VisualPolicy
     ) -> LeadSheetChordLayout {
         let event = placement.chordEvent.transposed(for: chart.defaultTranspositionView)
-        let textWidth = visualPolicy.estimatedChordTextWidth(for: event.symbol.displayText)
         let usableWidth = staffFrame.width - 16
         let attackCenterX = beatAttackCenterX(
             startPosition: placement.startPosition,
@@ -1184,6 +1179,23 @@ enum LeadSheetPageLayoutEngine {
             staffFrame: staffFrame,
             usableWidth: usableWidth
         )
+
+        if visualPolicy.layoutStyle == .simpleChordSheet {
+            return LeadSheetChordLayout(
+                id: placement.chordEvent.id,
+                text: event.symbol.displayText,
+                frame: simpleChordFrame(
+                    for: placement,
+                    nextPlacement: nextPlacement,
+                    meter: meter,
+                    chordBandFrame: chordBandFrame,
+                    visualPolicy: visualPolicy
+                ),
+                snapGuideTarget: CGPoint(x: attackCenterX, y: staffFrame.midY)
+            )
+        }
+
+        let textWidth = estimatedChordTextWidth(for: event.symbol.displayText)
         let chordX = min(
             max(chordBandFrame.minX + 1, attackCenterX - textWidth / 2),
             chordBandFrame.maxX - textWidth
@@ -1201,6 +1213,43 @@ enum LeadSheetPageLayoutEngine {
                 height: chordBandFrame.height
             ),
             snapGuideTarget: CGPoint(x: attackCenterX, y: staffFrame.midY)
+        )
+    }
+
+    private static func simpleChordFrame(
+        for placement: MeasureChordPlacement,
+        nextPlacement: MeasureChordPlacement?,
+        meter: Meter,
+        chordBandFrame: CGRect,
+        visualPolicy: VisualPolicy
+    ) -> CGRect {
+        let measureLength = max(0.0001, meter.measureLengthInWholeNotes)
+        let startOffset = min(
+            measureLength,
+            max(0, placement.startPosition.startOffset(in: meter) ?? 0)
+        )
+        let nextOffset = nextPlacement?.startPosition.startOffset(in: meter)
+        let proposedEndOffset = nextOffset ?? measureLength
+        let endOffset = min(
+            measureLength,
+            max(
+                startOffset + measureLength * 0.03,
+                proposedEndOffset > startOffset ? proposedEndOffset : startOffset + meter.beatUnitWholeNoteLength
+            )
+        )
+        let startFraction = startOffset / measureLength
+        let endFraction = max(startFraction, endOffset / measureLength)
+        let rawMinX = chordBandFrame.minX + chordBandFrame.width * CGFloat(startFraction)
+        let rawMaxX = chordBandFrame.minX + chordBandFrame.width * CGFloat(endFraction)
+        let inset = min(visualPolicy.simpleChordHorizontalInset, max(0, (rawMaxX - rawMinX) / 4))
+        let minX = rawMinX + inset
+        let maxX = max(minX + 1, rawMaxX - inset)
+
+        return CGRect(
+            x: minX,
+            y: chordBandFrame.minY,
+            width: max(1, maxX - minX),
+            height: chordBandFrame.height
         )
     }
 
