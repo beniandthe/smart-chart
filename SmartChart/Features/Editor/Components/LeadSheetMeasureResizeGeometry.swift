@@ -13,6 +13,11 @@ struct ActiveMeasureResizeDrag {
     var initialWidth: CGFloat
 }
 
+struct ActiveSimpleRowGroupDrag {
+    var measureID: UUID
+    var groupedMeasureIDs: [UUID]
+}
+
 struct LeadSheetMeasureResizeHandleFrames {
     let left: CGRect
     let right: CGRect
@@ -75,7 +80,13 @@ enum LeadSheetMeasureResizeGeometry {
 }
 
 enum LeadSheetSimpleRowGroupAffordanceGeometry {
+    enum DragOperation: Equatable {
+        case insertBreakBefore
+        case removeBreakBefore
+    }
+
     static let handleSize = CGSize(width: 30, height: 18)
+    static let verticalCommitThreshold: CGFloat = 34
 
     static func affordance(
         for selectedMeasureID: UUID?,
@@ -123,6 +134,45 @@ enum LeadSheetSimpleRowGroupAffordanceGeometry {
                     height: handleSize.height
                 )
             )
+        }
+
+        return nil
+    }
+
+    static func hitTarget(
+        at location: CGPoint,
+        in affordance: LeadSheetSimpleRowGroupAffordance?
+    ) -> ActiveSimpleRowGroupDrag? {
+        guard let affordance else {
+            return nil
+        }
+
+        if affordance.handleFrame.insetBy(dx: -12, dy: -12).contains(location) {
+            return ActiveSimpleRowGroupDrag(
+                measureID: affordance.selectedMeasureID,
+                groupedMeasureIDs: affordance.groupedMeasureIDs
+            )
+        }
+
+        return nil
+    }
+
+    static func dragOperation(
+        for translation: CGPoint,
+        canInsertBreak: Bool,
+        canRemoveBreak: Bool
+    ) -> DragOperation? {
+        guard abs(translation.y) >= verticalCommitThreshold,
+              abs(translation.y) > abs(translation.x) else {
+            return nil
+        }
+
+        if translation.y > 0, canInsertBreak {
+            return .insertBreakBefore
+        }
+
+        if translation.y < 0, canRemoveBreak {
+            return .removeBreakBefore
         }
 
         return nil

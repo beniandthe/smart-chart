@@ -394,11 +394,15 @@ Implemented slice:
 - The affordance uses a small drag-handle visual plus a dashed guide spanning the selected measure through the end of the current manual row.
 - The grouping follows the documented future drag rule: selected measure plus following measures until the next manual row break.
 - Rhythm Section Sheet and Lead Sheet do not show this Simple row-group affordance.
-- This slice is visual/geometry-only; it does not add vertical drag behavior yet.
+- The affordance handle now supports release-based vertical drag as a row-break edit operation:
+  - dragging down past threshold inserts `New System Before This Measure` for the selected group when valid;
+  - dragging up past threshold removes the forced system break before the selected row when valid.
+- Tiny gestures, mostly horizontal gestures, or invalid row-break directions do not rewrite rows.
+- Vertical drag uses the same `ChartEditing` row-break authority as the Measure menu and does not introduce per-measure row IDs or freeform placement state.
 
 Verification:
 
-- Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `21` tests and `0` failures.
+- Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `23` tests and `0` failures.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `410` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture showed the app launched to Projects.
 
@@ -428,9 +432,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/group affordance is implemented locally in Measure edit mode.
+Simple Chord Sheet row-break/group affordance and release-based vertical row drag are implemented locally in Measure edit mode.
 
 Next implementation checkpoint:
 
-- Decide whether vertical drag row movement is stable enough for the next slice, and if so wire it as a row-break edit operation rather than a second layout authority.
+- Run a live simulator pass on Simple Chord Sheet row controls, then move to the next Simple style refinement only after the manual row workflow feels stable.
 - Keep vamp count deferred until there is a clearer V1 need.

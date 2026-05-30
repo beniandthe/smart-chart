@@ -229,6 +229,77 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
         XCTAssertLessThanOrEqual(affordance.handleFrame.minX, affordance.groupFrame.maxX)
     }
 
+    func testSimpleRowGroupAffordanceHitTargetUsesHandle() throws {
+        var chart = Chart.blank(title: "Manual Rows", measureCount: 6, layoutStyle: .simpleChordSheet)
+        let measureIDs = chart.measures.map(\.id)
+        XCTAssertTrue(chart.insertSimpleSystemBreak(before: measureIDs[4]))
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+        let affordance = try XCTUnwrap(
+            LeadSheetSimpleRowGroupAffordanceGeometry.affordance(
+                for: measureIDs[1],
+                in: layout,
+                layoutStyle: chart.layoutStyle
+            )
+        )
+
+        let hitTarget = LeadSheetSimpleRowGroupAffordanceGeometry.hitTarget(
+            at: CGPoint(x: affordance.handleFrame.midX, y: affordance.handleFrame.midY),
+            in: affordance
+        )
+        XCTAssertEqual(hitTarget?.measureID, measureIDs[1])
+        XCTAssertEqual(hitTarget?.groupedMeasureIDs, Array(measureIDs[1..<4]))
+
+        XCTAssertNil(
+            LeadSheetSimpleRowGroupAffordanceGeometry.hitTarget(
+                at: CGPoint(x: affordance.groupFrame.midX, y: affordance.groupFrame.midY),
+                in: affordance
+            )
+        )
+    }
+
+    func testSimpleRowGroupDragOperationCommitsOnlyVerticalRowBreakGestures() {
+        XCTAssertEqual(
+            LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
+                for: CGPoint(x: 2, y: 42),
+                canInsertBreak: true,
+                canRemoveBreak: false
+            ),
+            .insertBreakBefore
+        )
+        XCTAssertEqual(
+            LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
+                for: CGPoint(x: -3, y: -48),
+                canInsertBreak: false,
+                canRemoveBreak: true
+            ),
+            .removeBreakBefore
+        )
+        XCTAssertNil(
+            LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
+                for: CGPoint(x: 3, y: 18),
+                canInsertBreak: true,
+                canRemoveBreak: true
+            )
+        )
+        XCTAssertNil(
+            LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
+                for: CGPoint(x: 54, y: 42),
+                canInsertBreak: true,
+                canRemoveBreak: true
+            )
+        )
+        XCTAssertNil(
+            LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
+                for: CGPoint(x: 0, y: 42),
+                canInsertBreak: false,
+                canRemoveBreak: true
+            )
+        )
+    }
+
     func testSimpleRowGroupAffordanceIsSimpleOnly() throws {
         let chart = Chart.blank(title: "Pocket", measureCount: 4, layoutStyle: .rhythmSectionSheet)
         let measureID = try XCTUnwrap(chart.measures.first?.id)

@@ -543,6 +543,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
     private var chordInkRecognitionRequestState = LeadSheetChordInkRecognitionRequestState()
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
+    private var activeSimpleRowGroupDrag: ActiveSimpleRowGroupDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
     private var selectedFreehandSymbolID: UUID?
     private var activeFreehandSymbolMoveDrag: ActiveFreehandSymbolMoveDrag?
@@ -1116,6 +1117,17 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         return LeadSheetMeasureResizeGeometry.hitTarget(at: location, in: measure)
     }
 
+    private func simpleRowGroupDragHitTarget(at location: CGPoint) -> ActiveSimpleRowGroupDrag? {
+        guard interactionMode.showsMeasureResizeHandles else {
+            return nil
+        }
+
+        return LeadSheetSimpleRowGroupAffordanceGeometry.hitTarget(
+            at: location,
+            in: simpleRowGroupAffordance()
+        )
+    }
+
     private func chordEditHitTarget(at location: CGPoint) -> ChordEditHitTarget? {
         guard interactionMode.allowsChordInkEditing,
               let pageLayout else {
@@ -1379,8 +1391,16 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         switch recognizer.state {
         case .began:
             let location = recognizer.location(in: self)
-            activeMeasureResizeDrag = measureResizeHandleHitTarget(at: location)
+            activeSimpleRowGroupDrag = simpleRowGroupDragHitTarget(at: location)
+            if activeSimpleRowGroupDrag == nil {
+                activeMeasureResizeDrag = measureResizeHandleHitTarget(at: location)
+            } else {
+                activeMeasureResizeDrag = nil
+            }
         case .changed:
+            guard activeSimpleRowGroupDrag == nil else {
+                return
+            }
             guard let activeMeasureResizeDrag else {
                 return
             }
@@ -1403,10 +1423,50 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             chart = updatedChart
             onChartChanged?(updatedChart)
         case .ended, .cancelled, .failed:
+            if recognizer.state == .ended,
+               let activeSimpleRowGroupDrag {
+                commitSimpleRowGroupDrag(
+                    activeSimpleRowGroupDrag,
+                    translation: recognizer.translation(in: self)
+                )
+            }
+            activeSimpleRowGroupDrag = nil
             activeMeasureResizeDrag = nil
         default:
             break
         }
+    }
+
+    private func commitSimpleRowGroupDrag(
+        _ drag: ActiveSimpleRowGroupDrag,
+        translation: CGPoint
+    ) {
+        let operation = LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
+            for: translation,
+            canInsertBreak: chart.canInsertSimpleSystemBreak(before: drag.measureID),
+            canRemoveBreak: chart.canRemoveSimpleSystemBreak(before: drag.measureID)
+        )
+        guard let operation else {
+            return
+        }
+
+        var updatedChart = chart
+        let didApply: Bool
+        switch operation {
+        case .insertBreakBefore:
+            didApply = updatedChart.insertSimpleSystemBreak(before: drag.measureID)
+        case .removeBreakBefore:
+            didApply = updatedChart.removeSimpleSystemBreak(before: drag.measureID)
+        }
+
+        guard didApply else {
+            return
+        }
+
+        chart = updatedChart
+        selectedMeasureID = drag.measureID
+        onChartChanged?(updatedChart)
+        onMeasureSelectionChanged?(drag.measureID)
     }
 
     @objc
@@ -2309,6 +2369,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if policy.clearsMeasureResizeDrag {
             activeMeasureResizeDrag = nil
+            activeSimpleRowGroupDrag = nil
         }
 
         if policy.clearsChordInteractionState {
