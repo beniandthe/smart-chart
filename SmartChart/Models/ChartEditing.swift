@@ -479,9 +479,11 @@ extension Chart {
         }
 
         var measure = systems[location.systemIndex].measures[location.measureIndex]
-        let suggestion = measure.suggestedChordInsertion(
+        let suggestion = chordInsertionSuggestion(
+            for: measure,
             atFraction: fraction,
-            defaultMeter: defaultMeter
+            excluding: nil,
+            mode: .append
         )
         let chordEventID = measure.appendChordEvent(
             symbol: symbol,
@@ -589,10 +591,11 @@ extension Chart {
         if sourceLocation.systemIndex == targetLocation.systemIndex,
            sourceLocation.measureIndex == targetLocation.measureIndex {
             var measure = systems[targetLocation.systemIndex].measures[targetLocation.measureIndex]
-            let suggestion = measure.suggestedChordInsertion(
+            let suggestion = chordInsertionSuggestion(
+                for: measure,
                 atFraction: fraction,
-                defaultMeter: defaultMeter,
-                excluding: chordEventID
+                excluding: chordEventID,
+                mode: .move
             )
             chordEvent.apply(suggestion: suggestion)
             measure.chordEvents[sourceLocation.chordIndex] = chordEvent
@@ -607,15 +610,86 @@ extension Chart {
             .remove(at: sourceLocation.chordIndex)
 
         var targetMeasure = systems[targetLocation.systemIndex].measures[targetLocation.measureIndex]
-        let suggestion = targetMeasure.suggestedChordInsertion(
+        let suggestion = chordInsertionSuggestion(
+            for: targetMeasure,
             atFraction: fraction,
-            defaultMeter: defaultMeter
+            excluding: nil,
+            mode: .move
         )
         chordEvent.apply(suggestion: suggestion)
         targetMeasure.chordEvents.append(chordEvent)
         systems[targetLocation.systemIndex].measures[targetLocation.measureIndex] = targetMeasure
         updatedAt = .now
         return true
+    }
+
+    private enum ChordInsertionMode: Equatable {
+        case append
+        case move
+    }
+
+    private func chordInsertionSuggestion(
+        for measure: Measure,
+        atFraction fraction: Double?,
+        excluding chordEventID: UUID?,
+        mode: ChordInsertionMode
+    ) -> MeasureChordInsertionSuggestion {
+        guard layoutStyle == .simpleChordSheet,
+              measure.rhythmMap == nil,
+              mode == .append else {
+            return measure.suggestedChordInsertion(
+                atFraction: fraction,
+                defaultMeter: defaultMeter,
+                excluding: chordEventID
+            )
+        }
+
+        return simpleChordSheetAutomaticChordInsertionSuggestion(
+            for: measure,
+            excluding: chordEventID
+        )
+    }
+
+    private func simpleChordSheetAutomaticChordInsertionSuggestion(
+        for measure: Measure,
+        excluding chordEventID: UUID?
+    ) -> MeasureChordInsertionSuggestion {
+        let meter = measure.resolvedMeter(defaultMeter: defaultMeter)
+        let occupiedBeats = Set<Int>(
+            measure.chordEvents.compactMap { event in
+                guard event.id != chordEventID,
+                      event.startPosition.subdivision == 0 else {
+                    return nil
+                }
+
+                return event.startPosition.beat
+            }
+        )
+        let preferredBeat = simpleChordSheetPreferredBeatOrder(for: meter)
+            .first { !occupiedBeats.contains($0) }
+            ?? 1
+
+        return MeasureChordInsertionSuggestion(
+            startPosition: BeatPosition(beat: preferredBeat, subdivision: 0, subdivisionsPerBeat: 1),
+            duration: .quarter,
+            mappedRhythmSlotIndex: nil
+        )
+    }
+
+    private func simpleChordSheetPreferredBeatOrder(for meter: Meter) -> [Int] {
+        let beatCount = max(1, meter.numerator)
+        let midpointBeat = min(beatCount, max(1, beatCount / 2 + 1))
+        var orderedBeats = [1]
+        if midpointBeat != 1 {
+            orderedBeats.append(midpointBeat)
+        }
+
+        orderedBeats.append(
+            contentsOf: (1...beatCount).filter { beat in
+                !orderedBeats.contains(beat)
+            }
+        )
+        return orderedBeats
     }
 
     @discardableResult

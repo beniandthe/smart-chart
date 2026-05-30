@@ -325,8 +325,10 @@ final class LeadSheetPageLayoutTests: XCTestCase {
 
         let firstMeasure = try XCTUnwrap(layout.systems.first?.measures.first)
         let chordLayouts = firstMeasure.chordLayouts
+        let chordEvents = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents)
 
         XCTAssertEqual(chordLayouts.map(\.text), ["C", "D7"])
+        XCTAssertEqual(chordEvents.map(\.startPosition.displayText), ["1", "3"])
         XCTAssertLessThanOrEqual(chordLayouts[0].fitFrame.maxX, firstMeasure.chordBandFrame.midX)
         XCTAssertGreaterThanOrEqual(chordLayouts[1].fitFrame.minX, firstMeasure.chordBandFrame.midX)
         XCTAssertEqual(chordLayouts[0].fitFrame.width, chordLayouts[1].fitFrame.width, accuracy: 0.001)

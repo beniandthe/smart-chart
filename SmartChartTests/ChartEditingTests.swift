@@ -1424,6 +1424,48 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(movedChord.mappedRhythmSlotIndex)
     }
 
+    func testSimpleChordSheetFirstChordAlwaysStartsAtBeatOne() throws {
+        var chart = Chart.blank(title: "Simple Chords", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let symbol = ChordSymbol(root: .c, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+
+        XCTAssertTrue(chart.appendRecognizedChord(symbol, rawInput: "C", to: measureID, atFraction: 0.72))
+
+        let chord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
+        XCTAssertEqual(chord.startPosition.displayText, "1")
+        XCTAssertNil(chord.mappedRhythmSlotIndex)
+    }
+
+    func testSimpleChordSheetSecondChordAutomaticallyStartsAtBeatThree() throws {
+        var chart = Chart.blank(title: "Simple Chords", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let firstSymbol = ChordSymbol(root: .c, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+        let secondSymbol = ChordSymbol(root: .f, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+
+        XCTAssertTrue(chart.appendRecognizedChord(firstSymbol, rawInput: "C", to: measureID, atFraction: 0.72))
+        XCTAssertTrue(chart.appendRecognizedChord(secondSymbol, rawInput: "F", to: measureID, atFraction: 0.08))
+
+        let chords = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents)
+        XCTAssertEqual(chords.map(\.startPosition.displayText), ["1", "3"])
+        XCTAssertTrue(chords.allSatisfy { $0.mappedRhythmSlotIndex == nil })
+    }
+
+    func testSimpleChordSheetMoveSnapsChordToRequestedBeatWithoutChangingSizeManually() throws {
+        var chart = Chart.blank(title: "Simple Chords", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let symbol = ChordSymbol(root: .f, accidental: .natural, quality: "", extensions: [], alterations: [], slashBass: nil)
+        XCTAssertTrue(chart.appendRecognizedChord(symbol, rawInput: "F", to: measureID, atFraction: 0.03))
+        let chordID = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first?.id)
+
+        XCTAssertTrue(chart.moveChordEvent(chordID, to: measureID, atFraction: 0.68))
+
+        let movedChord = try XCTUnwrap(chart.measure(id: measureID)?.chordEvents.first)
+        XCTAssertEqual(movedChord.id, chordID)
+        XCTAssertEqual(movedChord.startPosition.displayText, "4")
+        XCTAssertEqual(movedChord.duration, .quarter)
+        XCTAssertNil(movedChord.mappedRhythmSlotIndex)
+    }
+
     func testMoveChordEventSnapsExistingChordToRhythmSlot() throws {
         var chart = Chart.draft(title: "New Chart")
         chart.completeInitialSetup(

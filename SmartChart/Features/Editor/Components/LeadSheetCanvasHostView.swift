@@ -1056,23 +1056,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             alignment: .center
         )
 
-        let movePath = UIBezierPath(ovalIn: controlFrames.move)
-        UIColor(red: 0.16, green: 0.38, blue: 0.86, alpha: isActiveMove ? 1 : 0.88).setFill()
-        movePath.fill()
-        UIColor.white.withAlphaComponent(0.95).setStroke()
-        movePath.lineWidth = 1
-        movePath.stroke()
-
-        let moveGlyph = UIBezierPath()
-        let glyphInset: CGFloat = 5
-        moveGlyph.move(to: CGPoint(x: controlFrames.move.minX + glyphInset, y: controlFrames.move.midY))
-        moveGlyph.addLine(to: CGPoint(x: controlFrames.move.maxX - glyphInset, y: controlFrames.move.midY))
-        moveGlyph.move(to: CGPoint(x: controlFrames.move.midX, y: controlFrames.move.minY + glyphInset))
-        moveGlyph.addLine(to: CGPoint(x: controlFrames.move.midX, y: controlFrames.move.maxY - glyphInset))
-        UIColor.white.withAlphaComponent(0.96).setStroke()
-        moveGlyph.lineWidth = 1.5
-        moveGlyph.lineCapStyle = .round
-        moveGlyph.stroke()
     }
 
     private func drawChordSnapGuide(for chordLayout: LeadSheetChordLayout) {
@@ -1150,6 +1133,15 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         return LeadSheetChordEditOverlayGeometry.hitTarget(at: location, in: pageLayout)
+    }
+
+    private func chordMoveHitTarget(at location: CGPoint) -> ChordEditHitTarget? {
+        guard interactionMode.allowsChordInkEditing,
+              let pageLayout else {
+            return nil
+        }
+
+        return LeadSheetChordEditOverlayGeometry.moveHitTarget(at: location, in: pageLayout)
     }
 
     private enum EditableOverlayHitTarget {
@@ -1479,8 +1471,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         switch recognizer.state {
         case .began:
             let location = recognizer.location(in: self)
-            guard let hitTarget = chordEditHitTarget(at: location),
-                  hitTarget.action == .move else {
+            guard let hitTarget = chordMoveHitTarget(at: location) else {
                 activeChordMoveDrag = nil
                 setNeedsDisplay()
                 return
@@ -2500,7 +2491,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 return lastFreehandSymbolDragHitTarget() != nil
             }
 
-            return chordEditHitTarget(at: location)?.action == .move
+            return chordMoveHitTarget(at: location) != nil
         }
 
         return super.gestureRecognizerShouldBegin(gestureRecognizer)

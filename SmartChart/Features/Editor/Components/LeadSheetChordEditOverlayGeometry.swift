@@ -4,7 +4,6 @@ import UIKit
 
 struct LeadSheetChordEditControlFrames {
     let delete: CGRect
-    let move: CGRect
 }
 
 struct ChordEditHitTarget {
@@ -42,14 +41,39 @@ enum LeadSheetChordEditOverlayGeometry {
                 y: originY,
                 width: controlSize,
                 height: controlSize
-            ),
-            move: CGRect(
-                x: editFrame.maxX - controlSize / 2,
-                y: originY,
-                width: controlSize,
-                height: controlSize
             )
         )
+    }
+
+    static func moveHitTarget(
+        at location: CGPoint,
+        in pageLayout: LeadSheetPageLayout
+    ) -> ChordEditHitTarget? {
+        let measures = pageLayout.systems.flatMap(\.measures)
+        for measure in measures.reversed() {
+            guard let measureID = measure.sourceMeasureID else {
+                continue
+            }
+
+            for chordLayout in measure.chordLayouts.reversed() {
+                let controls = controlFrames(for: chordLayout)
+                if controls.delete.insetBy(dx: -controlHitOutset, dy: -controlHitOutset).contains(location) {
+                    continue
+                }
+
+                guard editFrame(for: chordLayout).insetBy(dx: -8, dy: -8).contains(location) else {
+                    continue
+                }
+
+                return ChordEditHitTarget(
+                    measureID: measureID,
+                    chordID: chordLayout.id,
+                    action: .move
+                )
+            }
+        }
+
+        return nil
     }
 
     static func hitTarget(
@@ -69,14 +93,6 @@ enum LeadSheetChordEditOverlayGeometry {
                         measureID: measureID,
                         chordID: chordLayout.id,
                         action: .delete
-                    )
-                }
-
-                if controlFrames.move.insetBy(dx: -controlHitOutset, dy: -controlHitOutset).contains(location) {
-                    return ChordEditHitTarget(
-                        measureID: measureID,
-                        chordID: chordLayout.id,
-                        action: .move
                     )
                 }
 

@@ -15,12 +15,9 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
 
         XCTAssertEqual(controls.delete.width, LeadSheetChordEditOverlayGeometry.controlSize)
         XCTAssertEqual(controls.delete.height, LeadSheetChordEditOverlayGeometry.controlSize)
-        XCTAssertEqual(controls.move.width, LeadSheetChordEditOverlayGeometry.controlSize)
-        XCTAssertEqual(controls.move.height, LeadSheetChordEditOverlayGeometry.controlSize)
-        XCTAssertGreaterThanOrEqual(controls.move.width, 18)
     }
 
-    func testMoveAndDeleteControlsWinOverReviewHitArea() {
+    func testDeleteControlWinsOverReviewAndMoveHitAreas() {
         let measureID = UUID()
         let chordID = UUID()
         let chordLayout = LeadSheetChordLayout(
@@ -40,10 +37,29 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
         XCTAssertEqual(deleteTarget?.chordID, chordID)
         assertAction(deleteTarget?.action, is: .delete)
 
-        let moveTarget = LeadSheetChordEditOverlayGeometry.hitTarget(
-            at: CGPoint(x: controls.move.maxX + 8, y: controls.move.midY),
+        let moveTarget = LeadSheetChordEditOverlayGeometry.moveHitTarget(
+            at: CGPoint(x: controls.delete.midX, y: controls.delete.midY),
             in: pageLayout
         )
+        XCTAssertNil(moveTarget)
+    }
+
+    func testChordBodyCanStartMoveWithoutSeparateResizeHandle() {
+        let measureID = UUID()
+        let chordID = UUID()
+        let chordLayout = LeadSheetChordLayout(
+            id: chordID,
+            text: "Db7(b9)",
+            frame: CGRect(x: 160, y: 88, width: 76, height: 36),
+            snapGuideTarget: CGPoint(x: 198, y: 132)
+        )
+        let pageLayout = pageLayout(measureID: measureID, chordLayout: chordLayout)
+
+        let moveTarget = LeadSheetChordEditOverlayGeometry.moveHitTarget(
+            at: CGPoint(x: chordLayout.frame.midX, y: chordLayout.frame.midY),
+            in: pageLayout
+        )
+
         XCTAssertEqual(moveTarget?.measureID, measureID)
         XCTAssertEqual(moveTarget?.chordID, chordID)
         assertAction(moveTarget?.action, is: .move)

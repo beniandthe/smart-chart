@@ -519,6 +519,9 @@ Follow-up chord-fit slice:
 - Multiple chords in one measure divide the cell by their snapped attack positions, so two chords read as two large half-measure chord regions instead of small labels near beat centers.
 - Simple chord font sizing ignores the selected notation font/style and scales bold text into the segment, shrinking only when a longer chord symbol would overflow.
 - The visible rendered chord frame and edit overlay are intentionally separate from the fit segment: the chord can scale like an iReal-style grid cell while the selection/review/move/delete box wraps the displayed chord instead of presenting a segment-sized resize-looking box.
+- Simple chord editing no longer exposes a separate move/resize-looking control. Dragging the selected chord body moves it beat-to-beat; delete remains the only visible chord edit control.
+- Simple chord append placement now follows the iReal-style grid rule instead of the handwriting location: the first chord in an empty measure lands on beat `1`, and the second chord lands on beat `3` in common time.
+- Moving an existing Simple chord still uses the drag location to snap to the requested beat, while chord size remains fully automatic from the measure, beat segment, and rendered text fit.
 
 Verification:
 
@@ -530,6 +533,7 @@ Verification:
 - Follow-up chord-fit full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `419` tests, `36` skipped, and `0` failures.
 - Follow-up chord-fit simulator layout/PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `65` tests and `0` failures.
 - Follow-up chord edit-box correction: focused SwiftPM `LeadSheetPageLayoutTests` passed with `60` tests and `0` failures; full SwiftPM verification passed with `419` tests, `36` skipped, and `0` failures; XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests -only-testing:SmartChartTests/LeadSheetChordEditOverlayGeometryTests -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `69` tests and `0` failures; `git diff --check` passed; clean simulator reinstall/rebuild and screenshot capture succeeded.
+- Follow-up automatic placement/no-resize correction: focused SwiftPM `ChartEditingTests` plus `LeadSheetPageLayoutTests` passed with `146` tests and `0` failures; focused simulator `ChartEditingTests`, `LeadSheetChordEditOverlayGeometryTests`, `LeadSheetInteractionModeStatePolicyTests`, and Simple chord layout cases passed with `34` tests and `0` failures; full SwiftPM verification passed with `422` tests, `36` skipped, and `0` failures.
 
 Verification:
 
@@ -576,5 +580,6 @@ Simple Chord Sheet row-break/menu controls are implemented locally, default Simp
 
 Next implementation checkpoint:
 
-- Continue Rhythm Section below-staff freehand workflow polish from the `Free-Hand` entry point.
+- Run the fresh live simulator pass for Simple chord writing after the automatic beat placement/no-resize correction.
+- Continue Rhythm Section below-staff freehand workflow polish from the `Free-Hand` entry point after the Simple pass is accepted.
 - Keep vamp count deferred until there is a clearer V1 need.
