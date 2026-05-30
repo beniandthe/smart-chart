@@ -800,9 +800,9 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
             drawSavedMeasureRhythmicNotation(measure)
 
-            if let trailingMeterChange = measure.trailingMeterChange,
-               let trailingMeterChangeFrame = measure.trailingMeterChangeFrame {
-                renderer.drawTimeSignature(trailingMeterChange, in: trailingMeterChangeFrame)
+            if let meterChange = measure.meterChange,
+               let meterChangeFrame = measure.meterChangeFrame {
+                renderer.drawTimeSignature(meterChange, in: meterChangeFrame)
             }
 
             if measure.isOpen && chart.layoutStyle != .simpleChordSheet {

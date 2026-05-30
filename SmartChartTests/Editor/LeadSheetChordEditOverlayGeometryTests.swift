@@ -103,8 +103,8 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
             repeatMarkerLayouts: [],
             cueTextLayouts: [],
             barlineAfter: .single,
-            trailingMeterChange: nil,
-            trailingMeterChangeFrame: nil,
+            meterChange: nil,
+            meterChangeFrame: nil,
             trailingBarlineFrame: CGRect(x: 280, y: 116, width: 1.6, height: 34),
             isOpen: false
         )

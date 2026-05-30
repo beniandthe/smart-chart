@@ -1022,37 +1022,44 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertEqual(secondSystem.measures.count, 2)
     }
 
-    func testLeadSheetLayoutShowsTrailingMeterChangeAtEndOfSelectedMeasure() throws {
+    func testLeadSheetLayoutShowsMeterChangeInsideChangedMeasure() throws {
         var chart = makeBlankLeadSheet()
         _ = chart.commitOpenMeasure()
         let thirdMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
-        _ = chart.applyMeterChange(
+        let changedMeasureID = try XCTUnwrap(chart.applyMeterChange(
             Meter(numerator: 3, denominator: 4),
             after: thirdMeasureID,
             scope: .toNextTimeSignature
-        )
+        ))
 
         let layout = LeadSheetPageLayoutEngine.pageLayout(
             for: chart,
             pageSize: CGSize(width: 900, height: 1400)
         )
 
-        let firstSystem = try XCTUnwrap(layout.systems.first)
-        let trailingChangeMeasure = try XCTUnwrap(firstSystem.measures.last)
+        let allMeasures = layout.systems.flatMap(\.measures)
+        let changedMeasure = try XCTUnwrap(
+            allMeasures.first { $0.sourceMeasureID == changedMeasureID }
+        )
+        let previousMeasure = try XCTUnwrap(
+            allMeasures.first { $0.sourceMeasureID == thirdMeasureID }
+        )
+        let meterFrame = try XCTUnwrap(changedMeasure.meterChangeFrame)
 
-        XCTAssertEqual(trailingChangeMeasure.sourceMeasureID, thirdMeasureID)
-        XCTAssertEqual(trailingChangeMeasure.trailingMeterChange, Meter(numerator: 3, denominator: 4))
-        XCTAssertNotNil(trailingChangeMeasure.trailingMeterChangeFrame)
+        XCTAssertNil(previousMeasure.meterChange)
+        XCTAssertEqual(changedMeasure.meterChange, Meter(numerator: 3, denominator: 4))
+        XCTAssertGreaterThan(meterFrame.minX, changedMeasure.frame.minX)
+        XCTAssertLessThan(meterFrame.maxX, changedMeasure.frame.midX)
     }
 
-    func testSimpleChordSheetLayoutShowsTrailingMeterChangeInsideGrid() throws {
+    func testSimpleChordSheetLayoutShowsMeterChangeInsideChangedGridCell() throws {
         var chart = Chart.blank(title: "Simple Time", measureCount: 3, layoutStyle: .simpleChordSheet)
         let secondMeasureID = chart.measures[1].id
-        _ = chart.applyMeterChange(
+        let changedMeasureID = try XCTUnwrap(chart.applyMeterChange(
             Meter(numerator: 3, denominator: 4),
             after: secondMeasureID,
             scope: .toNextTimeSignature
-        )
+        ))
 
         let layout = LeadSheetPageLayoutEngine.pageLayout(
             for: chart,
@@ -1060,14 +1067,19 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         )
 
         let firstSystem = try XCTUnwrap(layout.systems.first)
-        let changedBoundaryMeasure = try XCTUnwrap(
+        let sourceMeasure = try XCTUnwrap(
             firstSystem.measures.first { $0.sourceMeasureID == secondMeasureID }
         )
-        let meterFrame = try XCTUnwrap(changedBoundaryMeasure.trailingMeterChangeFrame)
+        let changedMeasure = try XCTUnwrap(
+            firstSystem.measures.first { $0.sourceMeasureID == changedMeasureID }
+        )
+        let meterFrame = try XCTUnwrap(changedMeasure.meterChangeFrame)
 
-        XCTAssertEqual(changedBoundaryMeasure.trailingMeterChange, Meter(numerator: 3, denominator: 4))
-        XCTAssertTrue(changedBoundaryMeasure.staffFrame.intersects(meterFrame))
-        XCTAssertLessThan(meterFrame.maxX, changedBoundaryMeasure.trailingBarlineFrame.midX)
+        XCTAssertNil(sourceMeasure.meterChange)
+        XCTAssertEqual(changedMeasure.meterChange, Meter(numerator: 3, denominator: 4))
+        XCTAssertTrue(changedMeasure.staffFrame.intersects(meterFrame))
+        XCTAssertGreaterThan(meterFrame.minX, changedMeasure.frame.minX)
+        XCTAssertLessThan(meterFrame.maxX, changedMeasure.frame.midX)
     }
 
     func testLeadSheetLayoutRendersQuantizedRhythmMapAsSlashNotation() throws {

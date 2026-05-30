@@ -491,9 +491,11 @@ Verification:
 Implemented slice:
 
 - Simple Chord Sheet now reserves a left meter gutter across every rendered row, so the initial time signature appears before the first measure without shifting only the first row.
-- Simple Chord Sheet trailing meter changes now render inside the blank grid cell near the changed boundary; meter edits are no longer model-only for Simple.
+- Simple Chord Sheet non-initial meter changes now render visibly in the grid instead of being suppressed.
 - The Measures tool keeps opening as a menu during pending multi-step measure workflows such as `Start Repeat Here` -> `End Repeat Here` and ending-span creation, instead of deselecting on the second tap.
 - Header, metadata, section, roadmap, and cue text now use stable app-standard text fonts instead of the selected notation font, so font changes do not clip the bottom of chart headers or make annotation styles drift.
+- Follow-up correction: non-initial time-signature changes now render inline inside the measure whose meter they change, not before the barline of the previous measure.
+- First architecture seam: `LeadSheetPageLayoutEngine.VisualPolicy` now owns shared header/meter placement constants so visual decisions can keep moving out of one-off feature code.
 
 Design note:
 
@@ -507,6 +509,12 @@ Verification:
 - Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `24` tests and `0` failures.
 - Focused simulator layout verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests CODE_SIGNING_ALLOWED=NO` passed with `57` tests and `0` failures.
 - Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+- Follow-up focused SwiftPM `LeadSheetPageLayoutTests` passed with `57` tests and `0` failures after the inline meter-change correction.
+- Follow-up focused SwiftPM `ChartEditingTests/testApplyMeterChangeToNextTimeSignaturePersistsIntoFutureMeasures` passed with `1` test and `0` failures.
+- Follow-up full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `416` tests, `36` skipped, and `0` failures.
+- Follow-up focused simulator layout verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests CODE_SIGNING_ALLOWED=NO` passed with `57` tests and `0` failures.
+- Follow-up focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `24` tests and `0` failures.
+- Follow-up simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only, and screenshot capture succeeded.
 
 ## Recommended Sequence
 

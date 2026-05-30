@@ -1300,7 +1300,7 @@ struct EditorView: View {
         scope: TimeSignatureApplicationScope
     ) {
         let appliedMeasureID = chart.applyMeterChange(meter, after: sourceMeasureID, scope: scope)
-        selectedMeasureID = sourceMeasureID
+        selectedMeasureID = appliedMeasureID ?? sourceMeasureID
         selectedNoteSelection = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
