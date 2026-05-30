@@ -27,6 +27,8 @@ struct ActiveFreehandSymbolEditDrag {
 enum LeadSheetFreehandSymbolEditOverlayGeometry {
     static let controlSize: CGFloat = 18
     static let controlHitOutset: CGFloat = 12
+    static let editFrameHitOutset: CGFloat = 8
+    static let selectedDragHitOutset: CGFloat = 22
 
     static func editFrame(for symbolLayout: LeadSheetFreehandSymbolLayout) -> CGRect {
         let paddedFrame = symbolLayout.frame.insetBy(dx: -8, dy: -8)
@@ -38,6 +40,14 @@ enum LeadSheetFreehandSymbolEditOverlayGeometry {
             width: width,
             height: height
         )
+    }
+
+    static func editHitFrame(for symbolLayout: LeadSheetFreehandSymbolLayout) -> CGRect {
+        editFrame(for: symbolLayout).insetBy(dx: -editFrameHitOutset, dy: -editFrameHitOutset)
+    }
+
+    static func selectedDragFrame(for symbolLayout: LeadSheetFreehandSymbolLayout) -> CGRect {
+        editFrame(for: symbolLayout).insetBy(dx: -selectedDragHitOutset, dy: -selectedDragHitOutset)
     }
 
     static func controlFrames(
@@ -76,7 +86,7 @@ enum LeadSheetFreehandSymbolEditOverlayGeometry {
                 return FreehandSymbolEditHitTarget(symbolID: symbolLayout.id, action: .move)
             }
 
-            if editFrame(for: symbolLayout).insetBy(dx: -8, dy: -8).contains(location) {
+            if editHitFrame(for: symbolLayout).contains(location) {
                 return FreehandSymbolEditHitTarget(symbolID: symbolLayout.id, action: .select)
             }
         }

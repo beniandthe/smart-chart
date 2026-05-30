@@ -702,10 +702,19 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     fileprivate func allowsParentScrollGestureStart(at point: CGPoint) -> Bool {
-        LeadSheetScrollMarginPolicy.allowsPageScrollStart(
+        guard restrictsParentScrollToOutsideMargins else {
+            return true
+        }
+
+        if measureResizeHandleHitTarget(at: point) != nil
+            || editableOverlayHitTarget(at: point) != nil {
+            return false
+        }
+
+        return LeadSheetScrollMarginPolicy.allowsPageScrollStart(
             at: point,
             paperFrame: pageLayout?.paperFrame,
-            restrictsToOutsideMargins: restrictsParentScrollToOutsideMargins
+            restrictsToOutsideMargins: true
         )
     }
 
@@ -1183,11 +1192,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
            ) {
             return selectedHitTarget
         }
+        if let selectedFreehandSymbolID,
+           let selectedLayout = symbolLayouts.first(where: { $0.id == selectedFreehandSymbolID }),
+           LeadSheetFreehandSymbolEditOverlayGeometry.selectedDragFrame(for: selectedLayout).contains(location) {
+            return FreehandSymbolEditHitTarget(symbolID: selectedFreehandSymbolID, action: .select)
+        }
 
         for symbolLayout in symbolLayouts.reversed() where symbolLayout.id != selectedFreehandSymbolID {
-            if LeadSheetFreehandSymbolEditOverlayGeometry.editFrame(for: symbolLayout)
-                .insetBy(dx: -8, dy: -8)
-                .contains(location) {
+            if LeadSheetFreehandSymbolEditOverlayGeometry.editHitFrame(for: symbolLayout).contains(location) {
                 return FreehandSymbolEditHitTarget(symbolID: symbolLayout.id, action: .select)
             }
         }
@@ -1524,9 +1536,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             )
             let resolvedHitTarget = freehandSymbolEditHitTarget(at: startLocation)
                 ?? lastFreehandSymbolDragHitTarget()
-                ?? selectedFreehandSymbolID.map {
-                    FreehandSymbolEditHitTarget(symbolID: $0, action: .move)
-                }
             guard let hitTarget = resolvedHitTarget,
                   hitTarget.action != .delete,
                   let symbolLayout = freehandSymbolLayouts().first(where: { $0.id == hitTarget.symbolID }) else {
@@ -2489,7 +2498,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 }
 
                 return lastFreehandSymbolDragHitTarget() != nil
-                    || selectedFreehandSymbolID != nil
             }
 
             return chordEditHitTarget(at: location)?.action == .move
@@ -2512,19 +2520,26 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecognizerDelegate {
     weak var canvasView: LeadSheetCanvasUIKitView?
     weak var scrollView: UIScrollView?
-    weak var originalPanDelegate: UIGestureRecognizerDelegate?
-    weak var originalPinchDelegate: UIGestureRecognizerDelegate?
+    private lazy var panBlocker: UIPanGestureRecognizer = {
+        let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handleBlockerGesture(_:)))
+        configureBlocker(recognizer)
+        return recognizer
+    }()
+    private lazy var pinchBlocker: UIPinchGestureRecognizer = {
+        let recognizer = UIPinchGestureRecognizer(target: self, action: #selector(handleBlockerGesture(_:)))
+        configureBlocker(recognizer)
+        return recognizer
+    }()
 
     func install(in scrollView: UIScrollView, canvasView: LeadSheetCanvasUIKitView) {
         if self.scrollView !== scrollView {
             uninstall()
             self.scrollView = scrollView
-            originalPanDelegate = scrollView.panGestureRecognizer.delegate
-            scrollView.panGestureRecognizer.delegate = self
-
+            scrollView.addGestureRecognizer(panBlocker)
+            scrollView.panGestureRecognizer.require(toFail: panBlocker)
             if let pinchGestureRecognizer = scrollView.pinchGestureRecognizer {
-                originalPinchDelegate = pinchGestureRecognizer.delegate
-                pinchGestureRecognizer.delegate = self
+                scrollView.addGestureRecognizer(pinchBlocker)
+                pinchGestureRecognizer.require(toFail: pinchBlocker)
             }
         }
 
@@ -2537,58 +2552,40 @@ private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecogni
 
     func uninstall() {
         if let scrollView {
-            if scrollView.panGestureRecognizer.delegate === self {
-                scrollView.panGestureRecognizer.delegate = originalPanDelegate
-            }
-
-            if let pinchGestureRecognizer = scrollView.pinchGestureRecognizer,
-               pinchGestureRecognizer.delegate === self {
-                pinchGestureRecognizer.delegate = originalPinchDelegate
-            }
+            scrollView.removeGestureRecognizer(panBlocker)
+            scrollView.removeGestureRecognizer(pinchBlocker)
         }
 
         scrollView = nil
         canvasView = nil
-        originalPanDelegate = nil
-        originalPinchDelegate = nil
     }
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        if isScrollGesture(gestureRecognizer),
-           let canvasView,
-           !canvasView.allowsParentScrollGestureStart(at: gestureRecognizer.location(in: canvasView)) {
-            return false
+        guard isBlockerGesture(gestureRecognizer),
+              let canvasView else {
+            return true
         }
 
-        return forwardedShouldBegin(gestureRecognizer)
+        return !canvasView.allowsParentScrollGestureStart(at: gestureRecognizer.location(in: canvasView))
     }
 
     func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        forwardedSimultaneousDecision(gestureRecognizer, otherGestureRecognizer: otherGestureRecognizer)
+        isBlockerGesture(gestureRecognizer) && !isScrollGesture(otherGestureRecognizer)
     }
 
     func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer,
         shouldReceive touch: UITouch
     ) -> Bool {
-        forwardedShouldReceive(gestureRecognizer, touch: touch)
-    }
+        guard isBlockerGesture(gestureRecognizer),
+              let canvasView else {
+            return true
+        }
 
-    func gestureRecognizer(
-        _ gestureRecognizer: UIGestureRecognizer,
-        shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer
-    ) -> Bool {
-        forwardedShouldRequireFailure(gestureRecognizer, of: otherGestureRecognizer)
-    }
-
-    func gestureRecognizer(
-        _ gestureRecognizer: UIGestureRecognizer,
-        shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer
-    ) -> Bool {
-        forwardedShouldBeRequiredToFail(gestureRecognizer, by: otherGestureRecognizer)
+        return !canvasView.allowsParentScrollGestureStart(at: touch.location(in: canvasView))
     }
 
     private func isScrollGesture(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
@@ -2600,66 +2597,19 @@ private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecogni
             || gestureRecognizer === scrollView.pinchGestureRecognizer
     }
 
-    private func originalDelegate(for gestureRecognizer: UIGestureRecognizer) -> UIGestureRecognizerDelegate? {
-        guard let scrollView else {
-            return nil
-        }
-
-        if gestureRecognizer === scrollView.panGestureRecognizer {
-            return originalPanDelegate
-        }
-
-        if gestureRecognizer === scrollView.pinchGestureRecognizer {
-            return originalPinchDelegate
-        }
-
-        return nil
+    private func isBlockerGesture(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        gestureRecognizer === panBlocker || gestureRecognizer === pinchBlocker
     }
 
-    private func forwardedShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        originalDelegate(for: gestureRecognizer)?
-            .gestureRecognizerShouldBegin?(gestureRecognizer) ?? true
+    private func configureBlocker(_ recognizer: UIGestureRecognizer) {
+        recognizer.delegate = self
+        recognizer.cancelsTouchesInView = false
+        recognizer.delaysTouchesBegan = false
+        recognizer.delaysTouchesEnded = false
     }
 
-    private func forwardedSimultaneousDecision(
-        _ gestureRecognizer: UIGestureRecognizer,
-        otherGestureRecognizer: UIGestureRecognizer
-    ) -> Bool {
-        originalDelegate(for: gestureRecognizer)?
-            .gestureRecognizer?(
-                gestureRecognizer,
-                shouldRecognizeSimultaneouslyWith: otherGestureRecognizer
-            ) ?? false
-    }
-
-    private func forwardedShouldReceive(
-        _ gestureRecognizer: UIGestureRecognizer,
-        touch: UITouch
-    ) -> Bool {
-        originalDelegate(for: gestureRecognizer)?
-            .gestureRecognizer?(gestureRecognizer, shouldReceive: touch) ?? true
-    }
-
-    private func forwardedShouldRequireFailure(
-        _ gestureRecognizer: UIGestureRecognizer,
-        of otherGestureRecognizer: UIGestureRecognizer
-    ) -> Bool {
-        originalDelegate(for: gestureRecognizer)?
-            .gestureRecognizer?(
-                gestureRecognizer,
-                shouldRequireFailureOf: otherGestureRecognizer
-            ) ?? false
-    }
-
-    private func forwardedShouldBeRequiredToFail(
-        _ gestureRecognizer: UIGestureRecognizer,
-        by otherGestureRecognizer: UIGestureRecognizer
-    ) -> Bool {
-        originalDelegate(for: gestureRecognizer)?
-            .gestureRecognizer?(
-                gestureRecognizer,
-                shouldBeRequiredToFailBy: otherGestureRecognizer
-            ) ?? false
+    @objc private func handleBlockerGesture(_: UIGestureRecognizer) {
+        // The blocker only exists to make the parent scroll recognizer wait/fail.
     }
 
     deinit {

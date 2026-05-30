@@ -59,6 +59,20 @@ final class LeadSheetFreehandSymbolEditOverlayGeometryTests: XCTestCase {
         assertAction(target?.action, is: .select)
     }
 
+    func testSelectedDragFrameExtendsBeyondEditHitFrame() {
+        let symbolLayout = freehandSymbolLayout(
+            frame: CGRect(x: 150, y: 82, width: 48, height: 16)
+        )
+
+        let editHitFrame = LeadSheetFreehandSymbolEditOverlayGeometry.editHitFrame(for: symbolLayout)
+        let selectedDragFrame = LeadSheetFreehandSymbolEditOverlayGeometry.selectedDragFrame(for: symbolLayout)
+
+        XCTAssertLessThan(selectedDragFrame.minX, editHitFrame.minX)
+        XCTAssertLessThan(selectedDragFrame.minY, editHitFrame.minY)
+        XCTAssertGreaterThan(selectedDragFrame.maxX, editHitFrame.maxX)
+        XCTAssertGreaterThan(selectedDragFrame.maxY, editHitFrame.maxY)
+    }
+
     func testClampedFrameKeepsMovedSymbolInsideOriginalLane() {
         let laneFrame = CGRect(x: 100, y: 50, width: 160, height: 40)
         let proposedFrame = CGRect(x: 20, y: 88, width: 70, height: 20)

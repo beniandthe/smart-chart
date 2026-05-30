@@ -411,6 +411,7 @@ Implemented slice:
 - Simple `Free-Hand` mode uses the chart-paper writing scope and persists strokes as `FreehandSymbolLane.chartArea` objects.
 - Chart-area symbols store a measure-relative frame, so they move with the attached measure when the row/layout changes.
 - Selected freehand symbols keep delete and move controls only; moving a chart-area symbol reanchors it to the nearest measure when its center crosses measure territory.
+- Selected freehand symbol drag targets are intentionally more forgiving than the visible edit box, and the active-tool scroll gate protects editable freehand boxes/controls from parent page panning so grabbing an ink object does not pull the page sideways.
 - Rhythm Section Sheet keeps the below-measure freehand articulation lane; Lead Sheet still has no active freehand symbol lane for V1.
 - The previous freehand resize checkpoint is superseded by this floating ink model because resizing the selection box did not resize the underlying PencilKit ink.
 
@@ -419,6 +420,7 @@ Verification:
 - Focused model verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `82` tests and `0` failures after adding chart-area storage, lane-policy, move, and delete coverage.
 - Focused layout verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `54` tests and `0` failures after updating Simple export/readability and chart-area layout coverage.
 - Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetFreehandSymbolEditOverlayGeometryTests -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `25` tests and `0` failures.
+- Focused simulator editor hardening: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetFreehandSymbolEditOverlayGeometryTests -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `28` tests and `0` failures after the selected freehand drag-target hardening.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
@@ -428,7 +430,7 @@ Implemented slice:
 
 - Browse mode keeps normal page scrolling.
 - Any active tool mode gates the parent page scroll gestures to the outside paper margins, so gestures that begin on the rendered sheet do not pan the document while the user is writing, erasing, resizing measures, selecting, or moving objects.
-- The gate is installed by the canvas host on the enclosing `UIScrollView` pan/pinch gestures and preserves the scroll view's original gesture-delegate decisions when the margin rule allows scrolling.
+- The gate is installed by the canvas host as custom no-op blocker recognizers on the enclosing `UIScrollView`; it makes the built-in pan/pinch gestures wait/fail for sheet-started tool gestures without replacing UIKit's required scroll gesture delegates.
 - The margin decision uses the rendered paper frame with a small hit slop, keeping near-edge paper gestures stable while still allowing scroll starts from the surrounding workspace.
 
 Verification:
@@ -436,6 +438,7 @@ Verification:
 - XcodeBuildMCP focused simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `23` tests and `0` failures after adding scroll-margin policy coverage.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+- Crash hardening verification: after a clean simulator erase on 2026-05-30, XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` launched successfully and screenshot capture succeeded without the `UIScrollView` pan delegate exception.
 
 ## Recommended Sequence
 
@@ -463,9 +466,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects, and active tool modes only allow parent page scrolling from outside the rendered paper margins. Rhythm Section still owns below-measure freehand articulations only.
+Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects, selected freehand drag targets no longer pull the page sideways, and active tool modes only allow parent page scrolling from outside the rendered paper margins. Rhythm Section still owns below-measure freehand articulations only.
 
 Next implementation checkpoint:
 
-- Run a live simulator pass on Simple floating freehand ink capture, move, reanchor, delete, row-change follow behavior, and margin-only page scrolling while a tool is active.
+- Begin the Rhythm Section below-staff articulation workflow polish/audit from the existing below-measure freehand lane.
 - Keep vamp count deferred until there is a clearer V1 need.
