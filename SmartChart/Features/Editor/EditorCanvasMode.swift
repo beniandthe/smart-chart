@@ -79,7 +79,7 @@ enum EditorCanvasMode: Hashable {
         allowsPageInkEditing || allowsChordInkEditing || allowsDirectRhythmicNotationInk || allowsNoteSelectionInk
     }
 
-    var disablesPageScroll: Bool {
+    var restrictsPageScrollToOutsideMargins: Bool {
         self != .browse
     }
 }

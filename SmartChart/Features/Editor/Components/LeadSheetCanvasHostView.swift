@@ -42,6 +42,7 @@ struct LeadSheetCanvasHostView: UIViewRepresentable {
         view.selectedNoteSelection = selectedNoteSelection
         view.interactionMode = interactionMode
         view.inkToolMode = inkToolMode
+        view.restrictsParentScrollToOutsideMargins = interactionMode.restrictsPageScrollToOutsideMargins
         view.onMeasureSelectionChanged = { measureID in
             context.coordinator.selectedMeasureID.wrappedValue = measureID
         }
@@ -443,6 +444,11 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             setNeedsDisplay()
         }
     }
+    var restrictsParentScrollToOutsideMargins: Bool = false {
+        didSet {
+            parentScrollGestureGate.updateCanvasView(self)
+        }
+    }
     var interactionMode: EditorCanvasMode = .browse {
         didSet {
             guard oldValue != interactionMode else {
@@ -486,6 +492,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private let pageInkCanvasView = PKCanvasView()
     private let rhythmicNotationFeedbackOverlayView = RhythmicNotationFeedbackOverlayView()
     private let chordEditHitOverlayView = ChordEditHitOverlayView()
+    private let parentScrollGestureGate = LeadSheetParentScrollGestureGate()
     private let chordInkRecognizer = ChordInkRecognizer()
     private var chordInkRecognitionOptions: ChordInkRecognitionOptions {
         #if DEBUG || targetEnvironment(simulator)
@@ -564,11 +571,17 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         commonInit()
     }
 
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        updateParentScrollGestureGate()
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         chordEditHitOverlayView.frame = bounds
         rhythmicNotationFeedbackOverlayView.frame = bounds
         invalidateLayout()
+        updateParentScrollGestureGate()
     }
 
     override func draw(_ rect: CGRect) {
@@ -664,6 +677,36 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         addGestureRecognizer(chordMovePanRecognizer)
         addSubview(chordEditHitOverlayView)
         updateInteractionMode()
+    }
+
+    private func updateParentScrollGestureGate() {
+        guard let scrollView = enclosingParentScrollView() else {
+            parentScrollGestureGate.uninstall()
+            return
+        }
+
+        parentScrollGestureGate.install(in: scrollView, canvasView: self)
+    }
+
+    private func enclosingParentScrollView() -> UIScrollView? {
+        var candidate = superview
+        while let view = candidate {
+            if let scrollView = view as? UIScrollView {
+                return scrollView
+            }
+
+            candidate = view.superview
+        }
+
+        return nil
+    }
+
+    fileprivate func allowsParentScrollGestureStart(at point: CGPoint) -> Bool {
+        LeadSheetScrollMarginPolicy.allowsPageScrollStart(
+            at: point,
+            paperFrame: pageLayout?.paperFrame,
+            restrictsToOutsideMargins: restrictsParentScrollToOutsideMargins
+        )
     }
 
     private func invalidateLayout() {
@@ -2463,6 +2506,164 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             || otherGestureRecognizer === inkSelectionTapRecognizer
             || gestureRecognizer === chordMovePanRecognizer
             || otherGestureRecognizer === chordMovePanRecognizer
+    }
+}
+
+private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecognizerDelegate {
+    weak var canvasView: LeadSheetCanvasUIKitView?
+    weak var scrollView: UIScrollView?
+    weak var originalPanDelegate: UIGestureRecognizerDelegate?
+    weak var originalPinchDelegate: UIGestureRecognizerDelegate?
+
+    func install(in scrollView: UIScrollView, canvasView: LeadSheetCanvasUIKitView) {
+        if self.scrollView !== scrollView {
+            uninstall()
+            self.scrollView = scrollView
+            originalPanDelegate = scrollView.panGestureRecognizer.delegate
+            scrollView.panGestureRecognizer.delegate = self
+
+            if let pinchGestureRecognizer = scrollView.pinchGestureRecognizer {
+                originalPinchDelegate = pinchGestureRecognizer.delegate
+                pinchGestureRecognizer.delegate = self
+            }
+        }
+
+        self.canvasView = canvasView
+    }
+
+    func updateCanvasView(_ canvasView: LeadSheetCanvasUIKitView) {
+        self.canvasView = canvasView
+    }
+
+    func uninstall() {
+        if let scrollView {
+            if scrollView.panGestureRecognizer.delegate === self {
+                scrollView.panGestureRecognizer.delegate = originalPanDelegate
+            }
+
+            if let pinchGestureRecognizer = scrollView.pinchGestureRecognizer,
+               pinchGestureRecognizer.delegate === self {
+                pinchGestureRecognizer.delegate = originalPinchDelegate
+            }
+        }
+
+        scrollView = nil
+        canvasView = nil
+        originalPanDelegate = nil
+        originalPinchDelegate = nil
+    }
+
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if isScrollGesture(gestureRecognizer),
+           let canvasView,
+           !canvasView.allowsParentScrollGestureStart(at: gestureRecognizer.location(in: canvasView)) {
+            return false
+        }
+
+        return forwardedShouldBegin(gestureRecognizer)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        forwardedSimultaneousDecision(gestureRecognizer, otherGestureRecognizer: otherGestureRecognizer)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldReceive touch: UITouch
+    ) -> Bool {
+        forwardedShouldReceive(gestureRecognizer, touch: touch)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        forwardedShouldRequireFailure(gestureRecognizer, of: otherGestureRecognizer)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        forwardedShouldBeRequiredToFail(gestureRecognizer, by: otherGestureRecognizer)
+    }
+
+    private func isScrollGesture(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard let scrollView else {
+            return false
+        }
+
+        return gestureRecognizer === scrollView.panGestureRecognizer
+            || gestureRecognizer === scrollView.pinchGestureRecognizer
+    }
+
+    private func originalDelegate(for gestureRecognizer: UIGestureRecognizer) -> UIGestureRecognizerDelegate? {
+        guard let scrollView else {
+            return nil
+        }
+
+        if gestureRecognizer === scrollView.panGestureRecognizer {
+            return originalPanDelegate
+        }
+
+        if gestureRecognizer === scrollView.pinchGestureRecognizer {
+            return originalPinchDelegate
+        }
+
+        return nil
+    }
+
+    private func forwardedShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        originalDelegate(for: gestureRecognizer)?
+            .gestureRecognizerShouldBegin?(gestureRecognizer) ?? true
+    }
+
+    private func forwardedSimultaneousDecision(
+        _ gestureRecognizer: UIGestureRecognizer,
+        otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        originalDelegate(for: gestureRecognizer)?
+            .gestureRecognizer?(
+                gestureRecognizer,
+                shouldRecognizeSimultaneouslyWith: otherGestureRecognizer
+            ) ?? false
+    }
+
+    private func forwardedShouldReceive(
+        _ gestureRecognizer: UIGestureRecognizer,
+        touch: UITouch
+    ) -> Bool {
+        originalDelegate(for: gestureRecognizer)?
+            .gestureRecognizer?(gestureRecognizer, shouldReceive: touch) ?? true
+    }
+
+    private func forwardedShouldRequireFailure(
+        _ gestureRecognizer: UIGestureRecognizer,
+        of otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        originalDelegate(for: gestureRecognizer)?
+            .gestureRecognizer?(
+                gestureRecognizer,
+                shouldRequireFailureOf: otherGestureRecognizer
+            ) ?? false
+    }
+
+    private func forwardedShouldBeRequiredToFail(
+        _ gestureRecognizer: UIGestureRecognizer,
+        by otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        originalDelegate(for: gestureRecognizer)?
+            .gestureRecognizer?(
+                gestureRecognizer,
+                shouldBeRequiredToFailBy: otherGestureRecognizer
+            ) ?? false
+    }
+
+    deinit {
+        uninstall()
     }
 }
 

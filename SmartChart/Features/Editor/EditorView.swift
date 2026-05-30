@@ -87,7 +87,6 @@ struct EditorView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 28)
         }
-        .scrollDisabled(canvasMode.disablesPageScroll)
         .background(
             LinearGradient(
                 colors: [

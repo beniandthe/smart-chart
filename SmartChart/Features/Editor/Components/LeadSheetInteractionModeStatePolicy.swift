@@ -84,4 +84,23 @@ struct LeadSheetInteractionModeStatePolicy {
         #endif
     }
 }
+
+enum LeadSheetScrollMarginPolicy {
+    static let paperHitSlop: CGFloat = 8
+
+    static func allowsPageScrollStart(
+        at point: CGPoint,
+        paperFrame: CGRect?,
+        restrictsToOutsideMargins: Bool
+    ) -> Bool {
+        guard restrictsToOutsideMargins,
+              let paperFrame else {
+            return true
+        }
+
+        return !paperFrame
+            .insetBy(dx: -paperHitSlop, dy: -paperHitSlop)
+            .contains(point)
+    }
+}
 #endif

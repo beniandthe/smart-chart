@@ -41,6 +41,49 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
         #endif
     }
 
+    func testToolModesRestrictPageScrollToOutsideMargins() {
+        XCTAssertFalse(EditorCanvasMode.browse.restrictsPageScrollToOutsideMargins)
+        XCTAssertTrue(EditorCanvasMode.measureEdit.restrictsPageScrollToOutsideMargins)
+        XCTAssertTrue(EditorCanvasMode.timeSignatureEdit.restrictsPageScrollToOutsideMargins)
+        XCTAssertTrue(EditorCanvasMode.rhythmicNotationEdit.restrictsPageScrollToOutsideMargins)
+        XCTAssertTrue(EditorCanvasMode.chordEntry.restrictsPageScrollToOutsideMargins)
+        XCTAssertTrue(EditorCanvasMode.noteEdit.restrictsPageScrollToOutsideMargins)
+        XCTAssertTrue(EditorCanvasMode.freeHand.restrictsPageScrollToOutsideMargins)
+    }
+
+    func testScrollMarginPolicyBlocksPaperGesturesOnlyWhenRestricted() {
+        let paperFrame = CGRect(x: 100, y: 80, width: 300, height: 420)
+
+        XCTAssertTrue(
+            LeadSheetScrollMarginPolicy.allowsPageScrollStart(
+                at: CGPoint(x: 180, y: 140),
+                paperFrame: paperFrame,
+                restrictsToOutsideMargins: false
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetScrollMarginPolicy.allowsPageScrollStart(
+                at: CGPoint(x: 180, y: 140),
+                paperFrame: paperFrame,
+                restrictsToOutsideMargins: true
+            )
+        )
+        XCTAssertTrue(
+            LeadSheetScrollMarginPolicy.allowsPageScrollStart(
+                at: CGPoint(x: 70, y: 140),
+                paperFrame: paperFrame,
+                restrictsToOutsideMargins: true
+            )
+        )
+        XCTAssertFalse(
+            LeadSheetScrollMarginPolicy.allowsPageScrollStart(
+                at: CGPoint(x: paperFrame.minX - LeadSheetScrollMarginPolicy.paperHitSlop / 2, y: 140),
+                paperFrame: paperFrame,
+                restrictsToOutsideMargins: true
+            )
+        )
+    }
+
     func testInkCanvasSyncPolicyPreservesDirtyChordInkFromStaleModelReload() {
         XCTAssertTrue(
             LeadSheetInkCanvasSyncPolicy.shouldPreserveActiveCanvas(

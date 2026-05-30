@@ -422,6 +422,21 @@ Verification:
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
+## Tool Scroll Margin Gate
+
+Implemented slice:
+
+- Browse mode keeps normal page scrolling.
+- Any active tool mode gates the parent page scroll gestures to the outside paper margins, so gestures that begin on the rendered sheet do not pan the document while the user is writing, erasing, resizing measures, selecting, or moving objects.
+- The gate is installed by the canvas host on the enclosing `UIScrollView` pan/pinch gestures and preserves the scroll view's original gesture-delegate decisions when the margin rule allows scrolling.
+- The margin decision uses the rendered paper frame with a small hit slop, keeping near-edge paper gestures stable while still allowing scroll starts from the surrounding workspace.
+
+Verification:
+
+- XcodeBuildMCP focused simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `23` tests and `0` failures after adding scroll-margin policy coverage.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
+- Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
 ## Recommended Sequence
 
 1. Define system layout and measure flow.
@@ -448,9 +463,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, and Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects. Rhythm Section still owns below-measure freehand articulations only.
+Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects, and active tool modes only allow parent page scrolling from outside the rendered paper margins. Rhythm Section still owns below-measure freehand articulations only.
 
 Next implementation checkpoint:
 
-- Run a live simulator pass on Simple floating freehand ink capture, move, reanchor, delete, and row-change follow behavior.
+- Run a live simulator pass on Simple floating freehand ink capture, move, reanchor, delete, row-change follow behavior, and margin-only page scrolling while a tool is active.
 - Keep vamp count deferred until there is a clearer V1 need.
