@@ -167,6 +167,26 @@ struct LeadSheetNotationRenderer {
         )
     }
 
+    func drawRoadmapMarker(_ markerLayout: LeadSheetRoadmapMarkerLayout) {
+        let markerPath = UIBezierPath(
+            roundedRect: markerLayout.frame.insetBy(dx: 0.5, dy: 1.5),
+            cornerRadius: 2.5
+        )
+        style.inkColor.withAlphaComponent(0.055).setFill()
+        markerPath.fill()
+        style.inkColor.withAlphaComponent(0.62).setStroke()
+        markerPath.lineWidth = 0.9 * style.strokeScale
+        markerPath.stroke()
+
+        drawText(
+            markerLayout.text.uppercased(),
+            in: markerLayout.frame.insetBy(dx: 5, dy: 2),
+            font: style.metadataFont(size: 10.8),
+            color: style.inkColor.withAlphaComponent(0.82),
+            alignment: .center
+        )
+    }
+
     func drawStaffLines(for system: LeadSheetSystemLayout) {
         let staffSpace = system.staffSpace
         for lineY in system.staffLineYPositions {

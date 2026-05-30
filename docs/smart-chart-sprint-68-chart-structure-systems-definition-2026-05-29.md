@@ -9,7 +9,7 @@ Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
 Sprint 68 resumes the main chart-layout plan after the Rhythm Section core-authoring side sprint. The goal is to define the shared chart-structure systems for the V1 sheet styles before implementation changes layout behavior.
 
-This sprint is definition-first. Do not implement section/system layout, roadmap symbols, cue text, or richer per-style rendering until the target behavior is written down and confirmed.
+This sprint began definition-first. Do not implement section/system layout, roadmap symbols, cue text, or richer per-style rendering until the target behavior is written down and confirmed for that slice.
 
 Lead Sheet feature work is deferred until after V1. Preserve existing compatibility and baseline behavior, but do not use Lead Sheet as an active Sprint 68 design target.
 
@@ -268,6 +268,34 @@ Ending implementation progress:
 - Focused simulator PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `5` tests and `0` failures.
 - Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
+Point marker contract:
+
+- V1 point roadmap markers persist as structured roadmap objects with `startMeasureID` only and no `endMeasureID`.
+- Supported V1 point marker types are `Coda`, `To Coda`, `Segno`, `D.S.`, `D.S. al Coda`, `D.C.`, `D.C. al Fine`, `Fine`, and `N.C.`.
+- Duplicate requests for the same marker type and same measure return the existing point marker instead of stacking duplicates.
+- Deleting the attached measure deletes the marker and clears the measure back-reference.
+- Linked target behavior, such as connecting `To Coda` to a `Coda`, remains deferred for V1; visual rendering does not depend on playback/navigation semantics.
+- Vamp count remains deferred to the next roadmap-object slice because it needs a count entry surface and may later become either a point marker or span.
+
+Point marker visual contract:
+
+- Simple Chord Sheet renders compact marker text above the blank measure space, integrated with the chord-grid feel and excluded from the legacy roadmap-text banner.
+- Rhythm Section Sheet renders point markers in a reserved local roadmap lane above the chord lane so chord symbols remain readable.
+- If a point marker and an ending bracket share a system, the ending bracket shifts down inside the roadmap reserve instead of colliding with the marker.
+- The editor canvas and PDF export path use the same `LeadSheetRoadmapMarkerLayout` geometry and shared notation renderer.
+
+Point marker implementation progress:
+
+- `RoadmapType` now identifies point marker types separately from repeat spans, endings, and deferred vamp count.
+- `ChartEditing` can add, look up by attached measure, deduplicate, and delete point roadmap markers while preserving measure-ID anchoring.
+- Shared layout resolves `LeadSheetRoadmapMarkerLayout` for Simple Chord Sheet and Rhythm Section Sheet and keeps point markers out of the legacy roadmap-text banner.
+- The editor canvas and PDF export path draw point markers through the shared notation renderer.
+- The editor now exposes a `Roadmap` menu with point marker creation commands plus `Remove Roadmap Marker at Selected Measure`.
+- Focused verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests --filter LeadSheetPageLayoutTests` passed with `122` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `398` tests, `36` skipped, and `0` failures.
+- Focused simulator PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `5` tests and `0` failures.
+- Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
 ### 4. Cue Text
 
 Defined V1 behavior:
@@ -308,9 +336,9 @@ Implementation boundary:
 
 Implementation progress:
 
-- `PDFChartExporterTests` now includes Simple Chord Sheet and Rhythm Section Sheet export-proof charts populated with section labels, repeat spans, ending spans, cue text, chords, and rhythm maps where appropriate.
-- The PDF proof asserts exported document text includes the structured title/chord/cue/section content and excludes key text plus editor placeholder instructions. Repeat markers and ending brackets remain geometry-proofed through layout tests because their barline/bracket art is not reliably searchable PDF text.
-- `LeadSheetPageLayoutTests` now includes SwiftPM-visible per-style readiness tests proving Simple keeps staff lines absent and structured objects readable inside the chord-grid layout, while Rhythm Section keeps staff lines, chord lane, rhythm notation, below-staff cue/freehand space, repeat edge markers, and ending bracket space readable across automatic wrapping.
+- `PDFChartExporterTests` now includes Simple Chord Sheet and Rhythm Section Sheet export-proof charts populated with section labels, repeat spans, ending spans, point roadmap markers, cue text, chords, and rhythm maps where appropriate.
+- The PDF proof asserts exported document text includes the structured title/chord/cue/section/point-marker content and excludes key text plus editor placeholder instructions. Repeat markers and ending brackets remain geometry-proofed through layout tests because their barline/bracket art is not reliably searchable PDF text.
+- `LeadSheetPageLayoutTests` now includes SwiftPM-visible per-style readiness tests proving Simple keeps staff lines absent and structured objects readable inside the chord-grid layout, while Rhythm Section keeps staff lines, chord lane, rhythm notation, below-staff cue/freehand space, repeat edge markers, ending bracket space, and point marker space readable across automatic wrapping.
 
 Verification:
 
@@ -345,9 +373,9 @@ Verification:
 
 ## Current Checkpoint
 
-First and second ending spans are implemented locally as the second roadmap-object slice.
+Point navigation markers are implemented locally as the third roadmap-object slice.
 
 Next implementation checkpoint:
 
-- Continue the roadmap-object sequence with point navigation markers such as Coda, Segno, Fine, D.S., D.C., and N.C.
-- Keep vamp count and optional linked target behavior deferred until point marker rendering is stable.
+- Continue the roadmap-object sequence with vamp count support.
+- Keep optional linked target behavior deferred until point marker and vamp rendering are stable.

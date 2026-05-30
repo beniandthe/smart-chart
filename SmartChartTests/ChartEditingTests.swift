@@ -69,6 +69,65 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chart.systems[0].measures[0].roadmapObjectIDs, [chart.roadmapObjects[0].id])
     }
 
+    func testAddPointRoadmapMarkerCreatesMeasureAttachedNavigationMarker() throws {
+        var chart = Chart.blank(title: "Roadmap Markers", measureCount: 2)
+        let targetMeasureID = chart.measures[1].id
+
+        let markerID = try XCTUnwrap(
+            chart.addPointRoadmapMarker(.segno, anchorMeasureID: targetMeasureID)
+        )
+
+        let marker = try XCTUnwrap(chart.roadmapObject(id: markerID))
+        XCTAssertEqual(marker.type, .segno)
+        XCTAssertEqual(marker.startMeasureID, targetMeasureID)
+        XCTAssertNil(marker.endMeasureID)
+        XCTAssertEqual(marker.placement, .snappedTop)
+        XCTAssertEqual(marker.rawInput, RoadmapType.segno.defaultDisplayText)
+        XCTAssertEqual(chart.measure(id: targetMeasureID)?.roadmapObjectIDs, [markerID])
+        XCTAssertTrue(chart.measure(id: chart.measures[0].id)?.roadmapObjectIDs.isEmpty == true)
+    }
+
+    func testPointRoadmapMarkersRejectSpanAndDeferredTypes() {
+        var chart = Chart.blank(title: "Roadmap Markers", measureCount: 1)
+        let measureID = chart.measures[0].id
+
+        XCTAssertNil(chart.addPointRoadmapMarker(.repeatSpan, anchorMeasureID: measureID))
+        XCTAssertNil(chart.addPointRoadmapMarker(.ending1, anchorMeasureID: measureID))
+        XCTAssertNil(chart.addPointRoadmapMarker(.vampCount, anchorMeasureID: measureID))
+        XCTAssertNil(chart.addPointRoadmapMarker(.fine, anchorMeasureID: UUID()))
+        XCTAssertTrue(chart.roadmapObjects.isEmpty)
+        XCTAssertTrue(chart.measures.allSatisfy(\.roadmapObjectIDs.isEmpty))
+    }
+
+    func testPointRoadmapMarkersAvoidDuplicateSameTypeAtSameMeasure() throws {
+        var chart = Chart.blank(title: "Roadmap Markers", measureCount: 1)
+        let measureID = chart.measures[0].id
+
+        let firstMarkerID = try XCTUnwrap(chart.addPointRoadmapMarker(.fine, anchorMeasureID: measureID))
+        let secondMarkerID = try XCTUnwrap(chart.addPointRoadmapMarker(.fine, anchorMeasureID: measureID))
+        let thirdMarkerID = try XCTUnwrap(chart.addPointRoadmapMarker(.noChord, anchorMeasureID: measureID))
+
+        XCTAssertEqual(firstMarkerID, secondMarkerID)
+        XCTAssertNotEqual(firstMarkerID, thirdMarkerID)
+        XCTAssertEqual(chart.roadmapObjects.count, 2)
+        XCTAssertEqual(Set(chart.pointRoadmapMarkerIDs(attachedTo: measureID)), [firstMarkerID, thirdMarkerID])
+    }
+
+    func testDeletePointRoadmapMarkersAttachedToMeasureClearsBackReferences() throws {
+        var chart = Chart.blank(title: "Roadmap Markers", measureCount: 2)
+        let firstMeasureID = chart.measures[0].id
+        let secondMeasureID = chart.measures[1].id
+        let firstMarkerID = try XCTUnwrap(chart.addPointRoadmapMarker(.codaMarker, anchorMeasureID: firstMeasureID))
+        let secondMarkerID = try XCTUnwrap(chart.addPointRoadmapMarker(.toCoda, anchorMeasureID: secondMeasureID))
+
+        XCTAssertEqual(chart.deletePointRoadmapMarkers(attachedTo: firstMeasureID), 1)
+
+        XCTAssertNil(chart.roadmapObject(id: firstMarkerID))
+        XCTAssertNotNil(chart.roadmapObject(id: secondMarkerID))
+        XCTAssertTrue(chart.measure(id: firstMeasureID)?.roadmapObjectIDs.isEmpty == true)
+        XCTAssertEqual(chart.measure(id: secondMeasureID)?.roadmapObjectIDs, [secondMarkerID])
+    }
+
     func testAddRepeatSpanCreatesSingleObjectAttachedToBoundaryMeasures() throws {
         var chart = Chart.blank(title: "Repeats", measureCount: 4, layoutStyle: .rhythmSectionSheet)
         let startMeasureID = chart.measures[1].id

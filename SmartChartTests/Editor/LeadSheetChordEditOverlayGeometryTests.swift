@@ -121,6 +121,7 @@ final class LeadSheetChordEditOverlayGeometryTests: XCTestCase {
             sectionText: nil,
             roadmapTextFrame: nil,
             roadmapText: nil,
+            roadmapMarkerLayouts: [],
             endingLayouts: [],
             measures: [measure]
         )

@@ -770,6 +770,15 @@ extension Chart {
             return
         }
 
+        if type.isPointMarker {
+            _ = addPointRoadmapMarker(
+                type,
+                anchorMeasureID: systems[0].measures[0].id,
+                displayText: displayText
+            )
+            return
+        }
+
         let roadmap = RoadmapObject(
             id: UUID(),
             type: type,
@@ -786,6 +795,50 @@ extension Chart {
         systems[0].measures[0].roadmapObjectIDs.append(roadmap.id)
 
         updatedAt = .now
+    }
+
+    @discardableResult
+    mutating func addPointRoadmapMarker(
+        _ type: RoadmapType,
+        anchorMeasureID: UUID? = nil,
+        displayText: String? = nil,
+        count: Int? = nil
+    ) -> UUID? {
+        let normalizedDisplayText = displayText?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedDisplayText = normalizedDisplayText?.isEmpty == false ? normalizedDisplayText : nil
+        guard type.isPointMarker,
+              let resolvedMeasureID = anchorMeasureID ?? systems.first?.measures.first?.id,
+              let location = measureLocation(id: resolvedMeasureID) else {
+            return nil
+        }
+
+        if let existingMarker = roadmapObjects.first(where: {
+            $0.type == type
+                && $0.startMeasureID == resolvedMeasureID
+                && $0.endMeasureID == nil
+                && $0.displayText == resolvedDisplayText
+                && $0.count == count
+        }) {
+            return existingMarker.id
+        }
+
+        let marker = RoadmapObject(
+            id: UUID(),
+            type: type,
+            startMeasureID: resolvedMeasureID,
+            endMeasureID: nil,
+            anchorSystemID: systems[location.systemIndex].id,
+            placement: .snappedTop,
+            displayText: resolvedDisplayText,
+            count: count,
+            linkedTargetID: nil,
+            rawInput: resolvedDisplayText ?? type.defaultDisplayText
+        )
+
+        roadmapObjects.append(marker)
+        attachRoadmapObject(marker.id, to: resolvedMeasureID)
+        updatedAt = .now
+        return marker.id
     }
 
     func roadmapObject(id roadmapObjectID: UUID) -> RoadmapObject? {
@@ -963,6 +1016,16 @@ extension Chart {
             .map(\.id)
     }
 
+    func pointRoadmapMarkerIDs(attachedTo measureID: UUID) -> [UUID] {
+        roadmapObjects
+            .filter {
+                $0.type.isPointMarker
+                    && $0.startMeasureID == measureID
+                    && $0.endMeasureID == nil
+            }
+            .map(\.id)
+    }
+
     @discardableResult
     mutating func deleteRepeatSpans(attachedTo measureID: UUID) -> Int {
         let repeatSpanIDs = repeatSpanIDs(attachedTo: measureID)
@@ -993,6 +1056,22 @@ extension Chart {
         }
         updatedAt = .now
         return endingSpanIDs.count
+    }
+
+    @discardableResult
+    mutating func deletePointRoadmapMarkers(attachedTo measureID: UUID) -> Int {
+        let markerIDs = pointRoadmapMarkerIDs(attachedTo: measureID)
+        guard !markerIDs.isEmpty else {
+            return 0
+        }
+
+        let markerIDSet = Set(markerIDs)
+        roadmapObjects.removeAll { markerIDSet.contains($0.id) }
+        for markerID in markerIDs {
+            removeRoadmapObjectIDFromMeasures(markerID)
+        }
+        updatedAt = .now
+        return markerIDs.count
     }
 
     func measure(id: UUID) -> Measure? {

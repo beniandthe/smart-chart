@@ -443,6 +443,55 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertLessThan(firstMeasure.chordBandFrame.maxY, firstMeasure.staffFrame.minY)
     }
 
+    func testSimpleChordSheetPointRoadmapMarkerRendersAboveBlankMeasureSpace() throws {
+        var chart = Chart.blank(title: "Simple Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let markerID = try XCTUnwrap(chart.addPointRoadmapMarker(.fine, anchorMeasureID: measureID))
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let markerLayout = try XCTUnwrap(firstSystem.roadmapMarkerLayouts.first)
+
+        XCTAssertTrue(firstSystem.staffLineYPositions.isEmpty)
+        XCTAssertNil(firstSystem.roadmapText)
+        XCTAssertNil(firstSystem.roadmapTextFrame)
+        XCTAssertEqual(markerLayout.roadmapObjectID, markerID)
+        XCTAssertEqual(markerLayout.type, .fine)
+        XCTAssertEqual(markerLayout.text, "Fine")
+        XCTAssertLessThanOrEqual(markerLayout.frame.maxY, firstMeasure.staffFrame.minY)
+        XCTAssertEqual(markerLayout.frame.minX, firstMeasure.staffFrame.minX + 6, accuracy: 0.001)
+    }
+
+    func testRhythmSectionPointRoadmapMarkerReservesSpaceAboveChordLane() throws {
+        var chart = Chart.blank(title: "Rhythm Roadmap", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = try XCTUnwrap(chart.addPointRoadmapMarker(.dsAlCoda, anchorMeasureID: measureID))
+        try appendChord("C7", to: measureID, in: &chart, atFraction: 0.05)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first)
+        let markerLayout = try XCTUnwrap(firstSystem.roadmapMarkerLayouts.first)
+        let chordLayout = try XCTUnwrap(firstMeasure.chordLayouts.first)
+
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertNil(firstSystem.roadmapText)
+        XCTAssertNil(firstSystem.roadmapTextFrame)
+        XCTAssertEqual(markerLayout.text, "D.S. al Coda")
+        XCTAssertLessThanOrEqual(markerLayout.frame.maxY, firstMeasure.chordBandFrame.minY)
+        XCTAssertGreaterThanOrEqual(chordLayout.frame.minY, firstMeasure.chordBandFrame.minY)
+        XCTAssertLessThan(firstMeasure.chordBandFrame.maxY, firstMeasure.staffFrame.minY)
+    }
+
     func testRhythmSectionSheetPreservesCurrentRhythmAndChordWorkflow() throws {
         var chart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
         let measureID = try XCTUnwrap(chart.measures.first?.id)

@@ -686,6 +686,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             renderer.drawRoadmapText(roadmapText, in: roadmapTextFrame)
         }
 
+        for roadmapMarkerLayout in system.roadmapMarkerLayouts {
+            renderer.drawRoadmapMarker(roadmapMarkerLayout)
+        }
+
         for endingLayout in system.endingLayouts {
             renderer.drawEnding(endingLayout)
         }

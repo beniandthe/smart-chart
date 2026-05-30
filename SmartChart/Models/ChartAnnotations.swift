@@ -108,9 +108,30 @@ enum RoadmapType: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    var usesStructuredLayout: Bool {
-        self == .repeatSpan || isEnding
+    var isPointMarker: Bool {
+        switch self {
+        case .codaMarker, .toCoda, .segno, .ds, .dsAlCoda, .dc, .dcAlFine, .fine, .noChord:
+            return true
+        default:
+            return false
+        }
     }
+
+    var usesStructuredLayout: Bool {
+        self == .repeatSpan || isEnding || isPointMarker
+    }
+
+    static let navigationPointMarkerTypes: [RoadmapType] = [
+        .codaMarker,
+        .toCoda,
+        .segno,
+        .ds,
+        .dsAlCoda,
+        .dc,
+        .dcAlFine,
+        .fine,
+        .noChord
+    ]
 
     var compactEndingDisplayText: String? {
         switch self {

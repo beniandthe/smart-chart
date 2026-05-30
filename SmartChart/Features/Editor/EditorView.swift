@@ -446,6 +446,33 @@ struct EditorView: View {
                 .buttonStyle(.plain)
 
                 Menu {
+                    ForEach(RoadmapType.navigationPointMarkerTypes, id: \.self) { roadmapType in
+                        Button {
+                            handleAddPointRoadmapMarker(roadmapType)
+                        } label: {
+                            Label(roadmapType.defaultDisplayText, systemImage: "signpost.right")
+                        }
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        handleRemovePointRoadmapMarkersAtSelectedMeasure()
+                    } label: {
+                        Label("Remove Roadmap Marker at Selected Measure", systemImage: "trash")
+                    }
+                    .disabled(!canRemovePointRoadmapMarkerAtSelectedMeasure)
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Roadmap",
+                        systemImage: "signpost.right",
+                        isSelected: false
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Menu {
                     Button {
                         handleAddCueText(position: .below)
                     } label: {
@@ -720,6 +747,14 @@ struct EditorView: View {
         return !chart.endingSpanIDs(attachedTo: targetMeasureID).isEmpty
     }
 
+    private var canRemovePointRoadmapMarkerAtSelectedMeasure: Bool {
+        guard let targetMeasureID = resolvedMeasureActionTargetID() else {
+            return false
+        }
+
+        return !chart.pointRoadmapMarkerIDs(attachedTo: targetMeasureID).isEmpty
+    }
+
     private var canRemoveCueTextAtSelectedMeasure: Bool {
         guard let targetMeasureID = resolvedMeasureActionTargetID() else {
             return false
@@ -906,6 +941,32 @@ struct EditorView: View {
 
         pendingEndingStartMeasureID = nil
         pendingEndingType = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleAddPointRoadmapMarker(_ type: RoadmapType) {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard type.isPointMarker,
+              enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.addPointRoadmapMarker(type, anchorMeasureID: targetMeasureID) != nil else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleRemovePointRoadmapMarkersAtSelectedMeasure() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.deletePointRoadmapMarkers(attachedTo: targetMeasureID) > 0 else {
+            return
+        }
+
         selectedMeasureID = targetMeasureID
     }
 
