@@ -379,6 +379,32 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertTrue(chart.measure(id: endMeasureID)?.roadmapObjectIDs.contains(repeatID) == true)
     }
 
+    func testInsertMeasureAfterSelectedAddsMeasureWithoutMovingTrailingOpenMeasure() throws {
+        var chart = Chart.draft(title: "New Chart")
+        chart.completeInitialSetup(
+            title: "Pocket Groove",
+            key: .cMajor,
+            meter: Meter(numerator: 4, denominator: 4),
+            staffStyle: .fiveLine
+        )
+
+        let firstMeasureID = try XCTUnwrap(chart.measures.first?.id)
+        let secondMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+        let trailingOpenMeasureID = try XCTUnwrap(chart.commitOpenMeasure())
+
+        let insertedID = try XCTUnwrap(chart.insertMeasure(after: firstMeasureID))
+
+        XCTAssertEqual(chart.measures.map(\.id), [
+            firstMeasureID,
+            insertedID,
+            secondMeasureID,
+            trailingOpenMeasureID
+        ])
+        XCTAssertEqual(chart.measure(id: insertedID)?.authoringState, .committed)
+        XCTAssertEqual(chart.measure(id: trailingOpenMeasureID)?.authoringState, .open)
+        XCTAssertEqual(chart.measures.map(\.index), Array(1...4))
+    }
+
     func testAddEndingSpanCreatesTypedSpanAttachedToBoundaryMeasures() throws {
         var chart = Chart.blank(title: "Endings", measureCount: 4, layoutStyle: .rhythmSectionSheet)
         let startMeasureID = chart.measures[1].id

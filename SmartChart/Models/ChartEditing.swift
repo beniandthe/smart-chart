@@ -227,6 +227,27 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func insertMeasure(
+        after measureID: UUID,
+        authoringState: MeasureAuthoringState = .committed,
+        barlineAfter: BarlineType = .single
+    ) -> UUID? {
+        guard let targetLocation = measureLocation(id: measureID) else {
+            return nil
+        }
+
+        let newMeasure = Self.makeMeasure(
+            index: flattenedMeasureIndex(for: targetLocation) + 2,
+            authoringState: authoringState,
+            barlineAfter: barlineAfter,
+            beatGridPreset: layoutStyle.profile.measureDefaults.beatGridPreset
+        )
+        insertPreparedMeasure(newMeasure, after: targetLocation)
+        updatedAt = .now
+        return newMeasure.id
+    }
+
+    @discardableResult
     mutating func deleteMeasure(id measureID: UUID) -> Bool {
         guard measures.count > 1,
               let location = measureLocation(id: measureID) else {

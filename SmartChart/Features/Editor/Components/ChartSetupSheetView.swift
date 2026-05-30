@@ -45,7 +45,7 @@ struct ChartSetupSheetView: View {
                 }
                 .padding(24)
             }
-            .navigationTitle(chart.hasCompletedInitialSetup ? "Page Setup" : "New Chart")
+            .navigationTitle(chart.hasCompletedInitialSetup ? "Chart" : "New Chart")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(!chart.hasCompletedInitialSetup)
             .toolbar {

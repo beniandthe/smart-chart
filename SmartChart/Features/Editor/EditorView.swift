@@ -53,7 +53,6 @@ struct EditorView: View {
     @State private var pendingCueTextPosition: CuePosition?
     @State private var cueTextDraft = ""
     @State private var showingCueTextEntry = false
-    @State private var freeHandReturnMode: EditorCanvasMode = .browse
     @State private var canvasMode: EditorCanvasMode = .browse
     @State private var inkToolMode: EditorInkToolMode = .write
     @State private var pendingChordDiagnosticReconciliationWorkItem: DispatchWorkItem?
@@ -100,24 +99,8 @@ struct EditorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button(chart.hasCompletedInitialSetup ? "Page Setup" : "Setup") {
-                    selectedMeasureID = nil
-                    selectedNoteSelection = nil
-                    pendingTimeSignatureSourceMeasureID = nil
-                    pendingTimeSignaturePlacement = nil
-                    freeHandReturnMode = .browse
-                    canvasMode = .browse
-                    showingSetupSheet = true
-                }
-                .disabled(canvasMode.locksDocumentActions)
-
                 Button {
-                    selectedMeasureID = nil
-                    selectedNoteSelection = nil
-                    pendingTimeSignatureSourceMeasureID = nil
-                    pendingTimeSignaturePlacement = nil
-                    freeHandReturnMode = .browse
-                    canvasMode = .browse
+                    activateSelectTool(clearsMeasureSelection: true)
                     handleExportTapped()
                 } label: {
                     if isExporting {
@@ -315,15 +298,27 @@ struct EditorView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 Menu {
-                    Button {
-                        resetToolContextForDocumentAction()
-                        showingSetupSheet = true
-                    } label: {
-                        Label(chart.hasCompletedInitialSetup ? "Page Setup" : "Setup", systemImage: "doc.text")
+                    if !chart.hasCompletedInitialSetup {
+                        Button {
+                            activateSelectTool(clearsMeasureSelection: true)
+                            showingSetupSheet = true
+                        } label: {
+                            Label("Setup", systemImage: "doc.text")
+                        }
+
+                        Divider()
                     }
 
                     Button {
-                        resetToolContextForDocumentAction()
+                        activateSelectTool(clearsMeasureSelection: true)
+                        handleExportTapped()
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(isExporting || !chart.hasCompletedInitialSetup || !canvasMode.allowsTopBarExport)
+
+                    Button {
+                        activateSelectTool(clearsMeasureSelection: true)
                         showingHeaderSheet = true
                     } label: {
                         Label("Header", systemImage: "character.cursor.ibeam")
@@ -334,7 +329,7 @@ struct EditorView: View {
                     Menu {
                         ForEach(StylePreset.allCases, id: \.self) { preset in
                             Button {
-                                resetToolContextForDocumentAction()
+                                activateSelectTool(clearsMeasureSelection: true)
                                 chart.setStylePreset(preset)
                             } label: {
                                 notationMenuLabel(preset.displayText, isSelected: chart.stylePreset == preset)
@@ -347,7 +342,7 @@ struct EditorView: View {
                     Menu {
                         ForEach(NotationFontPreset.allCases, id: \.self) { preset in
                             Button {
-                                resetToolContextForDocumentAction()
+                                activateSelectTool(clearsMeasureSelection: true)
                                 chart.setNotationFont(preset)
                             } label: {
                                 notationMenuLabel(preset.displayText, isSelected: chart.notationFont == preset)
@@ -360,7 +355,7 @@ struct EditorView: View {
                     Menu {
                         ForEach(EngravingPreset.allCases, id: \.self) { preset in
                             Button {
-                                resetToolContextForDocumentAction()
+                                activateSelectTool(clearsMeasureSelection: true)
                                 chart.setEngravingPreset(preset)
                             } label: {
                                 notationMenuLabel(preset.displayText, isSelected: chart.engravingPreset == preset)
@@ -375,134 +370,31 @@ struct EditorView: View {
                 .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
 
-                Menu {
-                    Button {
-                        handleMeasureEditRequested()
-                    } label: {
-                        Label("Edit Measures", systemImage: "slider.horizontal.3")
-                    }
-
-                    Button {
-                        handleAddMeasureAtBeginning()
-                    } label: {
-                        Label("Add Measure at Beginning", systemImage: "backward.end")
-                    }
-
-                    Button {
-                        handleAddMeasureAfterSelected()
-                    } label: {
-                        Label("Add Measure After Selected", systemImage: "forward.end")
-                    }
-
-                    Divider()
-
-                    Button {
-                        handleNewSystemBeforeSelectedMeasure()
-                    } label: {
-                        Label("New System Before This Measure", systemImage: "arrow.down.to.line")
-                    }
-                    .disabled(!canInsertSimpleSystemBreakBeforeSelectedMeasure)
-
-                    Button {
-                        handleRemoveSystemBreakBeforeSelectedMeasure()
-                    } label: {
-                        Label("Remove System Break", systemImage: "arrow.up.to.line")
-                    }
-                    .disabled(!canRemoveSimpleSystemBreakBeforeSelectedMeasure)
-
-                    Divider()
-
-                    Button {
-                        handleRepeatSelectedMeasure()
-                    } label: {
-                        Label("Repeat Selected Measure", systemImage: "repeat")
-                    }
-
-                    Button {
-                        handleStartRepeatHere()
-                    } label: {
-                        Label("Start Repeat Here", systemImage: "repeat.circle")
-                    }
-
-                    Button {
-                        handleEndRepeatHere()
-                    } label: {
-                        Label("End Repeat Here", systemImage: "checkmark.circle")
-                    }
-                    .disabled(pendingRepeatStartMeasureID == nil)
-
-                    Button(role: .destructive) {
-                        handleRemoveRepeatAtSelectedMeasure()
-                    } label: {
-                        Label("Remove Repeat at Selected Measure", systemImage: "trash")
-                    }
-                    .disabled(!canRemoveRepeatAtSelectedMeasure)
-
-                    if pendingRepeatStartMeasureID != nil {
-                        Button(role: .cancel) {
-                            pendingRepeatStartMeasureID = nil
-                        } label: {
-                            Label("Clear Repeat Start", systemImage: "xmark.circle")
-                        }
-                    }
-
-                    Divider()
-
-                    Button {
-                        handleEndingSelectedMeasure(.ending1)
-                    } label: {
-                        Label("1st Ending Selected Measure", systemImage: "textformat.123")
-                    }
-
-                    Button {
-                        handleEndingSelectedMeasure(.ending2)
-                    } label: {
-                        Label("2nd Ending Selected Measure", systemImage: "textformat.123")
-                    }
-
-                    Button {
-                        handleStartEndingHere(.ending1)
-                    } label: {
-                        Label("Start 1st Ending Here", systemImage: "1.circle")
-                    }
-
-                    Button {
-                        handleStartEndingHere(.ending2)
-                    } label: {
-                        Label("Start 2nd Ending Here", systemImage: "2.circle")
-                    }
-
-                    Button {
-                        handleEndEndingHere()
-                    } label: {
-                        Label("End Ending Here", systemImage: "checkmark.circle")
-                    }
-                    .disabled(pendingEndingStartMeasureID == nil || pendingEndingType == nil)
-
-                    Button(role: .destructive) {
-                        handleRemoveEndingAtSelectedMeasure()
-                    } label: {
-                        Label("Remove Ending at Selected Measure", systemImage: "trash")
-                    }
-                    .disabled(!canRemoveEndingAtSelectedMeasure)
-
-                    if pendingEndingStartMeasureID != nil {
-                        Button(role: .cancel) {
-                            pendingEndingStartMeasureID = nil
-                            pendingEndingType = nil
-                        } label: {
-                            Label("Clear Ending Start", systemImage: "xmark.circle")
-                        }
-                    }
+                Button {
+                    activateSelectTool()
                 } label: {
                     EditorMenuTabLabel(
-                        title: "Measures",
-                        systemImage: "rectangle.split.4x1",
-                        isSelected: canvasMode == .measureEdit
+                        title: "Select",
+                        systemImage: "cursorarrow",
+                        isSelected: canvasMode == .browse
                     )
                 }
-                .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
+
+                if canvasMode == .measureEdit {
+                    Button {
+                        activateSelectTool()
+                    } label: {
+                        EditorMenuTabLabel(
+                            title: "Measures",
+                            systemImage: "rectangle.split.4x1",
+                            isSelected: true
+                        )
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    measuresMenu
+                }
 
                 Menu {
                     ForEach(RoadmapType.navigationPointMarkerTypes, id: \.self) { roadmapType in
@@ -601,7 +493,7 @@ struct EditorView: View {
                 } label: {
                     EditorMenuTabLabel(
                         title: "Chord",
-                        systemImage: "textformat.alt",
+                        systemImage: "pencil",
                         isSelected: canvasMode == .chordEntry
                     )
                 }
@@ -636,6 +528,137 @@ struct EditorView: View {
                     .stroke(Color.black.opacity(0.06), lineWidth: 1)
             )
         }
+    }
+
+    private var measuresMenu: some View {
+        Menu {
+            Button {
+                handleMeasureEditRequested()
+            } label: {
+                Label("Edit Measures", systemImage: "slider.horizontal.3")
+            }
+
+            Button {
+                handleAddMeasureAtBeginning()
+            } label: {
+                Label("Add Measure at Beginning", systemImage: "backward.end")
+            }
+
+            Button {
+                handleAddMeasureAfterSelected()
+            } label: {
+                Label("Add Measure After Selected", systemImage: "forward.end")
+            }
+
+            Divider()
+
+            Button {
+                handleNewSystemBeforeSelectedMeasure()
+            } label: {
+                Label("New System Before This Measure", systemImage: "arrow.down.to.line")
+            }
+            .disabled(!canInsertSimpleSystemBreakBeforeSelectedMeasure)
+
+            Button {
+                handleRemoveSystemBreakBeforeSelectedMeasure()
+            } label: {
+                Label("Remove System Break", systemImage: "arrow.up.to.line")
+            }
+            .disabled(!canRemoveSimpleSystemBreakBeforeSelectedMeasure)
+
+            Divider()
+
+            Button {
+                handleRepeatSelectedMeasure()
+            } label: {
+                Label("Repeat Selected Measure", systemImage: "repeat")
+            }
+
+            Button {
+                handleStartRepeatHere()
+            } label: {
+                Label("Start Repeat Here", systemImage: "repeat.circle")
+            }
+
+            Button {
+                handleEndRepeatHere()
+            } label: {
+                Label("End Repeat Here", systemImage: "checkmark.circle")
+            }
+            .disabled(pendingRepeatStartMeasureID == nil)
+
+            Button(role: .destructive) {
+                handleRemoveRepeatAtSelectedMeasure()
+            } label: {
+                Label("Remove Repeat at Selected Measure", systemImage: "trash")
+            }
+            .disabled(!canRemoveRepeatAtSelectedMeasure)
+
+            if pendingRepeatStartMeasureID != nil {
+                Button(role: .cancel) {
+                    pendingRepeatStartMeasureID = nil
+                } label: {
+                    Label("Clear Repeat Start", systemImage: "xmark.circle")
+                }
+            }
+
+            Divider()
+
+            Button {
+                handleEndingSelectedMeasure(.ending1)
+            } label: {
+                Label("1st Ending Selected Measure", systemImage: "textformat.123")
+            }
+
+            Button {
+                handleEndingSelectedMeasure(.ending2)
+            } label: {
+                Label("2nd Ending Selected Measure", systemImage: "textformat.123")
+            }
+
+            Button {
+                handleStartEndingHere(.ending1)
+            } label: {
+                Label("Start 1st Ending Here", systemImage: "1.circle")
+            }
+
+            Button {
+                handleStartEndingHere(.ending2)
+            } label: {
+                Label("Start 2nd Ending Here", systemImage: "2.circle")
+            }
+
+            Button {
+                handleEndEndingHere()
+            } label: {
+                Label("End Ending Here", systemImage: "checkmark.circle")
+            }
+            .disabled(pendingEndingStartMeasureID == nil || pendingEndingType == nil)
+
+            Button(role: .destructive) {
+                handleRemoveEndingAtSelectedMeasure()
+            } label: {
+                Label("Remove Ending at Selected Measure", systemImage: "trash")
+            }
+            .disabled(!canRemoveEndingAtSelectedMeasure)
+
+            if pendingEndingStartMeasureID != nil {
+                Button(role: .cancel) {
+                    pendingEndingStartMeasureID = nil
+                    pendingEndingType = nil
+                } label: {
+                    Label("Clear Ending Start", systemImage: "xmark.circle")
+                }
+            }
+        } label: {
+            EditorMenuTabLabel(
+                title: "Measures",
+                systemImage: "rectangle.split.4x1",
+                isSelected: false
+            )
+        }
+        .disabled(canvasMode.locksDocumentActions)
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -789,12 +812,16 @@ struct EditorView: View {
         selectedNoteSelection = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
-        freeHandReturnMode = .browse
         canvasMode = .measureEdit
         return true
     }
 
     private func handleMeasureEditRequested() {
+        if canvasMode == .measureEdit {
+            activateSelectTool()
+            return
+        }
+
         _ = enterMeasureEditMode()
     }
 
@@ -819,14 +846,14 @@ struct EditorView: View {
         pendingEndingStartMeasureID = nil
         pendingEndingType = nil
         guard let targetMeasureID else {
-            selectedMeasureID = chart.appendMeasure(authoringState: .open)
+            selectedMeasureID = chart.appendMeasure()
             return
         }
 
         if chart.measure(id: targetMeasureID)?.authoringState == .open {
             selectedMeasureID = chart.commitOpenMeasure()
         } else {
-            selectedMeasureID = chart.positionOpenMeasure(after: targetMeasureID)
+            selectedMeasureID = chart.insertMeasure(after: targetMeasureID)
         }
     }
 
@@ -1100,10 +1127,14 @@ struct EditorView: View {
             return
         }
 
+        if canvasMode == .timeSignatureEdit {
+            activateSelectTool()
+            return
+        }
+
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
         selectedNoteSelection = nil
-        freeHandReturnMode = .browse
         canvasMode = .timeSignatureEdit
     }
 
@@ -1117,7 +1148,6 @@ struct EditorView: View {
             selectedNoteSelection = nil
             pendingTimeSignatureSourceMeasureID = nil
             pendingTimeSignaturePlacement = nil
-            freeHandReturnMode = .browse
             canvasMode = .browse
             return
         }
@@ -1125,16 +1155,9 @@ struct EditorView: View {
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
         selectedNoteSelection = nil
-        freeHandReturnMode = .browse
 
         if canvasMode == .rhythmicNotationEdit {
-            if selectedMeasureID == nil {
-                selectedMeasureID = resolvedMeasureActionTargetID()
-                inkToolMode = .write
-                return
-            }
-
-            showingRhythmicNotationAcceptanceSheet = true
+            activateSelectTool()
             return
         }
 
@@ -1148,12 +1171,18 @@ struct EditorView: View {
         }
     }
 
-    private func resetToolContextForDocumentAction() {
-        selectedMeasureID = nil
+    private func activateSelectTool(clearsMeasureSelection: Bool = false) {
+        if clearsMeasureSelection {
+            selectedMeasureID = nil
+        }
         selectedNoteSelection = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
-        freeHandReturnMode = .browse
+        pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
+        isNoteEditMenuPresented = false
+        noteEditMenuStage = .actions
         canvasMode = .browse
     }
 
@@ -1180,7 +1209,7 @@ struct EditorView: View {
         if canvasMode == .freeHand {
             pendingTimeSignatureSourceMeasureID = nil
             pendingTimeSignaturePlacement = nil
-            canvasMode = freeHandReturnMode
+            activateSelectTool()
             return
         }
 
@@ -1192,7 +1221,6 @@ struct EditorView: View {
         }
         guard chart.layoutStyle.profile.allowsFreehandSymbolInk else {
             selectedNoteSelection = nil
-            freeHandReturnMode = .browse
             canvasMode = .browse
             return
         }
@@ -1200,7 +1228,6 @@ struct EditorView: View {
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
         selectedNoteSelection = nil
-        freeHandReturnMode = canvasMode
         inkToolMode = .write
         canvasMode = .freeHand
     }
@@ -1215,10 +1242,9 @@ struct EditorView: View {
         selectedNoteSelection = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
-        freeHandReturnMode = .browse
 
         if canvasMode == .chordEntry {
-            canvasMode = .browse
+            activateSelectTool()
         } else {
             inkToolMode = .write
             canvasMode = .chordEntry
@@ -1240,7 +1266,6 @@ struct EditorView: View {
         selectedMeasureID = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
-        freeHandReturnMode = .browse
 
         if canvasMode == .noteEdit {
             selectedNoteSelection = nil
