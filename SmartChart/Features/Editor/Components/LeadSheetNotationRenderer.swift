@@ -108,6 +108,30 @@ struct LeadSheetNotationRenderer {
         )
     }
 
+    func drawCueText(_ cueTextLayout: LeadSheetCueTextLayout) {
+        let fontSize: CGFloat
+        let alpha: CGFloat
+        switch cueTextLayout.emphasis {
+        case .subtle:
+            fontSize = 10.5
+            alpha = 0.56
+        case .normal:
+            fontSize = 11.5
+            alpha = 0.68
+        case .strong:
+            fontSize = 12.5
+            alpha = 0.82
+        }
+
+        drawText(
+            cueTextLayout.text,
+            in: cueTextLayout.frame,
+            font: style.metadataFont(size: fontSize),
+            color: style.inkColor.withAlphaComponent(alpha),
+            alignment: cueTextLayout.position == .trailingEdge ? .right : .left
+        )
+    }
+
     func drawStaffLines(for system: LeadSheetSystemLayout) {
         let staffSpace = system.staffSpace
         for lineY in system.staffLineYPositions {
@@ -220,6 +244,45 @@ struct LeadSheetNotationRenderer {
         }
     }
 
+    func drawRepeatMarker(_ marker: LeadSheetRepeatMarkerLayout) {
+        let staffSpace = staffSpace(fromStaffHeight: marker.frame.height)
+        let separation = max(
+            style.barlineSeparation(staffSpace: staffSpace) * 1.55,
+            staffSpace * 0.46
+        )
+        let thinLineWidth = max(style.barlineWidth(.thin, staffSpace: staffSpace), 1.05)
+        let heavyLineWidth = max(thinLineWidth * 1.45, 1.65)
+        let centerX = marker.frame.midX
+        let thinX: CGFloat
+        let thickX: CGFloat
+        let dotX: CGFloat
+
+        switch marker.edge {
+        case .leading:
+            thickX = centerX - separation / 2
+            thinX = centerX + separation / 2
+            dotX = thinX + separation * 1.35
+        case .trailing:
+            thinX = centerX - separation / 2
+            thickX = centerX + separation / 2
+            dotX = thinX - separation * 1.35
+        }
+
+        drawRepeatBarline(
+            at: thickX,
+            from: marker.frame.minY,
+            to: marker.frame.maxY,
+            width: heavyLineWidth
+        )
+        drawRepeatBarline(
+            at: thinX,
+            from: marker.frame.minY,
+            to: marker.frame.maxY,
+            width: thinLineWidth
+        )
+        drawRepeatDots(atX: dotX, in: marker.frame, staffSpace: staffSpace)
+    }
+
     func drawSingleBarline(
         at x: CGFloat,
         from startY: CGFloat,
@@ -235,6 +298,35 @@ struct LeadSheetNotationRenderer {
             ?? style.barlineWidth(semanticWidth, staffSpace: staffSpace)
         style.inkColor.setStroke()
         path.stroke()
+    }
+
+    private func drawRepeatBarline(at x: CGFloat, from startY: CGFloat, to endY: CGFloat, width: CGFloat) {
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: x, y: startY))
+        path.addLine(to: CGPoint(x: x, y: endY))
+        path.lineWidth = width
+        style.inkColor.setStroke()
+        path.stroke()
+    }
+
+    private func drawRepeatDots(atX dotX: CGFloat, in frame: CGRect, staffSpace: CGFloat) {
+        let dotRadius = max(CGFloat(1.45), staffSpace * 0.16)
+        let dotCenters = [
+            CGPoint(x: dotX, y: frame.midY - staffSpace / 2),
+            CGPoint(x: dotX, y: frame.midY + staffSpace / 2)
+        ]
+
+        style.inkColor.setFill()
+        for center in dotCenters {
+            UIBezierPath(
+                ovalIn: CGRect(
+                    x: center.x - dotRadius,
+                    y: center.y - dotRadius,
+                    width: dotRadius * 2,
+                    height: dotRadius * 2
+                )
+            ).fill()
+        }
     }
 
     func drawOpenMeasureHint(_ measure: LeadSheetMeasureLayout) {

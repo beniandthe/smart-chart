@@ -47,6 +47,11 @@ struct EditorView: View {
     @State private var showingChordInkError = false
     @State private var pendingTimeSignatureSourceMeasureID: UUID?
     @State private var pendingTimeSignaturePlacement: PendingTimeSignaturePlacement?
+    @State private var pendingRepeatStartMeasureID: UUID?
+    @State private var pendingCueTextMeasureID: UUID?
+    @State private var pendingCueTextPosition: CuePosition?
+    @State private var cueTextDraft = ""
+    @State private var showingCueTextEntry = false
     @State private var freeHandReturnMode: EditorCanvasMode = .browse
     @State private var canvasMode: EditorCanvasMode = .browse
     @State private var inkToolMode: EditorInkToolMode = .write
@@ -139,6 +144,13 @@ struct EditorView: View {
         }
         .sheet(isPresented: $showingHeaderSheet) {
             ChartHeaderSheetView(chart: $chart)
+        }
+        .sheet(isPresented: $showingCueTextEntry) {
+            CueTextEntrySheetView(
+                text: $cueTextDraft,
+                onAdd: handleCueTextEntryAccepted,
+                onCancel: clearPendingCueTextEntry
+            )
         }
         .sheet(item: $activeAppearancePanel) { panel in
             ChartAppearanceSheetView(chart: $chart, panel: panel)
@@ -336,11 +348,76 @@ struct EditorView: View {
                     } label: {
                         Label("Add Measure After Selected", systemImage: "forward.end")
                     }
+
+                    Divider()
+
+                    Button {
+                        handleRepeatSelectedMeasure()
+                    } label: {
+                        Label("Repeat Selected Measure", systemImage: "repeat")
+                    }
+
+                    Button {
+                        handleStartRepeatHere()
+                    } label: {
+                        Label("Start Repeat Here", systemImage: "repeat.circle")
+                    }
+
+                    Button {
+                        handleEndRepeatHere()
+                    } label: {
+                        Label("End Repeat Here", systemImage: "checkmark.circle")
+                    }
+                    .disabled(pendingRepeatStartMeasureID == nil)
+
+                    Button(role: .destructive) {
+                        handleRemoveRepeatAtSelectedMeasure()
+                    } label: {
+                        Label("Remove Repeat at Selected Measure", systemImage: "trash")
+                    }
+                    .disabled(!canRemoveRepeatAtSelectedMeasure)
+
+                    if pendingRepeatStartMeasureID != nil {
+                        Button(role: .cancel) {
+                            pendingRepeatStartMeasureID = nil
+                        } label: {
+                            Label("Clear Repeat Start", systemImage: "xmark.circle")
+                        }
+                    }
                 } label: {
                     EditorMenuTabLabel(
                         title: "Measures",
                         systemImage: "rectangle.split.4x1",
                         isSelected: canvasMode == .measureEdit
+                    )
+                }
+                .disabled(canvasMode.locksDocumentActions)
+                .buttonStyle(.plain)
+
+                Menu {
+                    Button {
+                        handleAddCueText(position: .below)
+                    } label: {
+                        Label("Add Cue Below Selected Measure", systemImage: "text.bubble")
+                    }
+
+                    Button {
+                        handleAddCueText(position: .above)
+                    } label: {
+                        Label("Add Cue Above Selected Measure", systemImage: "text.bubble")
+                    }
+
+                    Button(role: .destructive) {
+                        handleRemoveCueTextsAtSelectedMeasure()
+                    } label: {
+                        Label("Remove Cue Text at Selected Measure", systemImage: "trash")
+                    }
+                    .disabled(!canRemoveCueTextAtSelectedMeasure)
+                } label: {
+                    EditorMenuTabLabel(
+                        title: "Cue",
+                        systemImage: "text.bubble",
+                        isSelected: showingCueTextEntry
                     )
                 }
                 .disabled(canvasMode.locksDocumentActions)
@@ -576,6 +653,22 @@ struct EditorView: View {
         chart.layoutStyle.profile.allowsUserFacingRhythmNoteEditing
     }
 
+    private var canRemoveRepeatAtSelectedMeasure: Bool {
+        guard let targetMeasureID = resolvedMeasureActionTargetID() else {
+            return false
+        }
+
+        return !chart.repeatSpanIDs(attachedTo: targetMeasureID).isEmpty
+    }
+
+    private var canRemoveCueTextAtSelectedMeasure: Bool {
+        guard let targetMeasureID = resolvedMeasureActionTargetID() else {
+            return false
+        }
+
+        return !chart.cueTextIDs(attachedTo: targetMeasureID).isEmpty
+    }
+
     @discardableResult
     private func enterMeasureEditMode() -> Bool {
         guard chart.hasCompletedInitialSetup else {
@@ -601,6 +694,7 @@ struct EditorView: View {
             return
         }
 
+        pendingRepeatStartMeasureID = nil
         selectedMeasureID = chart.insertMeasureAtBeginning()
     }
 
@@ -610,6 +704,7 @@ struct EditorView: View {
             return
         }
 
+        pendingRepeatStartMeasureID = nil
         guard let targetMeasureID else {
             selectedMeasureID = chart.appendMeasure(authoringState: .open)
             return
@@ -620,6 +715,112 @@ struct EditorView: View {
         } else {
             selectedMeasureID = chart.positionOpenMeasure(after: targetMeasureID)
         }
+    }
+
+    private func handleRepeatSelectedMeasure() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.addRepeatSpan(startMeasureID: targetMeasureID, endMeasureID: targetMeasureID) != nil else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleStartRepeatHere() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = targetMeasureID
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleEndRepeatHere() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let repeatStartMeasureID = pendingRepeatStartMeasureID,
+              let targetMeasureID,
+              let orderedBoundaryIDs = orderedRepeatBoundaryIDs(
+                startMeasureID: repeatStartMeasureID,
+                endMeasureID: targetMeasureID
+              ),
+              chart.addRepeatSpan(
+                startMeasureID: orderedBoundaryIDs.start,
+                endMeasureID: orderedBoundaryIDs.end
+              ) != nil else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleRemoveRepeatAtSelectedMeasure() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.deleteRepeatSpans(attachedTo: targetMeasureID) > 0 else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleAddCueText(position: CuePosition) {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        selectedMeasureID = targetMeasureID
+        pendingCueTextMeasureID = targetMeasureID
+        pendingCueTextPosition = position
+        cueTextDraft = ""
+        showingCueTextEntry = true
+    }
+
+    private func handleCueTextEntryAccepted() {
+        defer {
+            clearPendingCueTextEntry()
+        }
+
+        guard let pendingCueTextMeasureID,
+              let pendingCueTextPosition,
+              chart.addCueText(
+                cueTextDraft,
+                anchorMeasureID: pendingCueTextMeasureID,
+                position: pendingCueTextPosition
+              ) != nil else {
+            return
+        }
+
+        selectedMeasureID = pendingCueTextMeasureID
+    }
+
+    private func handleRemoveCueTextsAtSelectedMeasure() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.deleteCueTexts(attachedTo: targetMeasureID) > 0 else {
+            return
+        }
+
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func clearPendingCueTextEntry() {
+        cueTextDraft = ""
+        pendingCueTextMeasureID = nil
+        pendingCueTextPosition = nil
+        showingCueTextEntry = false
     }
 
     private func handleTimeSignatureTabTapped() {
@@ -688,6 +889,21 @@ struct EditorView: View {
 
     private func resolvedMeasureActionTargetID() -> UUID? {
         chart.resolvedAuthoringMeasureID(preferredMeasureID: selectedMeasureID)
+    }
+
+    private func orderedRepeatBoundaryIDs(
+        startMeasureID: UUID,
+        endMeasureID: UUID
+    ) -> (start: UUID, end: UUID)? {
+        let measureIDs = chart.measures.map(\.id)
+        guard let startIndex = measureIDs.firstIndex(of: startMeasureID),
+              let endIndex = measureIDs.firstIndex(of: endMeasureID) else {
+            return nil
+        }
+
+        return startIndex <= endIndex
+            ? (startMeasureID, endMeasureID)
+            : (endMeasureID, startMeasureID)
     }
 
     private func toggleFreeHandMode() {
@@ -1808,6 +2024,48 @@ private extension RhythmValue {
         }
     }
 
+}
+
+private struct CueTextEntrySheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var text: String
+    let onAdd: () -> Void
+    let onCancel: () -> Void
+
+    private var canAdd: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                TextField("Cue text", text: $text, axis: .vertical)
+                    .textFieldStyle(.roundedBorder)
+                    .lineLimit(2...4)
+
+                Spacer(minLength: 0)
+            }
+            .padding(24)
+            .navigationTitle("Cue Text")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        onCancel()
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add") {
+                        onAdd()
+                        dismiss()
+                    }
+                    .disabled(!canAdd)
+                }
+            }
+        }
+        .presentationDetents([.height(190)])
+    }
 }
 
 private struct TimeSignatureScopeSheetView: View {

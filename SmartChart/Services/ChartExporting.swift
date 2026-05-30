@@ -141,7 +141,8 @@ private struct ChartPDFRenderer {
             renderer.drawTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
         }
 
-        if let firstMeasure = system.measures.first {
+        if let firstMeasure = system.measures.first,
+           !firstMeasure.repeatMarkerLayouts.contains(where: { $0.edge == .leading }) {
             renderer.drawSingleBarline(
                 at: firstMeasure.frame.minX,
                 from: firstMeasure.staffFrame.minY,
@@ -155,12 +156,18 @@ private struct ChartPDFRenderer {
     }
 
     private func drawMeasure(_ measure: LeadSheetMeasureLayout, using renderer: LeadSheetNotationRenderer) {
+        drawRepeatMarkers(measure.repeatMarkerLayouts.filter { $0.edge == .leading }, using: renderer)
+
         for chordLayout in measure.chordLayouts {
             renderer.drawChord(chordLayout)
         }
 
         for noteLayout in measure.noteLayouts {
             renderer.drawNote(noteLayout)
+        }
+
+        for cueTextLayout in measure.cueTextLayouts {
+            renderer.drawCueText(cueTextLayout)
         }
 
         drawSavedMeasureRhythmicNotation(measure)
@@ -172,8 +179,19 @@ private struct ChartPDFRenderer {
 
         if measure.isOpen && chart.layoutStyle != .simpleChordSheet {
             renderer.drawOpenMeasureHint(measure)
+        } else if measure.repeatMarkerLayouts.contains(where: { $0.edge == .trailing }) {
+            drawRepeatMarkers(measure.repeatMarkerLayouts.filter { $0.edge == .trailing }, using: renderer)
         } else {
             renderer.drawBarline(measure.barlineAfter, in: measure.trailingBarlineFrame)
+        }
+    }
+
+    private func drawRepeatMarkers(
+        _ repeatMarkers: [LeadSheetRepeatMarkerLayout],
+        using renderer: LeadSheetNotationRenderer
+    ) {
+        for repeatMarker in repeatMarkers {
+            renderer.drawRepeatMarker(repeatMarker)
         }
     }
 

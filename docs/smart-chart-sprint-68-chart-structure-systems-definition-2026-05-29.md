@@ -1,0 +1,321 @@
+# Smart Chart Sprint 68 Chart Structure Systems Definition
+
+Status: active definition sprint
+Date: 2026-05-29
+Branch: `codex/rhythm-section-core-authoring`
+Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
+
+## Purpose
+
+Sprint 68 resumes the main chart-layout plan after the Rhythm Section core-authoring side sprint. The goal is to define the shared chart-structure systems for the V1 sheet styles before implementation changes layout behavior.
+
+This sprint is definition-first. Do not implement section/system layout, roadmap symbols, cue text, or richer per-style rendering until the target behavior is written down and confirmed.
+
+Lead Sheet feature work is deferred until after V1. Preserve existing compatibility and baseline behavior, but do not use Lead Sheet as an active Sprint 68 design target.
+
+## Current Foundation
+
+- `ChartLayoutStyle` and `ChartLayoutProfile` are implemented for Simple Chord Sheet, Rhythm Section Sheet, and Lead Sheet.
+- New Chart setup follows each layout style's key, time, starting-measure, and clef policy.
+- Every chart style preserves a hard one-measure minimum.
+- Simple Chord Sheet has blank barline-to-barline measures and above/below freehand symbols.
+- Rhythm Section Sheet owns the current staff-line rhythm/chord workflow and V4 rhythm recognition gate.
+- Lead Sheet has the first clef/key-signature baseline and a narrow in-staff pitched-note proof, now archived for post-V1 continuation in `post-v1/lead-sheet/`.
+
+## Systems To Define
+
+### 1. System Layout And Measure Flow
+
+Definition needed:
+
+- How measures wrap into systems for the V1 sheet styles.
+- Whether each style uses fixed measures per row, flexible fit-to-page wrapping, manual row breaks, or a hybrid.
+- How manual measure stretch/compress interacts with wrapping.
+- How adding measures at the beginning, after selected, or later between measures should reflow existing content.
+- Whether users can force a new system before automatic layout is implemented.
+
+Implementation boundary:
+
+- Start with model/layout tests before changing renderer behavior.
+- Preserve existing Rhythm Section authoring feel unless this sprint explicitly defines a change.
+- Keep the one-measure minimum invariant.
+
+Simple Chord Sheet direction:
+
+- The target feel is an iReal Pro / handwritten chord-chart grid, not a notation staff.
+- The page should feel like free grid space arranged by the musician.
+- A system is a horizontal row of chord-chart measures, not a staff system with notation semantics.
+- System rows should be controlled by manual row breaks, not per-measure row IDs or fully automatic equal-width grouping.
+- Measures must stay complete inside one system row; a single measure should not split across rows.
+- Users should be able to compress, stretch, and reposition measures in a system row.
+- Users should be able to drag measures up or down between system rows as an editing gesture.
+- Moving measures to a new system should live under the Measure menu/edit-measure workflow.
+- The first Measure menu row-break controls should be `New System Before This Measure` and `Remove System Break`.
+- Adding a measure should place the new measure on the same system row as the current last measure by default.
+- Smart Chart should preserve user-directed system grouping instead of immediately forcing every measure back into an automatic equal-width layout.
+- The default can still start from a compact chord-chart grid, but user discretion controls how many measures belong on a row.
+- The amount of measures per row is entirely at the user's discretion up to an app/performance cap.
+- Simple Chord Sheet must allow at least `16` measures in one row.
+- The first implementation should expose the row cap through a profile/test constant, defaulting to `20` measures per row, so simulator performance evidence can tune it later without scattering magic numbers.
+
+Manual row-break behavior:
+
+- `New System Before This Measure` inserts a row break before the selected measure, unless it is already the first measure on its row.
+- `Remove System Break` removes the row break before the selected measure when one exists, merging the selected measure's row into the previous row.
+- Adding a measure at the end appends it to the final row.
+- Adding a measure after selected inserts it after the selected measure and keeps it in that selected measure's current row unless the user later adds a row break.
+- Adding a measure at the beginning keeps the new first measure on the first row and shifts existing row breaks by measure identity/order without creating a zero-measure row.
+- Rows auto-fit proportionally inside the available page width.
+- Compress/stretch changes the selected measure's relative width weight inside its row; it should not silently add or remove row breaks.
+- Adding a measure to a row proportionally rebalances that row while preserving user width emphasis.
+- Smart Chart should not automatically move measures to a new row for readability.
+- The row cap is the exception: when adding a measure would exceed the cap, Smart Chart automatically starts a new system and places the new measure there.
+- Dragging a measure vertically between rows should become a row-break edit operation, not a second layout authority.
+- Vertical drag moves the selected measure plus every following measure until the next manual row break; it does not move only one isolated measure.
+- In Measure edit mode, a subtle row-break/group handle should appear for the selected measure group so the user can see that vertical dragging moves the group boundary rather than a single isolated bar.
+
+Reference notes:
+
+- iReal Pro's documented chart representation is cell/grid-like: it describes 16 cells per line, usually 4 cells per measure, producing a common 4-measure system.
+- iReal Pro also exposes adding/deleting spaces to adjust bar size and warns that a measure should not split between systems.
+- Smart Chart should use those ideas as product inspiration, not a compatibility requirement or clone target.
+
+Rhythm Section Sheet direction:
+
+- Rhythm Section Sheet should keep automatic system wrapping for now.
+- The visual target is a close-to-professional rhythm/hit chart feel: clear staff systems, chord lane, rhythmic hits/slashes, cue text, and roadmap space.
+- The inspiration includes real big-band-style hit/rhythm charts, but the product should not become intentionally jazz-only or genre-locked.
+- The visible renderer currently flattens measures and packs them left-to-right by preferred measure width until the next measure would exceed the available page width, then starts a new system.
+- Rhythm Section should not adopt Simple Chord Sheet's manual row-break grid in this slice.
+- Manual row/system breaks for Rhythm Section are deferred until section labels, roadmap objects, or rhythm-section-specific spacing prove they are needed.
+- The mismatch between model-level four-measure chunks and renderer-level width packing should be cleaned up later as architecture debt, but this definition pass should not change the user-facing Rhythm Section flow yet.
+
+### 2. Section Labels
+
+Definition needed:
+
+- The v1 section-label vocabulary and whether labels are typed, handwritten, or selected from a menu first.
+- Whether labels anchor to a measure, system, or page position.
+- How labels affect vertical spacing and measure/system wrapping.
+- How labels appear differently in Simple Chord Sheet and Rhythm Section Sheet.
+
+Implementation boundary:
+
+- Section labels should become structured chart objects, not raw free text.
+- Recognition for handwritten section labels is deferred unless explicitly scoped.
+
+V1 direction:
+
+- Section labels are measure-attached structured objects.
+- A section label means "section starts before this measure."
+- A section label should not automatically force a new system row.
+- A later option may combine a section label with a manual row/system break, but those should remain separate layout concepts.
+- Creation should start through a menu/manual entry flow, not handwriting recognition.
+- Each measure should support at most one primary section label for V1.
+- Section labels should survive measure insertion and reindexing by anchoring to measure ID, not only measure number.
+- If the anchored measure is deleted later, all section labels and symbols attached to that measure should be deleted with it.
+- V1 preset vocabulary: `Intro`, `A`, `B`, `C`, `Verse`, `Chorus`, `Bridge`, `Solo`, `Tag`, `Coda`.
+- V1 must also support custom section text.
+- Simple Chord Sheet visual treatment: compact boxed/pill-style form marker above the attached measure or row, optimized for dense chord-grid readability.
+- Rhythm Section Sheet visual treatment: stronger rehearsal-mark style above the staff/chord lane, clear enough for a professional rhythm/hit chart without colliding with chord symbols.
+
+### 3. Roadmap Objects
+
+Definition needed:
+
+- V1 roadmap vocabulary: repeats, first/second endings, coda, To Coda, Segno, D.S., D.C., Fine, N.C., vamp count, and any exclusions.
+- Object anchoring rules: barline-anchored, measure-spanning, system-level, or text-like.
+- How repeat spans and endings behave when measures are inserted or moved.
+- How roadmap objects differ visually between Simple Chord Sheet and Rhythm Section Sheet.
+
+Implementation boundary:
+
+- Prefer structured objects with deterministic layout and export.
+- Recognition is deferred; start with menu/manual object creation unless a smaller recognition slice is defined later.
+
+V1 direction:
+
+- Roadmap objects are structured chart objects, not freehand ink and not plain floating text.
+- Creation should start through a menu/manual entry flow, not handwriting recognition.
+- Roadmap objects should reuse the existing `RoadmapObject` model direction: `type`, `startMeasureID`, optional `endMeasureID`, optional `anchorSystemID`, placement, display text, optional count, optional linked target, and raw input.
+- Roadmap objects anchor by measure ID so insertion and reindexing preserve intent.
+- If a measure is deleted later, any roadmap object attached to that measure should be deleted with it.
+- V1 should support single-measure markers and measure-spanning objects.
+
+V1 vocabulary:
+
+- `Repeat Span`
+- `1st Ending`
+- `2nd Ending`
+- `Coda`
+- `To Coda`
+- `Segno`
+- `D.S.`
+- `D.S. al Coda`
+- `D.C.`
+- `D.C. al Fine`
+- `Fine`
+- `N.C.`
+- `Vamp Count`
+
+Object anchoring:
+
+- Point markers use `startMeasureID` only.
+- Span objects use `startMeasureID` and `endMeasureID`.
+- Endings and repeat spans are spanning objects.
+- Coda, To Coda, Segno, D.S., D.C., Fine, and N.C. are point markers unless a later slice defines a span behavior.
+- Vamp count can start as a point marker with `count`, then become a span if the user selects an end measure.
+- Linked targets, such as To Coda to Coda, should remain optional for V1; visual rendering should not depend on solving playback/navigation.
+
+Visual treatment:
+
+- Simple Chord Sheet: compact roadmap symbols and brackets integrated into the chord grid; prioritize density and quick form readability.
+- Rhythm Section Sheet: professional chart treatment above the staff/chord lane, with repeat and ending brackets clear enough for rhythm/hit charts.
+- Roadmap objects should reserve just enough local vertical space to avoid collisions, but should not force global page redesign in the first slice.
+
+Implementation sequence:
+
+1. Add/edit/delete repeat spans and repeat markers first.
+2. Add/edit/delete first and second endings.
+3. Add/edit/delete point roadmap markers such as Coda, Segno, Fine, D.S., D.C., and N.C.
+4. Add vamp count support.
+5. Add optional linked target behavior only after the visual/export path is stable.
+
+First roadmap implementation:
+
+- Start with repeats and repeat markers.
+- V1 repeat work should cover start repeat, end repeat, and repeat span rendering/anchoring.
+- Repeat marker creation should be available from the selected measure's Measure/Roadmap menu path.
+- Repeat spans should use measure IDs for start and end anchors.
+- Repeat markers should survive measure insertion and reindexing, but should be deleted if their attached measure is deleted.
+- First and second endings are important but should be the second roadmap slice after repeat markers are stable.
+
+Repeat span contract:
+
+- A V1 repeat should persist as one structured `Repeat Span` roadmap object, not as two unrelated start/end marker objects.
+- `startMeasureID` means the first measure inside the repeat.
+- `endMeasureID` means the final measure inside the repeat.
+- The renderer should draw a start-repeat marker at the leading edge of the start measure and an end-repeat marker at the trailing edge of the end measure.
+- A one-measure repeat is valid when `startMeasureID` and `endMeasureID` are the same measure.
+- Independent start-only or end-only repeat markers are deferred until there is a clear product need; the first slice should avoid orphan repeat markers.
+- The menu flow may expose `Start Repeat Here`, `End Repeat Here`, and `Repeat Selected Range`, but the committed model result should still be a single repeat-span object.
+- Repeat count text such as `x3` is deferred from this first slice unless it naturally falls out of the same edit surface; the default repeat marker implies the standard repeat.
+- If the start or end measure is deleted, delete the whole repeat span.
+- If measures are inserted between the start and end anchors, the inserted measures become part of the repeat span because the span resolves by current measure order between its measure IDs.
+- If measures are inserted before the start or after the end, the repeat anchors stay attached to their original measures.
+- If a future move operation inverts the start/end order, the span should fail closed for rendering/editing until the user repairs the range.
+
+Repeat visual contract:
+
+- Simple Chord Sheet should render compact repeat barlines and dots integrated into the chord-grid cell edges without stealing much horizontal space.
+- Rhythm Section Sheet should render notation-style repeat barlines and dots through the staff at the repeated range edges.
+- Both styles should leave room for later ending brackets above the repeated measures without requiring a global page-layout rewrite in the first slice.
+
+Repeat implementation test targets:
+
+- Model add/edit/delete for a repeat span by selected start/end measures.
+- One-measure minimum remains intact when repeat spans are added or removed.
+- Inserting measures before, inside, and after the span preserves the intended anchor behavior.
+- Deleting either attached measure deletes the repeat span and clears measure back-references.
+- Layout/export can resolve start/end marker geometry for Simple Chord Sheet and Rhythm Section Sheet.
+
+Repeat implementation progress:
+
+- Model repeat-span creation, update, lookup, and deletion are implemented locally through `ChartEditing`.
+- Repeat spans attach their roadmap object ID to the start and end boundary measures, using one back-reference for one-measure repeats.
+- Duplicate requests for the same repeat boundary return the existing repeat span instead of stacking duplicate repeat markers.
+- Repeat spans can be removed from a selected boundary measure; selecting an interior measure does not remove the span because no repeat marker is attached there.
+- Public measure deletion now preserves the one-measure minimum and removes annotations attached to the deleted measure: section labels, cue text, freehand symbols, and roadmap objects.
+- Deleting a repeat boundary measure deletes the whole repeat span; deleting a non-boundary measure does not implicitly delete the span.
+- Layout now resolves repeat marker geometry for both Simple Chord Sheet and Rhythm Section Sheet through the shared page layout.
+- The editor canvas and PDF export path draw repeat markers from the same `LeadSheetRepeatMarkerLayout` geometry.
+- Repeat spans are excluded from the legacy roadmap-text banner so they render as barline markers only.
+- Repeat marker art was tuned after the first live pass so each marker reads as two clear barlines instead of one overly thick artifact.
+- The Measures menu exposes first repeat creation/removal commands: `Repeat Selected Measure`, `Start Repeat Here`, `End Repeat Here`, `Remove Repeat at Selected Measure`, and `Clear Repeat Start`.
+- Focused verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests --filter LeadSheetPageLayoutTests` passed with `102` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `378` tests, `36` skipped, and `0` failures.
+- Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
+### 4. Cue Text
+
+Defined V1 behavior:
+
+- Cue text is structured musician-facing instruction text attached to a measure: groove notes, player instructions, arrangement reminders, tacets, stops, pushes, builds, or short local notes.
+- Cue text is not a section label and not a roadmap/navigation symbol. Section labels describe form starts; roadmap objects describe repeat/navigation structure; cue text describes local performance instructions.
+- Cue text is not freehand articulation ink. V1 cue text is typed/manual-first and renders as editable structured text; handwritten cue recognition is deferred.
+- Cue text is measure-attached. If the measure is deleted, all cue text attached to that measure is deleted with it.
+- V1 supports above-measure and below-measure cue positions. The default user path is below the selected measure; above is available for cases where below-staff space is already carrying local articulations.
+- Simple Chord Sheet renders cue text as small secondary text inside the measure's blank space, keeping the handwritten/iReal-style chart feel.
+- Rhythm Section Sheet renders cue text as small secondary text below or above the staff lane so the primary chord and rhythm notation remain visually dominant.
+
+Implementation progress:
+
+- `ChartEditing` can now add cue text to a selected measure, trim/reject empty text, preserve position/emphasis, look up cue text, and remove cue text attached to a measure while clearing measure back-references.
+- Shared layout resolves `LeadSheetCueTextLayout` per measure for Simple Chord Sheet and Rhythm Section Sheet.
+- The editor canvas and PDF export path draw cue text through the shared notation renderer.
+- The editor now exposes a `Cue` menu with `Add Cue Below Selected Measure`, `Add Cue Above Selected Measure`, and `Remove Cue Text at Selected Measure`.
+- Focused verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests --filter LeadSheetPageLayoutTests` passed with `107` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `383` tests, `36` skipped, and `0` failures.
+- Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
+### 5. Per-Style Export And Readability
+
+Defined V1 behavior:
+
+- Simple Chord Sheet export is worthy when it reads like a dense handwritten chord-chart grid: no key header, blank barline-to-barline measure space, structured chords inside the blank measure area, compact section/repeat/cue objects, and freehand lanes that do not leak into the chord lane.
+- Simple Chord Sheet should prefer dense one-page readability when possible, but never by overlapping structured objects or collapsing the user's measure-width emphasis.
+- Rhythm Section Sheet export is worthy when it reads like a professional rhythm/hit chart: no key header, visible meter/staff systems, chord lane above the staff, rhythmic slashes/rests inside the staff lane, cue text and below-staff freehand articulations below the measure, and clear repeat markers at repeated range edges.
+- Rhythm Section Sheet prioritizes readable rhythm-lane space over maximum density. Automatic wrapping remains acceptable for this slice.
+- Both active V1 styles must export from structured chart objects and shared page-layout geometry, not screenshots, editor placeholders, or raw live ink.
+- Lead Sheet export polish remains deferred to the post-V1 archive.
+
+Implementation boundary:
+
+- Export should render from structured chart objects, not screenshots or raw editor ink.
+- Keep PDF proof proportional to each implemented slice.
+
+Implementation progress:
+
+- `PDFChartExporterTests` now includes Simple Chord Sheet and Rhythm Section Sheet export-proof charts populated with section labels, repeat spans, cue text, chords, and rhythm maps where appropriate.
+- The PDF proof asserts exported document text includes the structured title/chord/cue/section content and excludes key text plus editor placeholder instructions. Repeat markers remain geometry-proofed through layout tests because their glyph/barline art is not searchable PDF text.
+- `LeadSheetPageLayoutTests` now includes SwiftPM-visible per-style readiness tests proving Simple keeps staff lines absent and structured objects readable inside the chord-grid layout, while Rhythm Section keeps staff lines, chord lane, rhythm notation, below-staff cue/freehand space, and repeat edge markers readable across automatic wrapping.
+
+Verification:
+
+- Focused layout verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `45` tests and `0` failures.
+- Focused simulator PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `5` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `385` tests, `36` skipped, and `0` failures.
+- Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
+## Recommended Sequence
+
+1. Define system layout and measure flow.
+2. Implement the smallest model/layout contract for V1 sheet-style system wrapping.
+3. Define and implement section labels.
+4. Define and implement the first manual roadmap object slice.
+5. Define and implement cue text.
+6. Run per-style export/readability proof.
+7. Return to style-specific refinements:
+   - Simple Chord Sheet: dense systems, roadmap/section polish, freehand resizing.
+   - Rhythm Section Sheet: below-staff articulation workflow, cue text, eventual rhythm object editing.
+   - Lead Sheet: defer to `post-v1/lead-sheet/` after V1.
+
+## Guardrails
+
+- No chord-recognition retuning.
+- No OCR expansion.
+- No personal handwriting fixture expansion.
+- No default symbol-ledger or rhythm diagnostic stream.
+- No global recognizer retraining from live passes.
+- Keep correction/user-loop behavior local and contextual.
+- Keep recognition separate from layout authority.
+- Preserve the hard one-measure minimum.
+
+## Current Checkpoint
+
+Per-style export/readability proof is implemented locally for Simple Chord Sheet and Rhythm Section Sheet.
+
+Next implementation checkpoint:
+
+- Continue the roadmap-object sequence with first and second endings.
+- Keep point navigation markers such as Coda, Segno, Fine, D.S., D.C., and N.C. deferred until endings are stable.

@@ -63,9 +63,11 @@ The active app runtime implementation state is the merged recovery branch from P
 - Rhythm Section side sprint plan artifact: `docs/smart-chart-rhythm-section-side-sprint-plan-2026-05-27.md`
 - Rhythm Section chart plan artifact: `docs/smart-chart-rhythm-section-chart-plan-2026-05-27.md`
 - Rhythm recognition rebuild plan artifact: `docs/smart-chart-rhythm-recognition-rebuild-plan-2026-05-28.md`
-- Lead Sheet pitched-note baseline artifact: `docs/smart-chart-lead-sheet-pitched-note-baseline-2026-05-29.md`
+- Post-V1 Lead Sheet archive: `docs/post-v1/lead-sheet/README.md`
+- Lead Sheet pitched-note baseline artifact: `docs/post-v1/lead-sheet/smart-chart-lead-sheet-pitched-note-baseline-2026-05-29.md`
 - Rhythm Section V4 closeout audit: `docs/smart-chart-rhythm-section-v4-closeout-audit-2026-05-29.md`
 - Rhythm Section progress log: `docs/smart-chart-rhythm-section-progress-log-2026-05-29.md`
+- Sprint 68 chart structure systems definition artifact: `docs/smart-chart-sprint-68-chart-structure-systems-definition-2026-05-29.md`
 - latest local verification: Rhythm Section side sprint core authoring is complete and locally verified on `codex/rhythm-section-core-authoring`. Rhythm Recognition V3 is implemented locally through the targeted-unread-stroke-feedback slice, and Rhythm Recognition V4 is now implemented locally as a deterministic raster/template phrase gate ahead of the V3 safety bridge. Live rhythm auto-apply rechecks a stable stroke-shape snapshot instead of comparing serialized PencilKit `Data`; live auto-render and selection finalization require a trusted commit decision, while underfilled, review-only, ambiguous, uncovered, competing, non-visual-fallback, non-natural exact-fit, unsupported, or unread-crop paths preserve local ink. V4 normalizes live rhythm ink into measure-relative symbol crops, matches those crops against a writer-agnostic visual compendium, validates exact values through `RhythmicNotationCompendium` and `MeasureRhythmMap`, and commits only when visual evidence plus render alignment agree. Red unread-ink feedback now waits until a rhythm decision is completed-looking and can localize the unread item; V4 unread-symbol decisions target the failing crop when possible, V3 uncovered decisions target primitive bounds, and broad review/fallback states no longer frame the whole live ink area. Rhythm mode resolves a real authoring measure when entered. The latest live simulator pass after the stable snapshot repair committed `slash, slash, slash, slash` in measure 1 and `quarter, quarter, quarter, eighth, eighth` in measure 2; follow-up underfilled/ambiguous attempts stayed local. The latest saved-state check after a clear non-rendering quarter-note pass showed raw measure ink preserved without a rhythm map, confirming fail-closed behavior. Temporary runtime auto-apply trace logging and the one-off live-trace replay helper were removed after that evidence capture, leaving the stable snapshot guard without a new default diagnostic stream. XcodeBuildMCP focused simulator `test_sim` for `RhythmicNotationQuantizerTests` and `LeadSheetInteractionModeStatePolicyTests` passed with `80` tests and `0` failures after the V4 raster/template gate and crop-level unread feedback slice; grouped simulator `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `125` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only and screenshot proof showed the app launched to Projects.
 - latest V4 semantic gate verification: stemmed notehead crops can no longer drive slash values, dotted values require detached dot evidence, and unflagged quarter-like stems can extend stability or require review but cannot force exact-fit live auto-render as eighths. XcodeBuildMCP `test_sim` for `RhythmicNotationQuantizerTests` passed with `67` tests and `0` failures; grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `128` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only.
 - latest unread-feedback verification: red unread feedback now waits for completed-looking rhythm decisions and only draws localized unread symbol/primitive frames. XcodeBuildMCP `test_sim` for `LeadSheetInteractionModeStatePolicyTests` passed with `17` tests and `0` failures; grouped `test_sim` for `RhythmicNotationQuantizerTests`, `LeadSheetInteractionModeStatePolicyTests`, and `ChartEditingTests` passed with `129` tests and `0` failures; full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `354` tests, `36` skipped, and `0` failures; `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only.
@@ -175,6 +177,57 @@ These rules are hard boundaries for Sprint 1 and future recognition work:
 - Do not use the `Chord Writing Test Chart`, fixture watcher, or copied fixture JSON as a standing corpus-expansion habit. They are debug/regression tools.
 
 ## Active Sprint
+
+### Sprint 68: Chart Structure Systems Definition
+
+Status: active definition sprint on `codex/rhythm-section-core-authoring`.
+
+Goal: define the next shared chart-structure systems before implementation changes layout behavior.
+
+Current state:
+
+- The Rhythm Section core-authoring side sprint has been checkpointed and pushed at `4c3e375`.
+- `ChartLayoutStyle` and `ChartLayoutProfile` now separate Simple Chord Sheet, Rhythm Section Sheet, and Lead Sheet setup/tool/layout policy.
+- Lead Sheet feature work is deferred until after V1 and archived under `docs/post-v1/lead-sheet/`; preserve compatibility and existing baseline behavior, but do not use Lead Sheet as an active Sprint 68 design target.
+- The remaining V1 sheet-style work is definition-gated for Simple Chord Sheet and Rhythm Section Sheet: system layout and measure flow, section labels, roadmap objects, cue text, per-style export/readability, and style-specific refinements. The first per-style export/readability proof is implemented locally for both active V1 styles.
+- Sprint 68 opens with a product-definition checkpoint for system layout and measure flow.
+- Simple Chord Sheet system layout direction is now partially defined: it should feel like an iReal Pro / handwritten chord-chart grid, preserve complete measures inside a row, use manual row breaks for user-directed system rows, expose `New System Before This Measure` and `Remove System Break` in the Measure menu, auto-fit rows proportionally while preserving relative measure-width emphasis, allow measure count per row at the user's discretion with support for at least `16` measures, expose a profile/test row-cap constant defaulting to `20`, automatically place newly added measures on a new system when the row cap is reached, allow measure compress/stretch plus vertical row movement, show a subtle row-break/group handle in Measure edit mode, move the selected measure plus following measures until the next row break during vertical drag, and place newly added measures on the same row as the current last measure by default.
+- Rhythm Section Sheet system layout direction is now defined as automatic for this slice: keep the current visible width-packing behavior, target a close-to-professional rhythm/hit chart feel with clear staff systems, chord lane, rhythmic hits/slashes, cue text, and roadmap space, avoid genre-locking the design as jazz-only, and defer manual row/system breaks until section labels, roadmap objects, or rhythm-section-specific spacing require them.
+- Section labels are now defined as V1 measure-attached structured objects meaning "section starts before this measure"; they should not automatically force a new system row, handwriting recognition for them is deferred, and the preset vocabulary is `Intro`, `A`, `B`, `C`, `Verse`, `Chorus`, `Bridge`, `Solo`, `Tag`, `Coda`, plus custom text. Simple Chord Sheet uses a compact boxed/pill form marker, while Rhythm Section Sheet uses a stronger rehearsal-mark treatment above the staff/chord lane. If a measure is deleted later, all labels and symbols attached to that measure are deleted with it.
+- Roadmap objects are now defined as V1 structured chart objects, menu/manual-first and measure-ID anchored. The V1 vocabulary is `Repeat Span`, `1st Ending`, `2nd Ending`, `Coda`, `To Coda`, `Segno`, `D.S.`, `D.S. al Coda`, `D.C.`, `D.C. al Fine`, `Fine`, `N.C.`, and `Vamp Count`; point markers use a start measure, span objects use start/end measures, and deleting an attached measure deletes its roadmap objects. The first roadmap implementation starts with repeats and repeat markers: one persisted `Repeat Span` object with start/end measure anchors, start-repeat rendering at the leading edge of the start measure, end-repeat rendering at the trailing edge of the end measure, no orphan start-only/end-only markers in the first slice, deletion of the whole repeat span if either attached measure is deleted, insertion between anchors included in the span by current measure order, and endings/navigation/vamp behavior deferred until repeat markers are stable.
+
+Step-by-step plan:
+
+1. Define system layout and measure flow for Simple Chord Sheet and Rhythm Section Sheet.
+2. Implement the smallest model/layout contract only after the V1 sheet-style behavior is confirmed.
+3. Define and implement section labels as structured chart objects.
+4. Define and implement the first manual roadmap object slice: repeat spans and repeat markers.
+5. Define and implement cue text as structured editable objects.
+6. Run per-style export/readability proof.
+
+Non-goals:
+
+- No chord-recognition retuning.
+- No OCR expansion.
+- No personal handwriting fixture expansion.
+- No default symbol-ledger or rhythm diagnostic stream.
+- No global recognizer retraining from live passes.
+- No Lead Sheet feature expansion before V1 ships.
+
+Current checkpoint:
+
+- Per-style export/readability proof is the active completed checkpoint before returning to the roadmap-object sequence.
+- Repeats/repeat markers are implemented as the first roadmap slice; cue text is implemented as the first structured-annotation slice; first and second endings are the next roadmap checkpoint before point navigation markers.
+- Repeat span model editing is implemented locally: `ChartEditing` can add, update, look up, and delete one structured `Repeat Span` object with start/end measure anchors; repeat spans attach to their boundary measures, support one-measure repeats without duplicate back-references, reject missing/inverted ranges, return an existing object for duplicate boundary requests, survive insertion by measure ID, can be removed from an attached boundary measure, and are deleted when either boundary measure is deleted.
+- Public measure deletion now preserves the one-measure minimum and removes annotations attached to the deleted measure: section labels, cue text, freehand symbols, and roadmap objects.
+- Repeat marker layout/rendering is wired locally through shared page geometry: Simple Chord Sheet gets compact edge markers, Rhythm Section gets notation-style staff markers, both the editor canvas and PDF export draw from `LeadSheetRepeatMarkerLayout`, repeat spans are excluded from the legacy roadmap-text banner, and marker art has been tuned so each repeat reads as two clear barlines instead of one overly thick artifact.
+- The Measures menu now exposes first repeat creation/removal commands: `Repeat Selected Measure`, `Start Repeat Here`, `End Repeat Here`, `Remove Repeat at Selected Measure`, and `Clear Repeat Start`.
+- Cue text V1 is defined and implemented locally as typed, measure-attached musician instruction text, separate from section labels, roadmap/navigation objects, and freehand articulation ink. `ChartEditing` can add cue text to a selected measure, trim/reject empty text, preserve position/emphasis, look up cue text, and remove all cue text attached to a measure while clearing back-references. Shared layout resolves `LeadSheetCueTextLayout` per measure, the editor canvas and PDF export draw it through the notation renderer, and the editor exposes a `Cue` menu with add-above, add-below, and remove-at-selected-measure commands.
+- Per-style export/readability proof is implemented locally for Simple Chord Sheet and Rhythm Section Sheet. SwiftPM-visible layout tests prove Simple keeps key/staff content out of the export layout while preserving section, repeat, cue, chord, and freehand lane readability; Rhythm Section keeps staff lines, chord lane, rhythm notation, cue text, repeat markers, and below-staff freehand space readable across automatic wrapping. Simulator PDF tests prove both styles export structured title/chord/cue/section content without key text or editor placeholder instructions.
+- Focused layout verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `45` tests and `0` failures.
+- Focused simulator PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `5` tests and `0` failures.
+- Full verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `385` tests, `36` skipped, and `0` failures; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+- The planning artifact is `docs/smart-chart-sprint-68-chart-structure-systems-definition-2026-05-29.md`.
 
 ### Rhythm Section Side Sprint: Core Authoring
 

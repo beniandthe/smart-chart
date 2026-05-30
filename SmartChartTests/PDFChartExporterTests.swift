@@ -62,5 +62,115 @@ final class PDFChartExporterTests: XCTestCase {
         XCTAssertFalse(documentText.contains("M2"))
         XCTAssertGreaterThan(pageBounds.height, pageBounds.width)
     }
+
+    func testSimpleChordSheetExportProofRendersStructuredObjects() async throws {
+        let exportDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let exporter = PDFChartExporter(exportDirectory: exportDirectory)
+        let chart = try makeSimpleChordSheetExportProofChart()
+
+        defer {
+            try? FileManager.default.removeItem(at: exportDirectory)
+        }
+
+        let exportedURL = try await exporter.exportPDF(for: chart)
+        let document = try XCTUnwrap(PDFDocument(url: exportedURL))
+        let documentText = document.string ?? ""
+        let pageBounds = try XCTUnwrap(document.page(at: 0)?.bounds(for: .mediaBox))
+
+        XCTAssertTrue(documentText.contains("SIMPLE EXPORT PROOF"))
+        XCTAssertTrue(documentText.contains("INTRO"))
+        XCTAssertTrue(documentText.contains("C"))
+        XCTAssertTrue(documentText.contains("F"))
+        XCTAssertTrue(documentText.contains("G/B"))
+        XCTAssertTrue(documentText.contains("freely"))
+        XCTAssertFalse(documentText.contains("C MAJOR"))
+        XCTAssertFalse(documentText.contains("Tap the measure in the editor"))
+        XCTAssertGreaterThan(pageBounds.height, pageBounds.width)
+    }
+
+    func testRhythmSectionExportProofRendersStructuredObjects() async throws {
+        let exportDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let exporter = PDFChartExporter(exportDirectory: exportDirectory)
+        let chart = try makeRhythmSectionExportProofChart()
+
+        defer {
+            try? FileManager.default.removeItem(at: exportDirectory)
+        }
+
+        let exportedURL = try await exporter.exportPDF(for: chart)
+        let document = try XCTUnwrap(PDFDocument(url: exportedURL))
+        let documentText = document.string ?? ""
+        let pageBounds = try XCTUnwrap(document.page(at: 0)?.bounds(for: .mediaBox))
+
+        XCTAssertTrue(documentText.contains("RHYTHM EXPORT PROOF"))
+        XCTAssertTrue(documentText.contains("A"))
+        XCTAssertTrue(documentText.contains("C7"))
+        XCTAssertTrue(documentText.contains("F7"))
+        XCTAssertTrue(documentText.contains("G7sus"))
+        XCTAssertTrue(documentText.contains("stop time"))
+        XCTAssertFalse(documentText.contains("C MAJOR"))
+        XCTAssertFalse(documentText.contains("Tap the measure in the editor"))
+        XCTAssertGreaterThan(pageBounds.height, pageBounds.width)
+    }
+
+    private func makeSimpleChordSheetExportProofChart() throws -> Chart {
+        var chart = Chart.blank(
+            title: "Simple Export Proof",
+            measureCount: 4,
+            layoutStyle: .simpleChordSheet
+        )
+        let measureIDs = chart.measures.map(\.id)
+        chart.addSectionLabel(text: "Intro")
+        _ = try XCTUnwrap(
+            chart.addRepeatSpan(startMeasureID: measureIDs[0], endMeasureID: measureIDs[3])
+        )
+        _ = try XCTUnwrap(
+            chart.addCueText("freely", anchorMeasureID: measureIDs[1], position: .above, emphasis: .subtle)
+        )
+        try appendChord("C", to: measureIDs[0], in: &chart, atFraction: 0.05)
+        try appendChord("F", to: measureIDs[1], in: &chart, atFraction: 0.05)
+        try appendChord("G/B", to: measureIDs[2], in: &chart, atFraction: 0.05)
+        return chart
+    }
+
+    private func makeRhythmSectionExportProofChart() throws -> Chart {
+        var chart = Chart.blank(
+            title: "Rhythm Export Proof",
+            measureCount: 4,
+            layoutStyle: .rhythmSectionSheet
+        )
+        let measureIDs = chart.measures.map(\.id)
+        chart.addSectionLabel(text: "A")
+        _ = try XCTUnwrap(
+            chart.addRepeatSpan(startMeasureID: measureIDs[0], endMeasureID: measureIDs[3])
+        )
+        _ = try XCTUnwrap(
+            chart.addCueText("stop time", anchorMeasureID: measureIDs[1], position: .below, emphasis: .normal)
+        )
+        XCTAssertTrue(chart.setMeasureRhythmMap([.quarter, .quarter, .quarter, .quarter], for: measureIDs[0]))
+        XCTAssertTrue(chart.setMeasureRhythmMap([.dottedHalf, .eighth, .eighth], for: measureIDs[1]))
+        try appendChord("C7", to: measureIDs[0], in: &chart, atFraction: 0.05)
+        try appendChord("F7", to: measureIDs[1], in: &chart, atFraction: 0.05)
+        try appendChord("G7sus", to: measureIDs[2], in: &chart, atFraction: 0.05)
+        return chart
+    }
+
+    private func appendChord(
+        _ text: String,
+        to measureID: UUID,
+        in chart: inout Chart,
+        atFraction fraction: Double
+    ) throws {
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                try ChordSymbolParser.parse(text),
+                rawInput: text,
+                to: measureID,
+                atFraction: fraction
+            )
+        )
+    }
 }
 #endif

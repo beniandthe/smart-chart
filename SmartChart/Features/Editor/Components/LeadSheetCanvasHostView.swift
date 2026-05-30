@@ -698,7 +698,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             renderer.drawTimeSignature(chart.defaultMeter, in: timeSignatureFrame)
         }
 
-        if let firstMeasure = system.measures.first {
+        if let firstMeasure = system.measures.first,
+           !firstMeasure.repeatMarkerLayouts.contains(where: { $0.edge == .leading }) {
             renderer.drawSingleBarline(
                 at: firstMeasure.frame.minX,
                 from: firstMeasure.staffFrame.minY,
@@ -711,6 +712,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                measure.sourceMeasureID == selectedMeasureID {
                 drawMeasureSelection(measure)
             }
+
+            drawRepeatMarkers(measure.repeatMarkerLayouts.filter { $0.edge == .leading }, using: renderer)
 
             for chordLayout in measure.chordLayouts {
                 renderer.drawChord(chordLayout)
@@ -727,6 +730,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 renderer.drawNote(noteLayout)
             }
 
+            for cueTextLayout in measure.cueTextLayouts {
+                renderer.drawCueText(cueTextLayout)
+            }
+
             drawSavedMeasureRhythmicNotation(measure)
 
             if let trailingMeterChange = measure.trailingMeterChange,
@@ -736,9 +743,20 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
             if measure.isOpen && chart.layoutStyle != .simpleChordSheet {
                 renderer.drawOpenMeasureHint(measure)
+            } else if measure.repeatMarkerLayouts.contains(where: { $0.edge == .trailing }) {
+                drawRepeatMarkers(measure.repeatMarkerLayouts.filter { $0.edge == .trailing }, using: renderer)
             } else {
                 renderer.drawBarline(measure.barlineAfter, in: measure.trailingBarlineFrame)
             }
+        }
+    }
+
+    private func drawRepeatMarkers(
+        _ repeatMarkers: [LeadSheetRepeatMarkerLayout],
+        using renderer: LeadSheetNotationRenderer
+    ) {
+        for repeatMarker in repeatMarkers {
+            renderer.drawRepeatMarker(repeatMarker)
         }
     }
 

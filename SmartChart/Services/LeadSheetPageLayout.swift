@@ -51,6 +51,8 @@ struct LeadSheetMeasureLayout: Identifiable, Hashable {
     var writableFrame: CGRect
     var chordLayouts: [LeadSheetChordLayout]
     var noteLayouts: [LeadSheetNoteLayout]
+    var repeatMarkerLayouts: [LeadSheetRepeatMarkerLayout]
+    var cueTextLayouts: [LeadSheetCueTextLayout]
     var barlineAfter: BarlineType
     var trailingMeterChange: Meter?
     var trailingMeterChangeFrame: CGRect?
@@ -99,6 +101,29 @@ struct LeadSheetNoteLayout: Identifiable, Hashable {
     var dotFrame: CGRect?
     var tieFrame: CGRect?
     var beamEndPoint: CGPoint?
+}
+
+struct LeadSheetRepeatMarkerLayout: Identifiable, Hashable {
+    enum Edge: String, Hashable {
+        case leading
+        case trailing
+    }
+
+    var roadmapObjectID: UUID
+    var edge: Edge
+    var frame: CGRect
+
+    var id: String {
+        "\(roadmapObjectID.uuidString)-\(edge.rawValue)"
+    }
+}
+
+struct LeadSheetCueTextLayout: Identifiable, Hashable {
+    var id: UUID
+    var text: String
+    var frame: CGRect
+    var position: CuePosition
+    var emphasis: CueEmphasis
 }
 
 struct LeadSheetNoteSelection: Identifiable, Hashable {
@@ -315,7 +340,8 @@ enum LeadSheetPageLayoutEngine {
             CGRect(x: frame.minX, y: frame.minY + 2, width: 140, height: 18)
         }
         let roadmapText = chart.roadmapObjects.first(where: {
-            measureIDs.contains($0.startMeasureID) || ($0.endMeasureID.map(measureIDs.contains) ?? false)
+            $0.type != .repeatSpan
+                && (measureIDs.contains($0.startMeasureID) || ($0.endMeasureID.map(measureIDs.contains) ?? false))
         })?.resolvedDisplayText
         let roadmapTextFrame = roadmapText.map { _ in
             CGRect(x: frame.maxX - 160, y: frame.minY + 2, width: 160, height: 18)
@@ -683,6 +709,8 @@ enum LeadSheetPageLayoutEngine {
                 writableFrame: writableFrame,
                 chordLayouts: [],
                 noteLayouts: [],
+                repeatMarkerLayouts: [],
+                cueTextLayouts: [],
                 barlineAfter: .single,
                 trailingMeterChange: trailingMeterChange,
                 trailingMeterChangeFrame: trailingMeterChangeFrame,
@@ -714,6 +742,18 @@ enum LeadSheetPageLayoutEngine {
             staffFrame: staffFrame,
             staffLineYPositions: staffLineYPositions
         ) ?? []
+        let repeatMarkerLayouts = repeatMarkerLayouts(
+            for: measure,
+            chart: chart,
+            staffFrame: staffFrame
+        )
+        let cueTextLayouts = cueTextLayouts(
+            for: measure,
+            chart: chart,
+            measureFrame: frame,
+            chordBandFrame: chordBandFrame,
+            staffFrame: staffFrame
+        )
 
         return LeadSheetMeasureLayout(
             id: measure.id,
@@ -727,6 +767,8 @@ enum LeadSheetPageLayoutEngine {
             writableFrame: writableFrame,
             chordLayouts: chordLayouts,
             noteLayouts: noteLayouts,
+            repeatMarkerLayouts: repeatMarkerLayouts,
+            cueTextLayouts: cueTextLayouts,
             barlineAfter: measure.barlineAfter,
             trailingMeterChange: trailingMeterChange,
             trailingMeterChangeFrame: trailingMeterChangeFrame,
@@ -763,6 +805,147 @@ enum LeadSheetPageLayoutEngine {
             frame: CGRect(x: chordX, y: chordBandFrame.minY, width: textWidth, height: chordBandFrame.height),
             snapGuideTarget: CGPoint(x: attackCenterX, y: staffFrame.midY)
         )
+    }
+
+    private static func repeatMarkerLayouts(
+        for measure: Measure,
+        chart: Chart,
+        staffFrame: CGRect
+    ) -> [LeadSheetRepeatMarkerLayout] {
+        let staffSpace = max(CGFloat(1), staffFrame.height / 4)
+        let markerWidth = max(CGFloat(12), staffSpace * 1.6)
+
+        return chart.roadmapObjects
+            .filter { $0.type == .repeatSpan }
+            .flatMap { roadmapObject -> [LeadSheetRepeatMarkerLayout] in
+                var layouts: [LeadSheetRepeatMarkerLayout] = []
+                if roadmapObject.startMeasureID == measure.id {
+                    layouts.append(
+                        repeatMarkerLayout(
+                            for: roadmapObject,
+                            edge: .leading,
+                            centerX: staffFrame.minX,
+                            staffFrame: staffFrame,
+                            markerWidth: markerWidth
+                        )
+                    )
+                }
+
+                if roadmapObject.endMeasureID == measure.id {
+                    layouts.append(
+                        repeatMarkerLayout(
+                            for: roadmapObject,
+                            edge: .trailing,
+                            centerX: staffFrame.maxX,
+                            staffFrame: staffFrame,
+                            markerWidth: markerWidth
+                        )
+                    )
+                }
+
+                return layouts
+            }
+    }
+
+    private static func repeatMarkerLayout(
+        for roadmapObject: RoadmapObject,
+        edge: LeadSheetRepeatMarkerLayout.Edge,
+        centerX: CGFloat,
+        staffFrame: CGRect,
+        markerWidth: CGFloat
+    ) -> LeadSheetRepeatMarkerLayout {
+        LeadSheetRepeatMarkerLayout(
+            roadmapObjectID: roadmapObject.id,
+            edge: edge,
+            frame: CGRect(
+                x: centerX - markerWidth / 2,
+                y: staffFrame.minY,
+                width: markerWidth,
+                height: staffFrame.height
+            )
+        )
+    }
+
+    private static func cueTextLayouts(
+        for measure: Measure,
+        chart: Chart,
+        measureFrame: CGRect,
+        chordBandFrame: CGRect,
+        staffFrame: CGRect
+    ) -> [LeadSheetCueTextLayout] {
+        chart.cueTexts
+            .filter { $0.anchorMeasureID == measure.id }
+            .enumerated()
+            .map { cueIndex, cueText in
+                LeadSheetCueTextLayout(
+                    id: cueText.id,
+                    text: cueText.text,
+                    frame: cueTextFrame(
+                        for: cueText,
+                        cueIndex: cueIndex,
+                        measureFrame: measureFrame,
+                        chordBandFrame: chordBandFrame,
+                        staffFrame: staffFrame
+                    ),
+                    position: cueText.position,
+                    emphasis: cueText.emphasis
+                )
+            }
+    }
+
+    private static func cueTextFrame(
+        for cueText: CueText,
+        cueIndex: Int,
+        measureFrame: CGRect,
+        chordBandFrame: CGRect,
+        staffFrame: CGRect
+    ) -> CGRect {
+        let lineHeight: CGFloat = 17
+        let lineGap: CGFloat = 2
+        let offset = CGFloat(cueIndex) * (lineHeight + lineGap)
+        let width = max(1, staffFrame.width - 12)
+        let leadingFrame = CGRect(
+            x: measureFrame.minX + 4,
+            y: staffFrame.minY,
+            width: min(58, max(1, staffFrame.width - 8)),
+            height: lineHeight
+        )
+        let trailingFrame = CGRect(
+            x: max(measureFrame.minX + 4, staffFrame.maxX - min(58, max(1, staffFrame.width - 8)) - 4),
+            y: staffFrame.minY,
+            width: min(58, max(1, staffFrame.width - 8)),
+            height: lineHeight
+        )
+
+        switch cueText.position {
+        case .above:
+            if chordBandFrame.intersects(staffFrame) {
+                return CGRect(
+                    x: staffFrame.minX + 6,
+                    y: min(measureFrame.maxY - lineHeight - 2, staffFrame.minY + 4 + offset),
+                    width: width,
+                    height: lineHeight
+                )
+            }
+
+            return CGRect(
+                x: staffFrame.minX + 6,
+                y: max(measureFrame.minY + 2, chordBandFrame.maxY - lineHeight - 2 - offset),
+                width: width,
+                height: lineHeight
+            )
+        case .below:
+            return CGRect(
+                x: staffFrame.minX + 6,
+                y: min(measureFrame.maxY - lineHeight - 2, staffFrame.maxY + 5 + offset),
+                width: width,
+                height: lineHeight
+            )
+        case .leadingEdge:
+            return leadingFrame.offsetBy(dx: 0, dy: offset)
+        case .trailingEdge:
+            return trailingFrame.offsetBy(dx: 0, dy: offset)
+        }
     }
 
     private static func estimatedChordTextWidth(for text: String) -> CGFloat {

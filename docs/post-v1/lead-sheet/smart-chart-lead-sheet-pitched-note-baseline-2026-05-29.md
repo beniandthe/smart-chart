@@ -1,9 +1,9 @@
 # Smart Chart Lead Sheet Pitched-Note Baseline
 
-Status: implemented locally; richer Lead Sheet systems deferred
+Status: implemented locally; richer Lead Sheet systems deferred until after V1
 Date: 2026-05-29
 Branch: `codex/rhythm-section-core-authoring`
-Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
+Source of truth: `../../smart-chart-sprint-source-of-truth.md`
 
 ## Purpose
 

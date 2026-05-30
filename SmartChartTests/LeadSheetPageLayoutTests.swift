@@ -259,6 +259,130 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertNotNil(try XCTUnwrap(firstSystem.measures.first).freehandBelowFrame)
     }
 
+    func testRhythmSectionCueTextRendersBelowSelectedMeasure() throws {
+        var chart = Chart.blank(title: "Hits", measureCount: 2, layoutStyle: .rhythmSectionSheet)
+        let measureID = chart.measures[1].id
+        let cueTextID = try XCTUnwrap(
+            chart.addCueText("stop time", anchorMeasureID: measureID, position: .below)
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let measure = try XCTUnwrap(layout.systems.first?.measures.first { $0.sourceMeasureID == measureID })
+        let cueTextLayout = try XCTUnwrap(measure.cueTextLayouts.first)
+
+        XCTAssertEqual(cueTextLayout.id, cueTextID)
+        XCTAssertEqual(cueTextLayout.text, "stop time")
+        XCTAssertEqual(cueTextLayout.position, .below)
+        XCTAssertGreaterThan(cueTextLayout.frame.minY, measure.staffFrame.maxY)
+        XCTAssertLessThanOrEqual(cueTextLayout.frame.maxX, measure.staffFrame.maxX)
+    }
+
+    func testSimpleChordSheetCueTextRendersAsSecondaryMeasureText() throws {
+        var chart = Chart.blank(title: "Simple Cue", measureCount: 1, layoutStyle: .simpleChordSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = try XCTUnwrap(
+            chart.addCueText("freely", anchorMeasureID: measureID, position: .above, emphasis: .subtle)
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let measure = try XCTUnwrap(firstSystem.measures.first)
+        let cueTextLayout = try XCTUnwrap(measure.cueTextLayouts.first)
+
+        XCTAssertTrue(firstSystem.staffLineYPositions.isEmpty)
+        XCTAssertEqual(cueTextLayout.text, "freely")
+        XCTAssertEqual(cueTextLayout.emphasis, .subtle)
+        XCTAssertTrue(measure.frame.contains(CGPoint(x: cueTextLayout.frame.midX, y: cueTextLayout.frame.midY)))
+        XCTAssertLessThan(cueTextLayout.frame.midY, measure.staffFrame.midY)
+    }
+
+    func testSimpleChordSheetRepeatSpanAddsCompactEdgeMarkers() throws {
+        var chart = Chart.blank(title: "Simple Repeats", measureCount: 2, layoutStyle: .simpleChordSheet)
+        let startMeasureID = chart.measures[0].id
+        let endMeasureID = chart.measures[1].id
+        let repeatID = try XCTUnwrap(
+            chart.addRepeatSpan(startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let startMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == startMeasureID })
+        let endMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == endMeasureID })
+        let startMarker = try XCTUnwrap(startMeasure.repeatMarkerLayouts.first)
+        let endMarker = try XCTUnwrap(endMeasure.repeatMarkerLayouts.first)
+
+        XCTAssertTrue(firstSystem.staffLineYPositions.isEmpty)
+        XCTAssertNil(firstSystem.roadmapText)
+        XCTAssertNil(firstSystem.roadmapTextFrame)
+        XCTAssertEqual(startMarker.roadmapObjectID, repeatID)
+        XCTAssertEqual(startMarker.edge, .leading)
+        XCTAssertEqual(startMarker.frame.midX, startMeasure.staffFrame.minX, accuracy: 0.001)
+        XCTAssertEqual(startMarker.frame.midX, try XCTUnwrap(firstSystem.measures.first?.frame.minX), accuracy: 0.001)
+        XCTAssertEqual(endMarker.roadmapObjectID, repeatID)
+        XCTAssertEqual(endMarker.edge, .trailing)
+        XCTAssertEqual(endMarker.frame.midX, endMeasure.staffFrame.maxX, accuracy: 0.001)
+    }
+
+    func testRhythmSectionRepeatSpanAddsNotationEdgeMarkers() throws {
+        var chart = Chart.blank(title: "Rhythm Repeats", measureCount: 2, layoutStyle: .rhythmSectionSheet)
+        let startMeasureID = chart.measures[0].id
+        let endMeasureID = chart.measures[1].id
+        _ = try XCTUnwrap(
+            chart.addRepeatSpan(startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let startMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == startMeasureID })
+        let endMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == endMeasureID })
+        let startMarker = try XCTUnwrap(startMeasure.repeatMarkerLayouts.first)
+        let endMarker = try XCTUnwrap(endMeasure.repeatMarkerLayouts.first)
+
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertNil(firstSystem.roadmapText)
+        XCTAssertNil(firstSystem.roadmapTextFrame)
+        XCTAssertEqual(startMarker.edge, .leading)
+        XCTAssertEqual(startMarker.frame.minY, startMeasure.staffFrame.minY, accuracy: 0.001)
+        XCTAssertEqual(startMarker.frame.maxY, startMeasure.staffFrame.maxY, accuracy: 0.001)
+        XCTAssertEqual(endMarker.edge, .trailing)
+        XCTAssertEqual(endMarker.frame.minY, endMeasure.staffFrame.minY, accuracy: 0.001)
+        XCTAssertEqual(endMarker.frame.maxY, endMeasure.staffFrame.maxY, accuracy: 0.001)
+    }
+
+    func testOneMeasureRepeatSpanAddsLeadingAndTrailingMarkersToSameMeasure() throws {
+        var chart = Chart.blank(title: "One Bar Repeat", measureCount: 1, layoutStyle: .rhythmSectionSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        _ = try XCTUnwrap(
+            chart.addRepeatSpan(startMeasureID: measureID, endMeasureID: measureID)
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let measure = try XCTUnwrap(layout.systems.first?.measures.first)
+
+        XCTAssertEqual(Set(measure.repeatMarkerLayouts.map(\.edge)), [.leading, .trailing])
+        XCTAssertEqual(measure.repeatMarkerLayouts.count, 2)
+    }
+
     func testRhythmSectionSheetPreservesCurrentRhythmAndChordWorkflow() throws {
         var chart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
         let measureID = try XCTUnwrap(chart.measures.first?.id)
@@ -304,6 +428,98 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertEqual(firstMeasure.chordLayouts[0].snapGuideTarget.x, firstMeasure.noteLayouts[0].noteheadFrame.midX, accuracy: 0.001)
         XCTAssertEqual(firstMeasure.chordLayouts[1].snapGuideTarget.x, firstMeasure.noteLayouts[2].noteheadFrame.midX, accuracy: 0.001)
         XCTAssertTrue(layout.freehandSymbolLayouts(for: chart).isEmpty)
+    }
+
+    func testSimpleChordSheetExportReadinessKeepsStructuredObjectsReadable() throws {
+        var chart = Chart.blank(title: "Simple Export Proof", measureCount: 4, layoutStyle: .simpleChordSheet)
+        let measureIDs = chart.measures.map(\.id)
+        chart.addSectionLabel(text: "Intro")
+        _ = try XCTUnwrap(chart.addRepeatSpan(startMeasureID: measureIDs[0], endMeasureID: measureIDs[3]))
+        _ = try XCTUnwrap(chart.addCueText("freely", anchorMeasureID: measureIDs[1], position: .above, emphasis: .subtle))
+        _ = try XCTUnwrap(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureIDs[0],
+                lane: .aboveMeasure,
+                normalizedFrame: FreehandSymbolNormalizedFrame(x: 0.1, y: 0.1, width: 0.3, height: 0.4),
+                drawingData: Data([1, 2, 3])
+            )
+        )
+        try appendChord("C", to: measureIDs[0], in: &chart, atFraction: 0.05)
+        try appendChord("F", to: measureIDs[1], in: &chart, atFraction: 0.05)
+        try appendChord("G/B", to: measureIDs[2], in: &chart, atFraction: 0.05)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == measureIDs[0] })
+        let secondMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == measureIDs[1] })
+        let cueTextLayout = try XCTUnwrap(secondMeasure.cueTextLayouts.first)
+        let freehandLayout = try XCTUnwrap(layout.freehandSymbolLayouts(for: chart).first)
+
+        XCTAssertNil(layout.header.keyFrame)
+        XCTAssertTrue(layout.systems.allSatisfy(\.staffLineYPositions.isEmpty))
+        XCTAssertEqual(firstSystem.sectionText, "Intro")
+        XCTAssertEqual(firstSystem.measures.flatMap(\.chordLayouts).map(\.text), ["C", "F", "G/B"])
+        XCTAssertEqual(firstMeasure.repeatMarkerLayouts.first?.edge, .leading)
+        XCTAssertEqual(firstSystem.measures.last?.repeatMarkerLayouts.first?.edge, .trailing)
+        XCTAssertEqual(cueTextLayout.text, "freely")
+        XCTAssertTrue(secondMeasure.frame.contains(CGPoint(x: cueTextLayout.frame.midX, y: cueTextLayout.frame.midY)))
+        XCTAssertTrue(try XCTUnwrap(firstMeasure.freehandAboveFrame).contains(freehandLayout.frame))
+        XCTAssertFalse(firstMeasure.chordBandFrame.intersects(freehandLayout.frame))
+    }
+
+    func testRhythmSectionExportReadinessKeepsProfessionalHitChartHierarchy() throws {
+        var chart = Chart.blank(title: "Rhythm Export Proof", measureCount: 4, layoutStyle: .rhythmSectionSheet)
+        let measureIDs = chart.measures.map(\.id)
+        chart.addSectionLabel(text: "A")
+        _ = try XCTUnwrap(chart.addRepeatSpan(startMeasureID: measureIDs[0], endMeasureID: measureIDs[3]))
+        _ = try XCTUnwrap(chart.addCueText("stop time", anchorMeasureID: measureIDs[1], position: .below))
+        _ = try XCTUnwrap(
+            chart.addFreehandSymbol(
+                anchorMeasureID: measureIDs[2],
+                lane: .belowMeasure,
+                normalizedFrame: FreehandSymbolNormalizedFrame(x: 0.2, y: 0.2, width: 0.25, height: 0.35),
+                drawingData: Data([4, 5, 6])
+            )
+        )
+        XCTAssertTrue(chart.setMeasureRhythmMap([.quarter, .quarter, .quarter, .quarter], for: measureIDs[0]))
+        XCTAssertTrue(chart.setMeasureRhythmMap([.dottedHalf, .eighth, .eighth], for: measureIDs[1]))
+        try appendChord("C7", to: measureIDs[0], in: &chart, atFraction: 0.05)
+        try appendChord("F7", to: measureIDs[1], in: &chart, atFraction: 0.05)
+        try appendChord("G7sus", to: measureIDs[2], in: &chart, atFraction: 0.05)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let allMeasures = layout.systems.flatMap(\.measures)
+        let firstMeasure = try XCTUnwrap(allMeasures.first { $0.sourceMeasureID == measureIDs[0] })
+        let secondMeasure = try XCTUnwrap(allMeasures.first { $0.sourceMeasureID == measureIDs[1] })
+        let thirdMeasure = try XCTUnwrap(allMeasures.first { $0.sourceMeasureID == measureIDs[2] })
+        let fourthMeasure = try XCTUnwrap(allMeasures.first { $0.sourceMeasureID == measureIDs[3] })
+        let cueTextLayout = try XCTUnwrap(secondMeasure.cueTextLayouts.first)
+        let freehandLayout = try XCTUnwrap(layout.freehandSymbolLayouts(for: chart).first)
+
+        XCTAssertNil(layout.header.keyFrame)
+        XCTAssertNotNil(layout.header.meterFrame)
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertEqual(firstSystem.sectionText, "A")
+        XCTAssertEqual(allMeasures.flatMap(\.chordLayouts).map(\.text), ["C7", "F7", "G7sus"])
+        XCTAssertEqual(firstMeasure.repeatMarkerLayouts.first?.edge, .leading)
+        XCTAssertEqual(fourthMeasure.repeatMarkerLayouts.first?.edge, .trailing)
+        XCTAssertEqual(firstMeasure.noteLayouts.count, 4)
+        XCTAssertEqual(secondMeasure.noteLayouts.count, 3)
+        XCTAssertTrue(firstSystem.measures.flatMap(\.chordLayouts).allSatisfy { $0.frame.maxY < firstMeasure.staffFrame.minY })
+        XCTAssertGreaterThan(cueTextLayout.frame.minY, secondMeasure.staffFrame.maxY)
+        XCTAssertFalse(cueTextLayout.frame.intersects(secondMeasure.staffFrame))
+        XCTAssertTrue(try XCTUnwrap(thirdMeasure.freehandBelowFrame).contains(freehandLayout.frame))
+        XCTAssertFalse(thirdMeasure.chordBandFrame.intersects(freehandLayout.frame))
+        XCTAssertFalse(thirdMeasure.staffFrame.intersects(freehandLayout.frame))
     }
 
     func testRhythmSectionFreehandSymbolLayoutsResolveBelowStaffOnly() throws {
@@ -1018,6 +1234,22 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         let outsidePaperLasso = CGRect(x: 10, y: 10, width: 40, height: 40)
 
         XCTAssertNil(layout.noteSelection(in: outsidePaperLasso))
+    }
+
+    private func appendChord(
+        _ text: String,
+        to measureID: UUID,
+        in chart: inout Chart,
+        atFraction fraction: Double
+    ) throws {
+        XCTAssertTrue(
+            chart.appendRecognizedChord(
+                try ChordSymbolParser.parse(text),
+                rawInput: text,
+                to: measureID,
+                atFraction: fraction
+            )
+        )
     }
 
     private func makeBlankLeadSheet() -> Chart {

@@ -1,7 +1,9 @@
 # Smart Chart — Jazz Lead-Sheet Build Plan
 
-Status: active implementation sequence
+Status: historical post-V1 Lead Sheet reference
 Date: 2026-04-24
+
+Archive note: this is preserved as historical Lead Sheet concept work only. It is not active for V1 and should not make the post-V1 Lead Sheet direction jazz-only.
 
 This is the working plan for the app as it exists now.
 

@@ -164,6 +164,18 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func deleteMeasure(id measureID: UUID) -> Bool {
+        guard measures.count > 1,
+              let location = measureLocation(id: measureID) else {
+            return false
+        }
+
+        removeMeasure(at: location)
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
     mutating func setPageHandwrittenNotationDrawing(_ drawingData: Data?) -> Bool {
         let normalizedData = drawingData?.isEmpty == true ? nil : drawingData
         guard pageHandwrittenNotationData != normalizedData else {
@@ -694,27 +706,63 @@ extension Chart {
         updatedAt = .now
     }
 
-    mutating func addCueText(_ text: String) {
-        guard !systems.isEmpty, !systems[0].measures.isEmpty else {
-            return
+    @discardableResult
+    mutating func addCueText(
+        _ text: String,
+        anchorMeasureID: UUID? = nil,
+        position: CuePosition = .below,
+        emphasis: CueEmphasis = .normal
+    ) -> UUID? {
+        let normalizedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedText.isEmpty else {
+            return nil
         }
 
-        let firstMeasure = systems[0].measures[0]
+        let resolvedMeasureID = anchorMeasureID ?? systems.first?.measures.first?.id
+        guard let resolvedMeasureID,
+              measureLocation(id: resolvedMeasureID) != nil else {
+            return nil
+        }
+
         let cue = CueText(
             id: UUID(),
-            text: text,
-            anchorMeasureID: firstMeasure.id,
-            position: .below,
-            emphasis: .normal,
-            rawInput: text
+            text: normalizedText,
+            anchorMeasureID: resolvedMeasureID,
+            position: position,
+            emphasis: emphasis,
+            rawInput: normalizedText
         )
 
-        cueTexts.append(
-            cue
-        )
-        systems[0].measures[0].cueTextIDs.append(cue.id)
-
+        cueTexts.append(cue)
+        attachCueText(cue.id, to: resolvedMeasureID)
         updatedAt = .now
+        return cue.id
+    }
+
+    func cueText(id cueTextID: UUID) -> CueText? {
+        cueTexts.first { $0.id == cueTextID }
+    }
+
+    func cueTextIDs(attachedTo measureID: UUID) -> [UUID] {
+        cueTexts
+            .filter { $0.anchorMeasureID == measureID }
+            .map(\.id)
+    }
+
+    @discardableResult
+    mutating func deleteCueTexts(attachedTo measureID: UUID) -> Int {
+        let cueTextIDs = cueTextIDs(attachedTo: measureID)
+        guard !cueTextIDs.isEmpty else {
+            return 0
+        }
+
+        let cueTextIDSet = Set(cueTextIDs)
+        cueTexts.removeAll { cueTextIDSet.contains($0.id) }
+        for cueTextID in cueTextIDs {
+            removeCueTextIDFromMeasures(cueTextID)
+        }
+        updatedAt = .now
+        return cueTextIDs.count
     }
 
     mutating func addRoadmapObject(_ type: RoadmapType, displayText: String? = nil) {
@@ -738,6 +786,115 @@ extension Chart {
         systems[0].measures[0].roadmapObjectIDs.append(roadmap.id)
 
         updatedAt = .now
+    }
+
+    func roadmapObject(id roadmapObjectID: UUID) -> RoadmapObject? {
+        roadmapObjects.first { $0.id == roadmapObjectID }
+    }
+
+    @discardableResult
+    mutating func addRepeatSpan(startMeasureID: UUID, endMeasureID: UUID) -> UUID? {
+        guard let startLocation = measureLocation(id: startMeasureID),
+              let endLocation = measureLocation(id: endMeasureID),
+              flattenedMeasureIndex(for: startLocation) <= flattenedMeasureIndex(for: endLocation) else {
+            return nil
+        }
+
+        if let existingRepeatSpan = roadmapObjects.first(where: {
+            $0.type == .repeatSpan
+                && $0.startMeasureID == startMeasureID
+                && $0.endMeasureID == endMeasureID
+        }) {
+            return existingRepeatSpan.id
+        }
+
+        let repeatSpan = RoadmapObject(
+            id: UUID(),
+            type: .repeatSpan,
+            startMeasureID: startMeasureID,
+            endMeasureID: endMeasureID,
+            anchorSystemID: systems[startLocation.systemIndex].id,
+            placement: .snappedTop,
+            displayText: nil,
+            count: nil,
+            linkedTargetID: nil,
+            rawInput: RoadmapType.repeatSpan.defaultDisplayText
+        )
+
+        roadmapObjects.append(repeatSpan)
+        attachRoadmapObject(repeatSpan.id, to: startMeasureID)
+        attachRoadmapObject(repeatSpan.id, to: endMeasureID)
+        updatedAt = .now
+        return repeatSpan.id
+    }
+
+    @discardableResult
+    mutating func updateRepeatSpan(
+        _ roadmapObjectID: UUID,
+        startMeasureID: UUID,
+        endMeasureID: UUID
+    ) -> Bool {
+        guard let roadmapObjectIndex = roadmapObjects.firstIndex(where: { $0.id == roadmapObjectID }),
+              roadmapObjects[roadmapObjectIndex].type == .repeatSpan,
+              let startLocation = measureLocation(id: startMeasureID),
+              let endLocation = measureLocation(id: endMeasureID),
+              flattenedMeasureIndex(for: startLocation) <= flattenedMeasureIndex(for: endLocation) else {
+            return false
+        }
+
+        var repeatSpan = roadmapObjects[roadmapObjectIndex]
+        guard repeatSpan.startMeasureID != startMeasureID
+            || repeatSpan.endMeasureID != endMeasureID
+            || repeatSpan.anchorSystemID != systems[startLocation.systemIndex].id else {
+            return false
+        }
+
+        repeatSpan.startMeasureID = startMeasureID
+        repeatSpan.endMeasureID = endMeasureID
+        repeatSpan.anchorSystemID = systems[startLocation.systemIndex].id
+        roadmapObjects[roadmapObjectIndex] = repeatSpan
+        removeRoadmapObjectIDFromMeasures(roadmapObjectID)
+        attachRoadmapObject(roadmapObjectID, to: startMeasureID)
+        attachRoadmapObject(roadmapObjectID, to: endMeasureID)
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func deleteRoadmapObject(_ roadmapObjectID: UUID) -> Bool {
+        guard let roadmapObjectIndex = roadmapObjects.firstIndex(where: { $0.id == roadmapObjectID }) else {
+            return false
+        }
+
+        roadmapObjects.remove(at: roadmapObjectIndex)
+        removeRoadmapObjectIDFromMeasures(roadmapObjectID)
+        updatedAt = .now
+        return true
+    }
+
+    func repeatSpanIDs(attachedTo measureID: UUID) -> [UUID] {
+        roadmapObjects
+            .filter {
+                $0.type == .repeatSpan
+                    && ($0.startMeasureID == measureID || $0.endMeasureID == measureID)
+            }
+            .map(\.id)
+    }
+
+    @discardableResult
+    mutating func deleteRepeatSpans(attachedTo measureID: UUID) -> Int {
+        let repeatSpanIDs = repeatSpanIDs(attachedTo: measureID)
+        guard !repeatSpanIDs.isEmpty else {
+            return 0
+        }
+
+        let repeatSpanIDSet = Set(repeatSpanIDs)
+        roadmapObjects.removeAll { repeatSpanIDSet.contains($0.id) }
+        for repeatSpanID in repeatSpanIDs {
+            removeRoadmapObjectIDFromMeasures(repeatSpanID)
+        }
+        updatedAt = .now
+        return repeatSpanIDs.count
     }
 
     func measure(id: UUID) -> Measure? {
@@ -859,7 +1016,8 @@ extension Chart {
             return
         }
 
-        flattenedMeasures.remove(at: removalIndex)
+        let removedMeasure = flattenedMeasures.remove(at: removalIndex)
+        removeAnnotations(attachedTo: removedMeasure, fromRemainingMeasures: &flattenedMeasures)
         rebuildSystems(using: flattenedMeasures)
     }
 
@@ -901,6 +1059,75 @@ extension Chart {
             }
 
         return precedingMeasureCount + location.measureIndex
+    }
+
+    private mutating func attachCueText(_ cueTextID: UUID, to measureID: UUID) {
+        guard let location = measureLocation(id: measureID),
+              !systems[location.systemIndex].measures[location.measureIndex].cueTextIDs.contains(cueTextID) else {
+            return
+        }
+
+        systems[location.systemIndex].measures[location.measureIndex].cueTextIDs.append(cueTextID)
+    }
+
+    private mutating func removeCueTextIDFromMeasures(_ cueTextID: UUID) {
+        for systemIndex in systems.indices {
+            for measureIndex in systems[systemIndex].measures.indices {
+                systems[systemIndex].measures[measureIndex].cueTextIDs.removeAll { $0 == cueTextID }
+            }
+        }
+    }
+
+    private mutating func attachRoadmapObject(_ roadmapObjectID: UUID, to measureID: UUID) {
+        guard let location = measureLocation(id: measureID),
+              !systems[location.systemIndex].measures[location.measureIndex].roadmapObjectIDs.contains(roadmapObjectID) else {
+            return
+        }
+
+        systems[location.systemIndex].measures[location.measureIndex].roadmapObjectIDs.append(roadmapObjectID)
+    }
+
+    private mutating func removeRoadmapObjectIDFromMeasures(_ roadmapObjectID: UUID) {
+        for systemIndex in systems.indices {
+            for measureIndex in systems[systemIndex].measures.indices {
+                systems[systemIndex].measures[measureIndex].roadmapObjectIDs.removeAll { $0 == roadmapObjectID }
+            }
+        }
+    }
+
+    private mutating func removeAnnotations(
+        attachedTo removedMeasure: Measure,
+        fromRemainingMeasures remainingMeasures: inout [Measure]
+    ) {
+        let removedMeasureID = removedMeasure.id
+        var removedCueTextIDs = Set(removedMeasure.cueTextIDs)
+        removedCueTextIDs.formUnion(
+            cueTexts
+                .filter { $0.anchorMeasureID == removedMeasureID }
+                .map(\.id)
+        )
+
+        var removedRoadmapObjectIDs = Set(removedMeasure.roadmapObjectIDs)
+        removedRoadmapObjectIDs.formUnion(
+            roadmapObjects
+                .filter {
+                    $0.startMeasureID == removedMeasureID
+                        || $0.endMeasureID == removedMeasureID
+                }
+                .map(\.id)
+        )
+
+        sectionLabels.removeAll { $0.anchorMeasureID == removedMeasureID }
+        cueTexts.removeAll {
+            $0.anchorMeasureID == removedMeasureID || removedCueTextIDs.contains($0.id)
+        }
+        roadmapObjects.removeAll { removedRoadmapObjectIDs.contains($0.id) }
+        freehandSymbols.removeAll { $0.anchorMeasureID == removedMeasureID }
+
+        for measureIndex in remainingMeasures.indices {
+            remainingMeasures[measureIndex].cueTextIDs.removeAll { removedCueTextIDs.contains($0) }
+            remainingMeasures[measureIndex].roadmapObjectIDs.removeAll { removedRoadmapObjectIDs.contains($0) }
+        }
     }
 
     private func effectiveMeter(for measure: Measure) -> Meter {
