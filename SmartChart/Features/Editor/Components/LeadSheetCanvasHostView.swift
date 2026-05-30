@@ -2520,24 +2520,24 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecognizerDelegate {
     weak var canvasView: LeadSheetCanvasUIKitView?
     weak var scrollView: UIScrollView?
-    private lazy var panBlocker: UIPanGestureRecognizer = {
-        let recognizer = UIPanGestureRecognizer(target: self, action: #selector(handleBlockerGesture(_:)))
-        configureBlocker(recognizer)
-        return recognizer
-    }()
-    private lazy var pinchBlocker: UIPinchGestureRecognizer = {
-        let recognizer = UIPinchGestureRecognizer(target: self, action: #selector(handleBlockerGesture(_:)))
-        configureBlocker(recognizer)
-        return recognizer
-    }()
+    private var panBlocker: UIPanGestureRecognizer?
+    private var pinchBlocker: UIPinchGestureRecognizer?
 
     func install(in scrollView: UIScrollView, canvasView: LeadSheetCanvasUIKitView) {
         if self.scrollView !== scrollView {
             uninstall()
             self.scrollView = scrollView
+
+            let panBlocker = UIPanGestureRecognizer(target: self, action: #selector(handleBlockerGesture(_:)))
+            configureBlocker(panBlocker)
+            self.panBlocker = panBlocker
             scrollView.addGestureRecognizer(panBlocker)
             scrollView.panGestureRecognizer.require(toFail: panBlocker)
+
             if let pinchGestureRecognizer = scrollView.pinchGestureRecognizer {
+                let pinchBlocker = UIPinchGestureRecognizer(target: self, action: #selector(handleBlockerGesture(_:)))
+                configureBlocker(pinchBlocker)
+                self.pinchBlocker = pinchBlocker
                 scrollView.addGestureRecognizer(pinchBlocker)
                 pinchGestureRecognizer.require(toFail: pinchBlocker)
             }
@@ -2552,12 +2552,18 @@ private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecogni
 
     func uninstall() {
         if let scrollView {
-            scrollView.removeGestureRecognizer(panBlocker)
-            scrollView.removeGestureRecognizer(pinchBlocker)
+            if let panBlocker {
+                scrollView.removeGestureRecognizer(panBlocker)
+            }
+            if let pinchBlocker {
+                scrollView.removeGestureRecognizer(pinchBlocker)
+            }
         }
 
         scrollView = nil
         canvasView = nil
+        panBlocker = nil
+        pinchBlocker = nil
     }
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
@@ -2598,7 +2604,15 @@ private final class LeadSheetParentScrollGestureGate: NSObject, UIGestureRecogni
     }
 
     private func isBlockerGesture(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        gestureRecognizer === panBlocker || gestureRecognizer === pinchBlocker
+        if let panBlocker,
+           gestureRecognizer === panBlocker {
+            return true
+        }
+        if let pinchBlocker,
+           gestureRecognizer === pinchBlocker {
+            return true
+        }
+        return false
     }
 
     private func configureBlocker(_ recognizer: UIGestureRecognizer) {
