@@ -501,6 +501,24 @@ Design note:
 
 - This is the first small pass toward a unified chart visual grammar. The larger follow-up is to consolidate tool/symbol/header/annotation styling into one explicit per-style visual policy instead of letting each feature define its own typography, spacing, and symbol treatment independently.
 
+## Simple iReal-Style Visual Cohesion
+
+Implemented slice:
+
+- The provided iReal Pro screenshot is treated as a feel reference, not a 1:1 compatibility target.
+- Simple Chord Sheet now uses a tighter chart-header hierarchy: compact title-case title, style/tempo text on the left, composer/credit on the right, and no duplicated key/meter header block.
+- The first time signature still appears before the first measure inside the shared left gutter; later meter changes stay inline inside the measure they change.
+- Simple rendering now uses white paper, larger bold size-fitting chord text, and stronger chord-grid identity while keeping the measured grid and structured object model unchanged.
+- Simple section labels render as black badges sized to their label text. One-letter sections keep the square iReal-style look; longer labels such as `Intro` remain readable and searchable in PDF export.
+- The pass keeps Rhythm Section and Lead Sheet visual behavior separate from Simple Chord Sheet.
+
+Verification:
+
+- Focused SwiftPM `LeadSheetPageLayoutTests` passed with `58` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `417` tests, `36` skipped, and `0` failures.
+- Focused simulator layout/PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `63` tests and `0` failures.
+- Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only, and screenshot capture succeeded.
+
 Verification:
 
 - Focused SwiftPM `LeadSheetPageLayoutTests` passed with `57` tests and `0` failures after adding Simple meter-gutter and Simple meter-change layout coverage.

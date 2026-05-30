@@ -41,6 +41,32 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertLessThan(centerMetadataFrame.maxX, composerFrame.minX)
     }
 
+    func testSimpleChordSheetHeaderUsesCompactChartTitleTreatment() throws {
+        var chart = Chart.blank(
+            title: "Almost Like Being In Love",
+            measureCount: 4,
+            layoutStyle: .simpleChordSheet
+        )
+        chart.styleNote = "(Medium Swing)"
+        chart.composerCredit = "Frederick Loewe"
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let styleNoteFrame = try XCTUnwrap(layout.header.styleNoteFrame)
+        let composerFrame = try XCTUnwrap(layout.header.composerFrame)
+
+        XCTAssertNil(layout.header.keyFrame)
+        XCTAssertNil(layout.header.meterFrame)
+        XCTAssertEqual(layout.header.titleFrame.midX, layout.paperFrame.midX, accuracy: 0.001)
+        XCTAssertLessThan(layout.header.titleFrame.height, 44)
+        XCTAssertEqual(styleNoteFrame.midY, composerFrame.midY, accuracy: 0.001)
+        XCTAssertLessThan(styleNoteFrame.maxX, layout.header.titleFrame.minX + layout.header.titleFrame.width * 0.34)
+        XCTAssertGreaterThan(composerFrame.minX, layout.header.titleFrame.maxX - layout.header.titleFrame.width * 0.34)
+    }
+
     func testNarrowEditorWidthKeepsPaperInsideVisiblePageBounds() {
         let chart = Chart.blank(title: "Chord Writing Test Chart", key: .cMajor, measureCount: 8)
 
@@ -247,7 +273,7 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         let firstChord = try XCTUnwrap(firstMeasure.chordLayouts.first)
 
         XCTAssertNil(layout.header.keyFrame)
-        XCTAssertNotNil(layout.header.meterFrame)
+        XCTAssertNil(layout.header.meterFrame)
         XCTAssertTrue(firstSystem.staffLineYPositions.isEmpty)
         XCTAssertNil(firstSystem.clefFrame)
         let timeSignatureFrame = try XCTUnwrap(firstSystem.timeSignatureFrame)
@@ -261,6 +287,7 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertGreaterThan(firstMeasure.staffFrame.height, firstMeasure.chordBandFrame.height)
         XCTAssertGreaterThanOrEqual(firstChord.frame.minY, firstMeasure.staffFrame.minY)
         XCTAssertLessThanOrEqual(firstChord.frame.maxY, firstMeasure.staffFrame.maxY)
+        XCTAssertGreaterThanOrEqual(firstChord.frame.width, 46)
         XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)
     }
 

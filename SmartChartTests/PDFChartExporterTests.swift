@@ -78,7 +78,7 @@ final class PDFChartExporterTests: XCTestCase {
         let documentText = document.string ?? ""
         let pageBounds = try XCTUnwrap(document.page(at: 0)?.bounds(for: .mediaBox))
 
-        XCTAssertTrue(documentText.contains("SIMPLE EXPORT PROOF"))
+        XCTAssertTrue(documentText.contains("Simple Export Proof"))
         XCTAssertTrue(documentText.contains("INTRO"))
         XCTAssertTrue(documentText.contains("C"))
         XCTAssertTrue(documentText.contains("F"))

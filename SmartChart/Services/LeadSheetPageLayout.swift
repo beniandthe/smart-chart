@@ -205,14 +205,52 @@ enum LeadSheetPageLayoutEngine {
         var headerMetadataTopSpacing: CGFloat { 6 }
         var headerMetadataHeight: CGFloat { 20 }
         var simpleLeadingMeterGutterWidth: CGFloat { 42 }
+        var simpleTitleFrameHeight: CGFloat { 36 }
+        var simpleMetadataHeight: CGFloat { 24 }
+        var simpleChordTextWidthScale: CGFloat { 2.1 }
+        var simpleMinimumChordTextWidth: CGFloat { 46 }
 
         func headerTitleFrame(in frame: CGRect) -> CGRect {
-            CGRect(
+            guard layoutStyle == .simpleChordSheet else {
+                return CGRect(
+                    x: frame.minX - headerTitleHorizontalBleed,
+                    y: frame.minY + headerTitleTopInset,
+                    width: frame.width + headerTitleHorizontalBleed * 2,
+                    height: headerTitleHeight
+                )
+            }
+
+            return CGRect(
                 x: frame.minX - headerTitleHorizontalBleed,
-                y: frame.minY + headerTitleTopInset,
+                y: frame.minY + 12,
                 width: frame.width + headerTitleHorizontalBleed * 2,
-                height: headerTitleHeight
+                height: simpleTitleFrameHeight
             )
+        }
+
+        func headerMetadataFrameY(after titleFrame: CGRect) -> CGFloat {
+            if layoutStyle == .simpleChordSheet {
+                return titleFrame.maxY - 2
+            }
+
+            return titleFrame.maxY + headerMetadataTopSpacing
+        }
+
+        var resolvedHeaderMetadataHeight: CGFloat {
+            layoutStyle == .simpleChordSheet ? simpleMetadataHeight : headerMetadataHeight
+        }
+
+        var showsHeaderMeter: Bool {
+            layoutStyle != .simpleChordSheet
+        }
+
+        func estimatedChordTextWidth(for text: String) -> CGFloat {
+            let baseWidth = LeadSheetPageLayoutEngine.estimatedChordTextWidth(for: text)
+            guard layoutStyle == .simpleChordSheet else {
+                return baseWidth
+            }
+
+            return max(simpleMinimumChordTextWidth, baseWidth * simpleChordTextWidthScale)
         }
 
         func simpleInitialTimeSignatureFrame(
@@ -307,8 +345,8 @@ enum LeadSheetPageLayoutEngine {
     ) -> LeadSheetHeaderLayout {
         let composerCredit = normalizedText(chart.composerCredit)
         let titleFrame = visualPolicy.headerTitleFrame(in: frame)
-        let metadataY = titleFrame.maxY + visualPolicy.headerMetadataTopSpacing
-        let metadataHeight = visualPolicy.headerMetadataHeight
+        let metadataY = visualPolicy.headerMetadataFrameY(after: titleFrame)
+        let metadataHeight = visualPolicy.resolvedHeaderMetadataHeight
         let sideMetadataWidth = min(220, frame.width * 0.32)
 
         let composerFrame: CGRect?
@@ -348,13 +386,18 @@ enum LeadSheetPageLayoutEngine {
         } else {
             keyFrame = nil
         }
-        let meterX = keyFrame == nil ? centerMetadataX : centerMetadataX + 88
-        let meterFrame = CGRect(
-            x: meterX,
-            y: metadataY,
-            width: keyFrame == nil ? centerMetadataWidth : 62,
-            height: metadataHeight
-        )
+        let meterFrame: CGRect?
+        if visualPolicy.showsHeaderMeter {
+            let meterX = keyFrame == nil ? centerMetadataX : centerMetadataX + 88
+            meterFrame = CGRect(
+                x: meterX,
+                y: metadataY,
+                width: keyFrame == nil ? centerMetadataWidth : 62,
+                height: metadataHeight
+            )
+        } else {
+            meterFrame = nil
+        }
 
         return LeadSheetHeaderLayout(
             frame: frame,
@@ -1077,7 +1120,8 @@ enum LeadSheetPageLayoutEngine {
                 chart: chart,
                 meter: meter,
                 chordBandFrame: chordBandFrame,
-                staffFrame: staffFrame
+                staffFrame: staffFrame,
+                visualPolicy: visualPolicy
             )
         }
         let noteLayouts = isSimpleChordSheet ? [] : noteLayouts(
@@ -1127,10 +1171,11 @@ enum LeadSheetPageLayoutEngine {
         chart: Chart,
         meter: Meter,
         chordBandFrame: CGRect,
-        staffFrame: CGRect
+        staffFrame: CGRect,
+        visualPolicy: VisualPolicy
     ) -> LeadSheetChordLayout {
         let event = placement.chordEvent.transposed(for: chart.defaultTranspositionView)
-        let textWidth = estimatedChordTextWidth(for: event.symbol.displayText)
+        let textWidth = visualPolicy.estimatedChordTextWidth(for: event.symbol.displayText)
         let usableWidth = staffFrame.width - 16
         let attackCenterX = beatAttackCenterX(
             startPosition: placement.startPosition,
@@ -1143,11 +1188,18 @@ enum LeadSheetPageLayoutEngine {
             max(chordBandFrame.minX + 1, attackCenterX - textWidth / 2),
             chordBandFrame.maxX - textWidth
         )
+        let resolvedChordX = max(chordBandFrame.minX + 1, chordX)
+        let resolvedWidth = min(textWidth, max(1, chordBandFrame.maxX - resolvedChordX))
 
         return LeadSheetChordLayout(
             id: placement.chordEvent.id,
             text: event.symbol.displayText,
-            frame: CGRect(x: chordX, y: chordBandFrame.minY, width: textWidth, height: chordBandFrame.height),
+            frame: CGRect(
+                x: resolvedChordX,
+                y: chordBandFrame.minY,
+                width: resolvedWidth,
+                height: chordBandFrame.height
+            ),
             snapGuideTarget: CGPoint(x: attackCenterX, y: staffFrame.midY)
         )
     }

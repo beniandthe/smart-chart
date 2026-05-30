@@ -7,6 +7,7 @@ struct LeadSheetNotationRenderer {
 
     private var style: LeadSheetNotationStyle {
         LeadSheetNotationStyle(
+            layoutStyle: chart.layoutStyle,
             documentStyle: chart.stylePreset,
             notationFont: chart.notationFont,
             engravingPreset: chart.engravingPreset
@@ -35,9 +36,9 @@ struct LeadSheetNotationRenderer {
     func drawHeader(_ header: LeadSheetHeaderLayout) {
         let title = chart.title.trimmingCharacters(in: .whitespacesAndNewlines)
         drawText(
-            title.isEmpty ? "UNTITLED CHART" : title.uppercased(),
+            style.headerTitleText(title),
             in: header.titleFrame,
-            font: style.titleFont(size: 38),
+            font: style.titleFont(size: style.titleFontSize),
             color: style.inkColor,
             alignment: .center
         )
@@ -47,8 +48,8 @@ struct LeadSheetNotationRenderer {
             drawText(
                 composerCredit,
                 in: composerFrame,
-                font: style.metadataFont(size: 14),
-                color: style.inkColor.withAlphaComponent(0.8),
+                font: style.metadataFont(size: style.headerMetadataFontSize),
+                color: style.inkColor.withAlphaComponent(style.headerMetadataAlpha),
                 alignment: .right
             )
         }
@@ -58,8 +59,8 @@ struct LeadSheetNotationRenderer {
             drawText(
                 styleNote,
                 in: styleNoteFrame,
-                font: style.metadataFont(size: 14),
-                color: style.inkColor.withAlphaComponent(0.8)
+                font: style.metadataFont(size: style.headerMetadataFontSize),
+                color: style.inkColor.withAlphaComponent(style.headerMetadataAlpha)
             )
         }
 
@@ -67,8 +68,8 @@ struct LeadSheetNotationRenderer {
             drawText(
                 chart.documentKey.transposed(for: chart.defaultTranspositionView).displayText.uppercased(),
                 in: keyFrame,
-                font: style.metadataFont(size: 14),
-                color: style.inkColor.withAlphaComponent(0.8),
+                font: style.metadataFont(size: style.headerMetadataFontSize),
+                color: style.inkColor.withAlphaComponent(style.headerMetadataAlpha),
                 alignment: .center
             )
         }
@@ -77,14 +78,39 @@ struct LeadSheetNotationRenderer {
             drawText(
                 chart.defaultMeter.displayText,
                 in: meterFrame,
-                font: style.metadataFont(size: 14),
-                color: style.inkColor.withAlphaComponent(0.8),
+                font: style.metadataFont(size: style.headerMetadataFontSize),
+                color: style.inkColor.withAlphaComponent(style.headerMetadataAlpha),
                 alignment: .center
             )
         }
     }
 
     func drawSectionText(_ text: String, in frame: CGRect) {
+        if chart.layoutStyle == .simpleChordSheet {
+            let font = style.sectionBadgeFont(size: 15)
+            let label = text.uppercased()
+            let textWidth = (label as NSString).size(withAttributes: [.font: font]).width
+            let boxHeight = min(frame.height, 22)
+            let boxWidth = min(frame.width, max(boxHeight, ceil(textWidth) + 8))
+            let boxFrame = CGRect(
+                x: frame.minX,
+                y: frame.minY,
+                width: boxWidth,
+                height: boxHeight
+            )
+            let boxPath = UIBezierPath(rect: boxFrame)
+            style.inkColor.setFill()
+            boxPath.fill()
+            drawText(
+                label,
+                in: boxFrame.insetBy(dx: 2, dy: 0),
+                font: font,
+                color: style.paperFillColor,
+                alignment: .center
+            )
+            return
+        }
+
         drawText(
             text.uppercased(),
             in: frame,
@@ -247,10 +273,13 @@ struct LeadSheetNotationRenderer {
     }
 
     func drawChord(_ chordLayout: LeadSheetChordLayout) {
+        let font = style.chordFont(
+            size: style.chordFontSize(fitting: chordLayout.frame, text: chordLayout.text)
+        )
         drawText(
             chordLayout.text,
             in: chordLayout.frame,
-            font: style.chordFont(size: 18),
+            font: font,
             color: style.inkColor
         )
     }
@@ -647,6 +676,7 @@ struct LeadSheetNotationRenderer {
 }
 
 private struct LeadSheetNotationStyle {
+    let layoutStyle: ChartLayoutStyle
     let documentStyle: StylePreset
     let notationFont: NotationFontPreset
     let engravingPreset: EngravingPreset
@@ -712,6 +742,10 @@ private struct LeadSheetNotationStyle {
     }
 
     var paperFillColor: UIColor {
+        if layoutStyle == .simpleChordSheet {
+            return .white
+        }
+
         switch documentStyle {
         case .cleanStudio:
             return UIColor(white: 0.995, alpha: 1)
@@ -722,7 +756,31 @@ private struct LeadSheetNotationStyle {
         }
     }
 
+    var titleFontSize: CGFloat {
+        layoutStyle == .simpleChordSheet ? 24 : 38
+    }
+
+    var headerMetadataFontSize: CGFloat {
+        layoutStyle == .simpleChordSheet ? 18 : 14
+    }
+
+    var headerMetadataAlpha: CGFloat {
+        layoutStyle == .simpleChordSheet ? 0.92 : 0.8
+    }
+
+    func headerTitleText(_ rawTitle: String) -> String {
+        guard !rawTitle.isEmpty else {
+            return layoutStyle == .simpleChordSheet ? "Untitled Chart" : "UNTITLED CHART"
+        }
+
+        return layoutStyle == .simpleChordSheet ? rawTitle : rawTitle.uppercased()
+    }
+
     func titleFont(size: CGFloat) -> UIFont {
+        if layoutStyle == .simpleChordSheet {
+            return UIFont.systemFont(ofSize: size, weight: .bold)
+        }
+
         switch documentStyle {
         case .cleanStudio:
             return UIFont.systemFont(ofSize: size * 0.94, weight: .semibold)
@@ -734,6 +792,10 @@ private struct LeadSheetNotationStyle {
     }
 
     func metadataFont(size: CGFloat) -> UIFont {
+        if layoutStyle == .simpleChordSheet {
+            return UIFont.systemFont(ofSize: size, weight: .regular)
+        }
+
         switch documentStyle {
         case .cleanStudio, .gigSheet:
             return UIFont.systemFont(ofSize: size, weight: .semibold)
@@ -743,7 +805,32 @@ private struct LeadSheetNotationStyle {
     }
 
     func chordFont(size: CGFloat) -> UIFont {
-        notationFont.textUIFont(size: size, fallback: markerFont(size: size, weight: .regular))
+        if layoutStyle == .simpleChordSheet {
+            return UIFont.systemFont(ofSize: size, weight: .bold)
+        }
+
+        return notationFont.textUIFont(size: size, fallback: markerFont(size: size, weight: .regular))
+    }
+
+    func chordFontSize(fitting frame: CGRect, text: String) -> CGFloat {
+        guard layoutStyle == .simpleChordSheet else {
+            return 18
+        }
+
+        var size = min(36, max(20, frame.height * 0.62))
+        while size > 18 {
+            let font = chordFont(size: size)
+            let renderedWidth = (text as NSString).size(withAttributes: [.font: font]).width
+            if renderedWidth <= frame.width {
+                break
+            }
+            size -= 1
+        }
+        return size
+    }
+
+    func sectionBadgeFont(size: CGFloat) -> UIFont {
+        UIFont.systemFont(ofSize: size, weight: .bold)
     }
 
     func timeSignatureFont(size: CGFloat) -> UIFont {
