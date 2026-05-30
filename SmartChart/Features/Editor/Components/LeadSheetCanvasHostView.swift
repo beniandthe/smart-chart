@@ -464,7 +464,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
             if oldValue.allowsPageInkEditing && !interactionMode.allowsPageInkEditing {
                 selectedFreehandSymbolID = nil
-                activeFreehandSymbolMoveDrag = nil
+                activeFreehandSymbolEditDrag = nil
             }
 
             updateInteractionMode()
@@ -545,7 +545,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
     private var selectedFreehandSymbolID: UUID?
-    private var activeFreehandSymbolMoveDrag: ActiveFreehandSymbolMoveDrag?
+    private var activeFreehandSymbolEditDrag: ActiveFreehandSymbolEditDrag?
     private var lastEditableOverlayHitTarget: EditableOverlayHitTarget?
     private var isClearingFreehandSymbolInk = false
     private var isRestoringSelection = false
@@ -929,13 +929,17 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     ) {
         let editFrame = LeadSheetFreehandSymbolEditOverlayGeometry.editFrame(for: symbolLayout)
         let controlFrames = LeadSheetFreehandSymbolEditOverlayGeometry.controlFrames(for: symbolLayout)
-        let isActiveMove = activeFreehandSymbolMoveDrag?.symbolID == symbolLayout.id
+        let isActiveMove = activeFreehandSymbolEditDrag?.symbolID == symbolLayout.id
+            && activeFreehandSymbolEditDrag?.action == .move
+        let isActiveResize = activeFreehandSymbolEditDrag?.symbolID == symbolLayout.id
+            && activeFreehandSymbolEditDrag?.action == .resize
+        let isActiveEdit = isActiveMove || isActiveResize
 
         let boxPath = UIBezierPath(roundedRect: editFrame, cornerRadius: 6)
-        UIColor(red: 0.80, green: 0.96, blue: 0.91, alpha: isActiveMove ? 0.34 : 0.20).setFill()
+        UIColor(red: 0.80, green: 0.96, blue: 0.91, alpha: isActiveEdit ? 0.34 : 0.20).setFill()
         boxPath.fill()
-        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveMove ? 0.92 : 0.66).setStroke()
-        boxPath.lineWidth = isActiveMove ? 1.4 : 1
+        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveEdit ? 0.92 : 0.66).setStroke()
+        boxPath.lineWidth = isActiveEdit ? 1.4 : 1
         boxPath.stroke()
 
         let deletePath = UIBezierPath(ovalIn: controlFrames.delete)
@@ -969,6 +973,36 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         moveGlyph.lineWidth = 1.5
         moveGlyph.lineCapStyle = .round
         moveGlyph.stroke()
+
+        let resizePath = UIBezierPath(ovalIn: controlFrames.resize)
+        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveResize ? 1 : 0.88).setFill()
+        resizePath.fill()
+        UIColor.white.withAlphaComponent(0.95).setStroke()
+        resizePath.lineWidth = 1
+        resizePath.stroke()
+
+        let resizeGlyph = UIBezierPath()
+        let resizeInset: CGFloat = 5
+        let resizeTip = CGPoint(
+            x: controlFrames.resize.maxX - resizeInset,
+            y: controlFrames.resize.minY + resizeInset
+        )
+        resizeGlyph.move(
+            to: CGPoint(
+                x: controlFrames.resize.minX + resizeInset,
+                y: controlFrames.resize.maxY - resizeInset
+            )
+        )
+        resizeGlyph.addLine(to: resizeTip)
+        resizeGlyph.move(to: resizeTip)
+        resizeGlyph.addLine(to: CGPoint(x: resizeTip.x - 5, y: resizeTip.y))
+        resizeGlyph.move(to: resizeTip)
+        resizeGlyph.addLine(to: CGPoint(x: resizeTip.x, y: resizeTip.y + 5))
+        UIColor.white.withAlphaComponent(0.96).setStroke()
+        resizeGlyph.lineWidth = 1.35
+        resizeGlyph.lineCapStyle = .round
+        resizeGlyph.lineJoinStyle = .round
+        resizeGlyph.stroke()
     }
 
     private func drawChordEditOverlay(
@@ -1232,7 +1266,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         switch hitTarget.action {
         case .delete:
             deleteFreehandSymbol(hitTarget.symbolID)
-        case .move, .select:
+        case .move, .resize, .select:
             selectedFreehandSymbolID = hitTarget.symbolID
             setNeedsDisplay()
         }
@@ -1312,8 +1346,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         if selectedFreehandSymbolID == symbolID {
             selectedFreehandSymbolID = nil
         }
-        if activeFreehandSymbolMoveDrag?.symbolID == symbolID {
-            activeFreehandSymbolMoveDrag = nil
+        if activeFreehandSymbolEditDrag?.symbolID == symbolID {
+            activeFreehandSymbolEditDrag = nil
         }
         chart = updatedChart
         onChartChanged?(updatedChart)
@@ -1388,7 +1422,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private func handleChordMovePan(_ recognizer: UIPanGestureRecognizer) {
         if interactionMode.allowsPageInkEditing,
            !chart.layoutStyle.profile.freehandSymbolLanes.isEmpty {
-            handleFreehandSymbolMovePan(recognizer)
+            handleFreehandSymbolEditPan(recognizer)
             return
         }
 
@@ -1441,7 +1475,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
     }
 
-    private func handleFreehandSymbolMovePan(_ recognizer: UIPanGestureRecognizer) {
+    private func handleFreehandSymbolEditPan(_ recognizer: UIPanGestureRecognizer) {
         switch recognizer.state {
         case .began:
             let location = recognizer.location(in: self)
@@ -1458,40 +1492,51 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             guard let hitTarget = resolvedHitTarget,
                   hitTarget.action != .delete,
                   let symbolLayout = freehandSymbolLayouts().first(where: { $0.id == hitTarget.symbolID }) else {
-                activeFreehandSymbolMoveDrag = nil
+                activeFreehandSymbolEditDrag = nil
                 setNeedsDisplay()
                 return
             }
 
             selectedFreehandSymbolID = hitTarget.symbolID
-            activeFreehandSymbolMoveDrag = ActiveFreehandSymbolMoveDrag(
+            activeFreehandSymbolEditDrag = ActiveFreehandSymbolEditDrag(
                 symbolID: hitTarget.symbolID,
+                action: hitTarget.action == .resize ? .resize : .move,
                 initialFrame: symbolLayout.frame,
                 laneFrame: symbolLayout.laneFrame
             )
             setNeedsDisplay()
         case .changed, .ended:
-            guard let activeFreehandSymbolMoveDrag else {
+            guard let activeFreehandSymbolEditDrag else {
                 return
             }
 
             let translation = recognizer.translation(in: self)
-            let proposedFrame = activeFreehandSymbolMoveDrag.initialFrame.offsetBy(
-                dx: translation.x,
-                dy: translation.y
-            )
-            let clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.clampedFrame(
-                proposedFrame,
-                in: activeFreehandSymbolMoveDrag.laneFrame
-            )
+            let clampedFrame: CGRect
+            switch activeFreehandSymbolEditDrag.action {
+            case .move:
+                let proposedFrame = activeFreehandSymbolEditDrag.initialFrame.offsetBy(
+                    dx: translation.x,
+                    dy: translation.y
+                )
+                clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.clampedFrame(
+                    proposedFrame,
+                    in: activeFreehandSymbolEditDrag.laneFrame
+                )
+            case .resize:
+                clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.resizedFrame(
+                    from: activeFreehandSymbolEditDrag.initialFrame,
+                    translation: translation,
+                    in: activeFreehandSymbolEditDrag.laneFrame
+                )
+            }
             let normalizedFrame = FreehandSymbolNormalizedFrame(
                 frame: clampedFrame,
-                in: activeFreehandSymbolMoveDrag.laneFrame
+                in: activeFreehandSymbolEditDrag.laneFrame
             )
 
             var updatedChart = chart
             if updatedChart.moveFreehandSymbol(
-                activeFreehandSymbolMoveDrag.symbolID,
+                activeFreehandSymbolEditDrag.symbolID,
                 to: normalizedFrame
             ) {
                 chart = updatedChart
@@ -1500,11 +1545,11 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             }
 
             if recognizer.state == .ended {
-                self.activeFreehandSymbolMoveDrag = nil
+                self.activeFreehandSymbolEditDrag = nil
                 lastEditableOverlayHitTarget = nil
             }
         case .cancelled, .failed:
-            activeFreehandSymbolMoveDrag = nil
+            activeFreehandSymbolEditDrag = nil
             lastEditableOverlayHitTarget = nil
             setNeedsDisplay()
         default:

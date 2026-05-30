@@ -403,6 +403,21 @@ Verification:
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
+## Freehand Symbol Resize Implementation
+
+Implemented slice:
+
+- Selected freehand symbol objects now show a resize control in addition to delete and move.
+- Resize is profile-lane driven: it is available wherever structured freehand symbols are available, which currently means Simple Chord Sheet above/below lanes and Rhythm Section below-measure articulation lanes.
+- Resize is proportional, anchored from the selected symbol's upper-left corner, and clamped inside the symbol's original lane so freehand ink cannot leak into the chord lane, staff lane, or another measure.
+- The underlying model remains the existing `FreehandSymbol.normalizedFrame`; no recognition, semantic classification, or new global ink authority is added.
+
+Verification:
+
+- Focused simulator geometry verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetFreehandSymbolEditOverlayGeometryTests CODE_SIGNING_ALLOWED=NO` passed with `6` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
+- Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
 ## Recommended Sequence
 
 1. Define system layout and measure flow.
@@ -429,9 +444,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, and Measure edit mode shows a Simple-only row-group guide without active vertical drag.
+Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, and selected freehand symbols can be proportionally resized inside their profile-owned lanes.
 
 Next implementation checkpoint:
 
-- Run a live simulator pass on Simple Chord Sheet row controls, then move to the next Simple style refinement only after the Measure-menu row workflow feels stable.
+- Run a live simulator pass on freehand symbol resize, then move to the next Simple/Rhythm style refinement only after resize feels stable.
 - Keep vamp count deferred until there is a clearer V1 need.
