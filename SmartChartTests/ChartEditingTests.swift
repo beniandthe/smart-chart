@@ -508,8 +508,9 @@ final class ChartEditingTests: XCTestCase {
         let symbolID = try XCTUnwrap(
             chart.addFreehandSymbol(
                 anchorMeasureID: firstMeasureID,
-                lane: .aboveMeasure,
+                lane: .chartArea,
                 normalizedFrame: FreehandSymbolNormalizedFrame(x: 0.1, y: 0.1, width: 0.2, height: 0.2),
+                measureRelativeFrame: FreehandSymbolMeasureFrame(offsetX: 12, offsetY: 18, width: 24, height: 18),
                 drawingData: Data([1, 2, 3])
             )
         )
@@ -639,7 +640,7 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertEqual(chordProfile.setupPolicy.includesStartingMeasureSelection, true)
         XCTAssertEqual(chordProfile.setupPolicy.clefOptions, [])
         XCTAssertEqual(chordProfile.notationLanePolicy, .chordGrid)
-        XCTAssertEqual(chordProfile.freehandSymbolLanes, [.aboveMeasure, .belowMeasure])
+        XCTAssertEqual(chordProfile.freehandSymbolLanes, [.chartArea])
         XCTAssertTrue(chordProfile.allowsFreehandSymbolInk)
         XCTAssertFalse(chordProfile.allowsRhythmicNotationInk)
         XCTAssertFalse(chordProfile.allowsUserFacingRhythmNoteEditing)
@@ -927,37 +928,30 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(chart.measure(id: measureID)?.handwrittenRhythmicNotationData)
     }
 
-    func testAddFreehandSymbolStoresSimpleAboveBelowMeasureInkObjects() throws {
+    func testAddFreehandSymbolStoresSimpleMeasureAttachedFloatingInkObject() throws {
         var chart = Chart.blank(title: "Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
         let measureID = try XCTUnwrap(chart.measures.first?.id)
         let drawingData = Data([9, 7, 5, 3])
-        let frame = FreehandSymbolNormalizedFrame(x: 0.1, y: 0.2, width: 0.35, height: 0.4)
+        let normalizedFrame = FreehandSymbolNormalizedFrame(x: 0.1, y: 0.2, width: 0.35, height: 0.4)
+        let measureRelativeFrame = FreehandSymbolMeasureFrame(offsetX: -12, offsetY: 18, width: 42, height: 16)
 
-        let aboveID = try XCTUnwrap(
+        let symbolID = try XCTUnwrap(
             chart.addFreehandSymbol(
                 anchorMeasureID: measureID,
-                lane: .aboveMeasure,
-                normalizedFrame: frame,
-                drawingData: drawingData
-            )
-        )
-        let belowID = try XCTUnwrap(
-            chart.addFreehandSymbol(
-                anchorMeasureID: measureID,
-                lane: .belowMeasure,
-                normalizedFrame: frame,
+                lane: .chartArea,
+                normalizedFrame: normalizedFrame,
+                measureRelativeFrame: measureRelativeFrame,
                 drawingData: drawingData
             )
         )
 
-        let aboveSymbol = try XCTUnwrap(chart.freehandSymbol(id: aboveID))
-        let belowSymbol = try XCTUnwrap(chart.freehandSymbol(id: belowID))
-        XCTAssertEqual(aboveSymbol.anchorMeasureID, measureID)
-        XCTAssertEqual(aboveSymbol.lane, .aboveMeasure)
-        XCTAssertEqual(aboveSymbol.drawingData, drawingData)
-        XCTAssertEqual(aboveSymbol.zIndex, 0)
-        XCTAssertEqual(belowSymbol.lane, .belowMeasure)
-        XCTAssertEqual(belowSymbol.zIndex, 1)
+        let symbol = try XCTUnwrap(chart.freehandSymbol(id: symbolID))
+        XCTAssertEqual(symbol.anchorMeasureID, measureID)
+        XCTAssertEqual(symbol.lane, .chartArea)
+        XCTAssertEqual(symbol.normalizedFrame, normalizedFrame)
+        XCTAssertEqual(symbol.measureRelativeFrame, measureRelativeFrame)
+        XCTAssertEqual(symbol.drawingData, drawingData)
+        XCTAssertEqual(symbol.zIndex, 0)
     }
 
     func testFreehandSymbolsFollowLayoutProfileLanesAndRejectEmptyDrawingData() throws {
@@ -968,13 +962,39 @@ final class ChartEditingTests: XCTestCase {
         let rhythmMeasureID = try XCTUnwrap(rhythmChart.measures.first?.id)
         let leadMeasureID = try XCTUnwrap(leadChart.measures.first?.id)
         let frame = FreehandSymbolNormalizedFrame(x: 0, y: 0, width: 0.5, height: 0.5)
+        let measureRelativeFrame = FreehandSymbolMeasureFrame(offsetX: 4, offsetY: 6, width: 20, height: 12)
 
+        XCTAssertNil(
+            simpleChart.addFreehandSymbol(
+                anchorMeasureID: simpleMeasureID,
+                lane: .chartArea,
+                normalizedFrame: frame,
+                drawingData: Data()
+            )
+        )
+        XCTAssertNil(
+            simpleChart.addFreehandSymbol(
+                anchorMeasureID: simpleMeasureID,
+                lane: .chartArea,
+                normalizedFrame: frame,
+                drawingData: Data([1])
+            )
+        )
         XCTAssertNil(
             simpleChart.addFreehandSymbol(
                 anchorMeasureID: simpleMeasureID,
                 lane: .aboveMeasure,
                 normalizedFrame: frame,
-                drawingData: Data()
+                drawingData: Data([1])
+            )
+        )
+        let simpleSymbolID = try XCTUnwrap(
+            simpleChart.addFreehandSymbol(
+                anchorMeasureID: simpleMeasureID,
+                lane: .chartArea,
+                normalizedFrame: frame,
+                measureRelativeFrame: measureRelativeFrame,
+                drawingData: Data([1])
             )
         )
         XCTAssertNil(
@@ -996,12 +1016,22 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNil(
             leadChart.addFreehandSymbol(
                 anchorMeasureID: leadMeasureID,
+                lane: .chartArea,
+                normalizedFrame: frame,
+                measureRelativeFrame: measureRelativeFrame,
+                drawingData: Data([1])
+            )
+        )
+        XCTAssertNil(
+            leadChart.addFreehandSymbol(
+                anchorMeasureID: leadMeasureID,
                 lane: .aboveMeasure,
                 normalizedFrame: frame,
                 drawingData: Data([1])
             )
         )
-        XCTAssertTrue(simpleChart.freehandSymbols.isEmpty)
+        XCTAssertEqual(simpleChart.freehandSymbols.map(\.id), [simpleSymbolID])
+        XCTAssertEqual(simpleChart.freehandSymbols.map(\.lane), [.chartArea])
         XCTAssertEqual(rhythmChart.freehandSymbols.map(\.lane), [.belowMeasure])
         XCTAssertTrue(
             rhythmChart.moveFreehandSymbol(
@@ -1015,21 +1045,25 @@ final class ChartEditingTests: XCTestCase {
     }
 
     func testMoveAndDeleteFreehandSymbolUpdatesSimpleInkObject() throws {
-        var chart = Chart.blank(title: "Roadmap", measureCount: 1, layoutStyle: .simpleChordSheet)
-        let measureID = try XCTUnwrap(chart.measures.first?.id)
-        let originalFrame = FreehandSymbolNormalizedFrame(x: 0.1, y: 0.2, width: 0.35, height: 0.4)
-        let movedFrame = FreehandSymbolNormalizedFrame(x: 0.45, y: 0.25, width: 0.30, height: 0.35)
+        var chart = Chart.blank(title: "Roadmap", measureCount: 2, layoutStyle: .simpleChordSheet)
+        let measureIDs = chart.measures.map(\.id)
+        let normalizedFrame = FreehandSymbolNormalizedFrame(x: 0.1, y: 0.2, width: 0.35, height: 0.4)
+        let originalFrame = FreehandSymbolMeasureFrame(offsetX: -10, offsetY: 20, width: 48, height: 18)
+        let movedFrame = FreehandSymbolMeasureFrame(offsetX: 18, offsetY: 28, width: 48, height: 18)
         let symbolID = try XCTUnwrap(
             chart.addFreehandSymbol(
-                anchorMeasureID: measureID,
-                lane: .aboveMeasure,
-                normalizedFrame: originalFrame,
+                anchorMeasureID: measureIDs[0],
+                lane: .chartArea,
+                normalizedFrame: normalizedFrame,
+                measureRelativeFrame: originalFrame,
                 drawingData: Data([4, 5, 6])
             )
         )
 
-        XCTAssertTrue(chart.moveFreehandSymbol(symbolID, to: movedFrame))
-        XCTAssertEqual(chart.freehandSymbol(id: symbolID)?.normalizedFrame, movedFrame)
+        XCTAssertFalse(chart.moveFreehandSymbol(symbolID, to: normalizedFrame))
+        XCTAssertTrue(chart.moveFreehandSymbol(symbolID, to: movedFrame, anchorMeasureID: measureIDs[1]))
+        XCTAssertEqual(chart.freehandSymbol(id: symbolID)?.anchorMeasureID, measureIDs[1])
+        XCTAssertEqual(chart.freehandSymbol(id: symbolID)?.measureRelativeFrame, movedFrame)
         XCTAssertTrue(chart.deleteFreehandSymbol(symbolID))
         XCTAssertNil(chart.freehandSymbol(id: symbolID))
         XCTAssertTrue(chart.freehandSymbols.isEmpty)
@@ -1591,8 +1625,9 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertNotNil(
             chart.addFreehandSymbol(
                 anchorMeasureID: trailingOpenMeasureID,
-                lane: .aboveMeasure,
+                lane: .chartArea,
                 normalizedFrame: FreehandSymbolNormalizedFrame(x: 0.2, y: 0.2, width: 0.3, height: 0.3),
+                measureRelativeFrame: FreehandSymbolMeasureFrame(offsetX: 10, offsetY: 12, width: 30, height: 18),
                 drawingData: Data([1, 2, 3])
             )
         )

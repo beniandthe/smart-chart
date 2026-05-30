@@ -4,6 +4,8 @@ Status: complete locally; setup/profile, Simple layout/free-hand capture/editing
 Date: 2026-05-27
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 
+Supersession note: the Simple Chord Sheet above/below free-hand lane model captured here is historical. Sprint 68 replaces it with measure-attached chart-area freehand objects; keep this file as Sprint 66 evidence, but use the source-of-truth file for current behavior.
+
 ## Purpose
 
 Sprint 66 lets the Sprint 65 layout-profile contracts begin shaping newly created chart structure and setup policy, then takes the first tightly scoped Simple Chord Sheet renderer and above/below free-hand steps.

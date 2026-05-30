@@ -1842,15 +1842,29 @@ extension LeadSheetPageLayout {
             .filter { supportedLanes.contains($0.lane) }
             .sorted { $0.zIndex < $1.zIndex }
             .compactMap { symbol in
-                guard let measureLayout = measureLayoutByID[symbol.anchorMeasureID],
-                      let laneFrame = measureLayout.freehandFrame(for: symbol.lane) else {
+                guard let measureLayout = measureLayoutByID[symbol.anchorMeasureID] else {
                     return nil
+                }
+
+                let frame: CGRect
+                let laneFrame: CGRect
+                if symbol.lane == .chartArea {
+                    laneFrame = paperFrame
+                    frame = symbol.measureRelativeFrame?.resolved(relativeTo: measureLayout.frame)
+                        ?? symbol.normalizedFrame.resolved(in: measureLayout.frame)
+                } else {
+                    guard let resolvedLaneFrame = measureLayout.freehandFrame(for: symbol.lane) else {
+                        return nil
+                    }
+
+                    laneFrame = resolvedLaneFrame
+                    frame = symbol.normalizedFrame.resolved(in: resolvedLaneFrame)
                 }
 
                 return LeadSheetFreehandSymbolLayout(
                     id: symbol.id,
                     symbol: symbol,
-                    frame: symbol.normalizedFrame.resolved(in: laneFrame),
+                    frame: frame,
                     laneFrame: laneFrame
                 )
             }
@@ -1910,6 +1924,8 @@ extension LeadSheetPageLayout {
 extension LeadSheetMeasureLayout {
     func freehandFrame(for lane: FreehandSymbolLane) -> CGRect? {
         switch lane {
+        case .chartArea:
+            return frame
         case .aboveMeasure:
             return freehandAboveFrame
         case .belowMeasure:

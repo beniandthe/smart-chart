@@ -930,16 +930,12 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         let editFrame = LeadSheetFreehandSymbolEditOverlayGeometry.editFrame(for: symbolLayout)
         let controlFrames = LeadSheetFreehandSymbolEditOverlayGeometry.controlFrames(for: symbolLayout)
         let isActiveMove = activeFreehandSymbolEditDrag?.symbolID == symbolLayout.id
-            && activeFreehandSymbolEditDrag?.action == .move
-        let isActiveResize = activeFreehandSymbolEditDrag?.symbolID == symbolLayout.id
-            && activeFreehandSymbolEditDrag?.action == .resize
-        let isActiveEdit = isActiveMove || isActiveResize
 
         let boxPath = UIBezierPath(roundedRect: editFrame, cornerRadius: 6)
-        UIColor(red: 0.80, green: 0.96, blue: 0.91, alpha: isActiveEdit ? 0.34 : 0.20).setFill()
+        UIColor(red: 0.80, green: 0.96, blue: 0.91, alpha: isActiveMove ? 0.34 : 0.20).setFill()
         boxPath.fill()
-        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveEdit ? 0.92 : 0.66).setStroke()
-        boxPath.lineWidth = isActiveEdit ? 1.4 : 1
+        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveMove ? 0.92 : 0.66).setStroke()
+        boxPath.lineWidth = isActiveMove ? 1.4 : 1
         boxPath.stroke()
 
         let deletePath = UIBezierPath(ovalIn: controlFrames.delete)
@@ -973,36 +969,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         moveGlyph.lineWidth = 1.5
         moveGlyph.lineCapStyle = .round
         moveGlyph.stroke()
-
-        let resizePath = UIBezierPath(ovalIn: controlFrames.resize)
-        UIColor(red: 0.08, green: 0.48, blue: 0.42, alpha: isActiveResize ? 1 : 0.88).setFill()
-        resizePath.fill()
-        UIColor.white.withAlphaComponent(0.95).setStroke()
-        resizePath.lineWidth = 1
-        resizePath.stroke()
-
-        let resizeGlyph = UIBezierPath()
-        let resizeInset: CGFloat = 5
-        let resizeTip = CGPoint(
-            x: controlFrames.resize.maxX - resizeInset,
-            y: controlFrames.resize.minY + resizeInset
-        )
-        resizeGlyph.move(
-            to: CGPoint(
-                x: controlFrames.resize.minX + resizeInset,
-                y: controlFrames.resize.maxY - resizeInset
-            )
-        )
-        resizeGlyph.addLine(to: resizeTip)
-        resizeGlyph.move(to: resizeTip)
-        resizeGlyph.addLine(to: CGPoint(x: resizeTip.x - 5, y: resizeTip.y))
-        resizeGlyph.move(to: resizeTip)
-        resizeGlyph.addLine(to: CGPoint(x: resizeTip.x, y: resizeTip.y + 5))
-        UIColor.white.withAlphaComponent(0.96).setStroke()
-        resizeGlyph.lineWidth = 1.35
-        resizeGlyph.lineCapStyle = .round
-        resizeGlyph.lineJoinStyle = .round
-        resizeGlyph.stroke()
     }
 
     private func drawChordEditOverlay(
@@ -1266,7 +1232,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         switch hitTarget.action {
         case .delete:
             deleteFreehandSymbol(hitTarget.symbolID)
-        case .move, .resize, .select:
+        case .move, .select:
             selectedFreehandSymbolID = hitTarget.symbolID
             setNeedsDisplay()
         }
@@ -1352,6 +1318,35 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         chart = updatedChart
         onChartChanged?(updatedChart)
         setNeedsDisplay()
+    }
+
+    private func moveFreehandSymbol(
+        _ symbolID: UUID,
+        to pageFrame: CGRect,
+        referenceFrame: CGRect,
+        in updatedChart: inout Chart
+    ) -> Bool {
+        guard let symbol = updatedChart.freehandSymbol(id: symbolID) else {
+            return false
+        }
+
+        if symbol.lane == .chartArea {
+            guard let pageLayout,
+                  let anchor = freehandSymbolAnchorTarget(for: pageFrame, in: pageLayout) else {
+                return false
+            }
+
+            return updatedChart.moveFreehandSymbol(
+                symbolID,
+                to: FreehandSymbolMeasureFrame(frame: pageFrame, relativeTo: anchor.measureFrame),
+                anchorMeasureID: anchor.measureID
+            )
+        }
+
+        return updatedChart.moveFreehandSymbol(
+            symbolID,
+            to: FreehandSymbolNormalizedFrame(frame: pageFrame, in: referenceFrame)
+        )
     }
 
     private func handleNoteSelectionTap(at location: CGPoint) {
@@ -1500,7 +1495,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             selectedFreehandSymbolID = hitTarget.symbolID
             activeFreehandSymbolEditDrag = ActiveFreehandSymbolEditDrag(
                 symbolID: hitTarget.symbolID,
-                action: hitTarget.action == .resize ? .resize : .move,
                 initialFrame: symbolLayout.frame,
                 laneFrame: symbolLayout.laneFrame
             )
@@ -1511,33 +1505,21 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             }
 
             let translation = recognizer.translation(in: self)
-            let clampedFrame: CGRect
-            switch activeFreehandSymbolEditDrag.action {
-            case .move:
-                let proposedFrame = activeFreehandSymbolEditDrag.initialFrame.offsetBy(
-                    dx: translation.x,
-                    dy: translation.y
-                )
-                clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.clampedFrame(
-                    proposedFrame,
-                    in: activeFreehandSymbolEditDrag.laneFrame
-                )
-            case .resize:
-                clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.resizedFrame(
-                    from: activeFreehandSymbolEditDrag.initialFrame,
-                    translation: translation,
-                    in: activeFreehandSymbolEditDrag.laneFrame
-                )
-            }
-            let normalizedFrame = FreehandSymbolNormalizedFrame(
-                frame: clampedFrame,
+            let proposedFrame = activeFreehandSymbolEditDrag.initialFrame.offsetBy(
+                dx: translation.x,
+                dy: translation.y
+            )
+            let clampedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.clampedFrame(
+                proposedFrame,
                 in: activeFreehandSymbolEditDrag.laneFrame
             )
 
             var updatedChart = chart
-            if updatedChart.moveFreehandSymbol(
+            if moveFreehandSymbol(
                 activeFreehandSymbolEditDrag.symbolID,
-                to: normalizedFrame
+                to: clampedFrame,
+                referenceFrame: activeFreehandSymbolEditDrag.laneFrame,
+                in: &updatedChart
             ) {
                 chart = updatedChart
                 onChartChanged?(updatedChart)
@@ -2199,7 +2181,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             }
 
             let pageFrame = localBounds.offsetBy(dx: canvasFrame.minX, dy: canvasFrame.minY)
-            let normalizedFrame = FreehandSymbolNormalizedFrame(frame: pageFrame, in: group.laneFrame)
+            let normalizedFrame = FreehandSymbolNormalizedFrame(frame: pageFrame, in: group.referenceFrame)
+            let measureRelativeFrame = group.lane == .chartArea
+                ? FreehandSymbolMeasureFrame(frame: pageFrame, relativeTo: group.measureFrame)
+                : nil
             let translatedDrawing = groupDrawing.transformed(
                 using: CGAffineTransform(translationX: -localBounds.minX, y: -localBounds.minY)
             )
@@ -2207,6 +2192,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
                 anchorMeasureID: group.measureID,
                 lane: group.lane,
                 normalizedFrame: normalizedFrame,
+                measureRelativeFrame: measureRelativeFrame,
                 drawingData: translatedDrawing.dataRepresentation()
             ) != nil else {
                 continue
@@ -2232,7 +2218,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private struct FreehandSymbolStrokeGroup {
         var measureID: UUID
         var lane: FreehandSymbolLane
-        var laneFrame: CGRect
+        var referenceFrame: CGRect
+        var measureFrame: CGRect
         var strokes: [PKStroke]
     }
 
@@ -2260,7 +2247,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             var group = groupsByKey[key] ?? FreehandSymbolStrokeGroup(
                 measureID: target.measureID,
                 lane: target.lane,
-                laneFrame: target.laneFrame,
+                referenceFrame: target.referenceFrame,
+                measureFrame: target.measureFrame,
                 strokes: []
             )
             group.strokes.append(stroke)
@@ -2279,7 +2267,18 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     private func freehandSymbolTarget(
         at pagePoint: CGPoint,
         in pageLayout: LeadSheetPageLayout
-    ) -> (measureID: UUID, lane: FreehandSymbolLane, laneFrame: CGRect)? {
+    ) -> (measureID: UUID, lane: FreehandSymbolLane, referenceFrame: CGRect, measureFrame: CGRect)? {
+        if chart.layoutStyle.profile.freehandSymbolLanes.contains(.chartArea),
+           pageLayout.paperFrame.contains(pagePoint),
+           let anchor = freehandSymbolAnchorTarget(at: pagePoint, in: pageLayout) {
+            return (
+                anchor.measureID,
+                .chartArea,
+                pageLayout.paperFrame,
+                anchor.measureFrame
+            )
+        }
+
         for measure in pageLayout.systems.flatMap(\.measures) {
             guard let measureID = measure.sourceMeasureID else {
                 continue
@@ -2287,16 +2286,69 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
             if let aboveFrame = measure.freehandAboveFrame,
                aboveFrame.contains(pagePoint) {
-                return (measureID, .aboveMeasure, aboveFrame)
+                return (measureID, .aboveMeasure, aboveFrame, measure.frame)
             }
 
             if let belowFrame = measure.freehandBelowFrame,
                belowFrame.contains(pagePoint) {
-                return (measureID, .belowMeasure, belowFrame)
+                return (measureID, .belowMeasure, belowFrame, measure.frame)
             }
         }
 
         return nil
+    }
+
+    private func freehandSymbolAnchorTarget(
+        at pagePoint: CGPoint,
+        in pageLayout: LeadSheetPageLayout
+    ) -> (measureID: UUID, measureFrame: CGRect)? {
+        pageLayout.systems
+            .flatMap(\.measures)
+            .compactMap { measure -> (measureID: UUID, measureFrame: CGRect, distance: CGFloat)? in
+                guard let measureID = measure.sourceMeasureID else {
+                    return nil
+                }
+
+                return (
+                    measureID,
+                    measure.frame,
+                    LeadSheetCanvasUIKitView.distance(from: pagePoint, to: measure.frame)
+                )
+            }
+            .min { $0.distance < $1.distance }
+            .map { ($0.measureID, $0.measureFrame) }
+    }
+
+    private func freehandSymbolAnchorTarget(
+        for pageFrame: CGRect,
+        in pageLayout: LeadSheetPageLayout
+    ) -> (measureID: UUID, measureFrame: CGRect)? {
+        freehandSymbolAnchorTarget(
+            at: CGPoint(x: pageFrame.midX, y: pageFrame.midY),
+            in: pageLayout
+        )
+    }
+
+    private static func distance(from point: CGPoint, to rect: CGRect) -> CGFloat {
+        let dx: CGFloat
+        if point.x < rect.minX {
+            dx = rect.minX - point.x
+        } else if point.x > rect.maxX {
+            dx = point.x - rect.maxX
+        } else {
+            dx = 0
+        }
+
+        let dy: CGFloat
+        if point.y < rect.minY {
+            dy = rect.minY - point.y
+        } else if point.y > rect.maxY {
+            dy = point.y - rect.maxY
+        } else {
+            dy = 0
+        }
+
+        return sqrt(dx * dx + dy * dy)
     }
 
     private func clearFreehandSymbolCanvas() {

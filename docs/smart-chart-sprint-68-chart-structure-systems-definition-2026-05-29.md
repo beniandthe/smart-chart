@@ -18,7 +18,7 @@ Lead Sheet feature work is deferred until after V1. Preserve existing compatibil
 - `ChartLayoutStyle` and `ChartLayoutProfile` are implemented for Simple Chord Sheet, Rhythm Section Sheet, and Lead Sheet.
 - New Chart setup follows each layout style's key, time, starting-measure, and clef policy.
 - Every chart style preserves a hard one-measure minimum.
-- Simple Chord Sheet has blank barline-to-barline measures and above/below freehand symbols.
+- Simple Chord Sheet has blank barline-to-barline measures and measure-attached floating freehand ink anywhere on the chart paper.
 - Rhythm Section Sheet owns the current staff-line rhythm/chord workflow and V4 rhythm recognition gate.
 - Lead Sheet has the first clef/key-signature baseline and a narrow in-staff pitched-note proof, now archived for post-V1 continuation in `post-v1/lead-sheet/`.
 
@@ -365,7 +365,7 @@ Verification:
 - Focused layout verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `45` tests and `0` failures.
 - Focused simulator PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `5` tests and `0` failures.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `385` tests, `36` skipped, and `0` failures.
-- Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+- Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
 ## Simple Chord Sheet Manual Rows Implementation
 
@@ -403,20 +403,24 @@ Verification:
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
-## Freehand Symbol Resize Implementation
+## Simple Floating Freehand Ink Pivot
 
 Implemented slice:
 
-- Selected freehand symbol objects now show a resize control in addition to delete and move.
-- Resize is profile-lane driven: it is available wherever structured freehand symbols are available, which currently means Simple Chord Sheet above/below lanes and Rhythm Section below-measure articulation lanes.
-- Resize is proportional, anchored from the selected symbol's upper-left corner, and clamped inside the symbol's original lane so freehand ink cannot leak into the chord lane, staff lane, or another measure.
-- The underlying model remains the existing `FreehandSymbol.normalizedFrame`; no recognition, semantic classification, or new global ink authority is added.
+- Simple Chord Sheet freehand ink no longer uses above/below lanes or a resize handle.
+- Simple `Free-Hand` mode uses the chart-paper writing scope and persists strokes as `FreehandSymbolLane.chartArea` objects.
+- Chart-area symbols store a measure-relative frame, so they move with the attached measure when the row/layout changes.
+- Selected freehand symbols keep delete and move controls only; moving a chart-area symbol reanchors it to the nearest measure when its center crosses measure territory.
+- Rhythm Section Sheet keeps the below-measure freehand articulation lane; Lead Sheet still has no active freehand symbol lane for V1.
+- The previous freehand resize checkpoint is superseded by this floating ink model because resizing the selection box did not resize the underlying PencilKit ink.
 
 Verification:
 
-- Focused simulator geometry verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetFreehandSymbolEditOverlayGeometryTests CODE_SIGNING_ALLOWED=NO` passed with `6` tests and `0` failures.
+- Focused model verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests` passed with `82` tests and `0` failures after adding chart-area storage, lane-policy, move, and delete coverage.
+- Focused layout verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `54` tests and `0` failures after updating Simple export/readability and chart-area layout coverage.
+- Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetFreehandSymbolEditOverlayGeometryTests -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `25` tests and `0` failures.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
-- Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+- Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
 ## Recommended Sequence
 
@@ -427,7 +431,7 @@ Verification:
 5. Define and implement cue text.
 6. Run per-style export/readability proof.
 7. Return to style-specific refinements:
-   - Simple Chord Sheet: dense systems, roadmap/section polish, freehand resizing.
+   - Simple Chord Sheet: dense systems, roadmap/section polish, floating freehand ink polish.
    - Rhythm Section Sheet: below-staff articulation workflow, cue text, eventual rhythm object editing.
    - Lead Sheet: defer to `post-v1/lead-sheet/` after V1.
 
@@ -444,9 +448,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, and selected freehand symbols can be proportionally resized inside their profile-owned lanes.
+Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, and Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects. Rhythm Section still owns below-measure freehand articulations only.
 
 Next implementation checkpoint:
 
-- Run a live simulator pass on freehand symbol resize, then move to the next Simple/Rhythm style refinement only after resize feels stable.
+- Run a live simulator pass on Simple floating freehand ink capture, move, reanchor, delete, and row-change follow behavior.
 - Keep vamp count deferred until there is a clearer V1 need.

@@ -26,7 +26,7 @@ This side sprint moves `Rhythm Section Sheet` from a behavior-locked designation
    - Carry the verified layout-style chooser, profile defaults, Simple Chord Sheet lane work, and Sprint 67 workflow lock.
 
 2. Generalize free-hand symbol lanes by layout profile.
-   - Simple Chord Sheet supports above/below measure lanes.
+   - Simple Chord Sheet support has since moved to measure-attached chart-area freehand objects; Rhythm Section remains below-measure only.
    - Rhythm Section Sheet supports below-measure lane only.
    - Lead Sheet has no free-hand symbol lanes for now.
 

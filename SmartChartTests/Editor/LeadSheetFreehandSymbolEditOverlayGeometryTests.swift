@@ -14,15 +14,13 @@ final class LeadSheetFreehandSymbolEditOverlayGeometryTests: XCTestCase {
         XCTAssertEqual(controls.delete.height, LeadSheetFreehandSymbolEditOverlayGeometry.controlSize)
         XCTAssertEqual(controls.move.width, LeadSheetFreehandSymbolEditOverlayGeometry.controlSize)
         XCTAssertEqual(controls.move.height, LeadSheetFreehandSymbolEditOverlayGeometry.controlSize)
-        XCTAssertEqual(controls.resize.width, LeadSheetFreehandSymbolEditOverlayGeometry.controlSize)
-        XCTAssertEqual(controls.resize.height, LeadSheetFreehandSymbolEditOverlayGeometry.controlSize)
         XCTAssertGreaterThanOrEqual(
             LeadSheetFreehandSymbolEditOverlayGeometry.editFrame(for: symbolLayout).height,
             26
         )
     }
 
-    func testDeleteMoveAndResizeControlsWinOverSelectionHitArea() {
+    func testDeleteAndMoveControlsWinOverSelectionHitArea() {
         let symbolID = UUID()
         let symbolLayout = freehandSymbolLayout(
             id: symbolID,
@@ -43,13 +41,6 @@ final class LeadSheetFreehandSymbolEditOverlayGeometryTests: XCTestCase {
         )
         XCTAssertEqual(moveTarget?.symbolID, symbolID)
         assertAction(moveTarget?.action, is: .move)
-
-        let resizeTarget = LeadSheetFreehandSymbolEditOverlayGeometry.hitTarget(
-            at: CGPoint(x: controls.resize.midX, y: controls.resize.midY),
-            in: [symbolLayout]
-        )
-        XCTAssertEqual(resizeTarget?.symbolID, symbolID)
-        assertAction(resizeTarget?.action, is: .resize)
     }
 
     func testSymbolBodySelectsFreehandSymbol() {
@@ -83,42 +74,6 @@ final class LeadSheetFreehandSymbolEditOverlayGeometryTests: XCTestCase {
         XCTAssertEqual(clampedFrame.height, proposedFrame.height, accuracy: 0.001)
     }
 
-    func testResizedFrameKeepsAspectRatioAndOriginalLane() {
-        let laneFrame = CGRect(x: 100, y: 50, width: 180, height: 80)
-        let initialFrame = CGRect(x: 130, y: 70, width: 40, height: 20)
-
-        let resizedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.resizedFrame(
-            from: initialFrame,
-            translation: CGPoint(x: 30, y: 6),
-            in: laneFrame
-        )
-
-        XCTAssertEqual(resizedFrame.minX, initialFrame.minX, accuracy: 0.001)
-        XCTAssertEqual(resizedFrame.minY, initialFrame.minY, accuracy: 0.001)
-        XCTAssertEqual(resizedFrame.width / resizedFrame.height, 2, accuracy: 0.001)
-        XCTAssertGreaterThan(resizedFrame.width, initialFrame.width)
-        XCTAssertLessThanOrEqual(resizedFrame.maxX, laneFrame.maxX + 0.001)
-        XCTAssertLessThanOrEqual(resizedFrame.maxY, laneFrame.maxY + 0.001)
-    }
-
-    func testResizedFrameHonorsMinimumSize() {
-        let laneFrame = CGRect(x: 100, y: 50, width: 180, height: 80)
-        let initialFrame = CGRect(x: 130, y: 70, width: 40, height: 20)
-
-        let resizedFrame = LeadSheetFreehandSymbolEditOverlayGeometry.resizedFrame(
-            from: initialFrame,
-            translation: CGPoint(x: -200, y: -200),
-            in: laneFrame
-        )
-
-        XCTAssertEqual(
-            resizedFrame.height,
-            LeadSheetFreehandSymbolEditOverlayGeometry.minimumResizeDimension,
-            accuracy: 0.001
-        )
-        XCTAssertEqual(resizedFrame.width / resizedFrame.height, 2, accuracy: 0.001)
-    }
-
     private func assertAction(
         _ action: FreehandSymbolEditHitTarget.Action?,
         is expectedAction: FreehandSymbolEditHitTarget.Action,
@@ -126,7 +81,7 @@ final class LeadSheetFreehandSymbolEditOverlayGeometryTests: XCTestCase {
         line: UInt = #line
     ) {
         switch (action, expectedAction) {
-        case (.delete?, .delete), (.move?, .move), (.resize?, .resize), (.select?, .select):
+        case (.delete?, .delete), (.move?, .move), (.select?, .select):
             break
         default:
             XCTFail("Expected \(expectedAction), got \(String(describing: action))", file: file, line: line)
@@ -143,8 +98,9 @@ final class LeadSheetFreehandSymbolEditOverlayGeometryTests: XCTestCase {
             symbol: FreehandSymbol(
                 id: id,
                 anchorMeasureID: UUID(),
-                lane: .aboveMeasure,
+                lane: .chartArea,
                 normalizedFrame: FreehandSymbolNormalizedFrame(frame: frame, in: laneFrame),
+                measureRelativeFrame: FreehandSymbolMeasureFrame(frame: frame, relativeTo: laneFrame),
                 drawingData: Data([1, 2, 3]),
                 zIndex: 0
             ),

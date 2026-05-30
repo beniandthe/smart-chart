@@ -632,14 +632,27 @@ extension Chart {
         anchorMeasureID: UUID,
         lane: FreehandSymbolLane,
         normalizedFrame: FreehandSymbolNormalizedFrame,
+        measureRelativeFrame: FreehandSymbolMeasureFrame? = nil,
         drawingData: Data
     ) -> UUID? {
         guard layoutStyle.profile.freehandSymbolLanes.contains(lane),
               measureLocation(id: anchorMeasureID) != nil,
-              !drawingData.isEmpty,
-              normalizedFrame.width > 0,
-              normalizedFrame.height > 0 else {
+              !drawingData.isEmpty else {
             return nil
+        }
+
+        switch lane {
+        case .chartArea:
+            guard let measureRelativeFrame,
+                  measureRelativeFrame.width > 0,
+                  measureRelativeFrame.height > 0 else {
+                return nil
+            }
+        case .aboveMeasure, .belowMeasure:
+            guard normalizedFrame.width > 0,
+                  normalizedFrame.height > 0 else {
+                return nil
+            }
         }
 
         let symbolID = UUID()
@@ -650,6 +663,7 @@ extension Chart {
                 anchorMeasureID: anchorMeasureID,
                 lane: lane,
                 normalizedFrame: normalizedFrame,
+                measureRelativeFrame: measureRelativeFrame,
                 drawingData: drawingData,
                 zIndex: nextZIndex
             )
@@ -670,6 +684,7 @@ extension Chart {
         guard normalizedFrame.width > 0,
               normalizedFrame.height > 0,
               let symbolIndex = freehandSymbols.firstIndex(where: { $0.id == symbolID }),
+              freehandSymbols[symbolIndex].lane != .chartArea,
               layoutStyle.profile.freehandSymbolLanes.contains(freehandSymbols[symbolIndex].lane),
               measureLocation(id: freehandSymbols[symbolIndex].anchorMeasureID) != nil,
               freehandSymbols[symbolIndex].normalizedFrame != normalizedFrame else {
@@ -677,6 +692,33 @@ extension Chart {
         }
 
         freehandSymbols[symbolIndex].normalizedFrame = normalizedFrame
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
+    mutating func moveFreehandSymbol(
+        _ symbolID: UUID,
+        to measureRelativeFrame: FreehandSymbolMeasureFrame,
+        anchorMeasureID: UUID
+    ) -> Bool {
+        guard measureRelativeFrame.width > 0,
+              measureRelativeFrame.height > 0,
+              let symbolIndex = freehandSymbols.firstIndex(where: { $0.id == symbolID }),
+              freehandSymbols[symbolIndex].lane == .chartArea,
+              layoutStyle.profile.freehandSymbolLanes.contains(.chartArea),
+              measureLocation(id: anchorMeasureID) != nil else {
+            return false
+        }
+
+        let currentSymbol = freehandSymbols[symbolIndex]
+        guard currentSymbol.anchorMeasureID != anchorMeasureID
+            || currentSymbol.measureRelativeFrame != measureRelativeFrame else {
+            return false
+        }
+
+        freehandSymbols[symbolIndex].anchorMeasureID = anchorMeasureID
+        freehandSymbols[symbolIndex].measureRelativeFrame = measureRelativeFrame
         updatedAt = .now
         return true
     }

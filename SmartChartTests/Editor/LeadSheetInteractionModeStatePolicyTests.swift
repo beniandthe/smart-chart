@@ -134,11 +134,19 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
             pageLayout: leadPage
         )
 
-        guard case .freehandSymbols = simpleScope,
-              case .freehandSymbols = rhythmScope else {
+        guard case .freehandSymbols(let simpleFrame) = simpleScope,
+              case .freehandSymbols(let rhythmFrame) = rhythmScope else {
             XCTFail("Simple and Rhythm Section should resolve freehand symbol ink scopes")
             return
         }
+        XCTAssertEqual(simpleFrame, LeadSheetActiveInkScope.pageWritingFrame(for: simplePage))
+        XCTAssertNotEqual(rhythmFrame, LeadSheetActiveInkScope.pageWritingFrame(for: rhythmPage))
+        XCTAssertTrue(
+            rhythmPage.systems
+                .flatMap(\.measures)
+                .compactMap(\.freehandBelowFrame)
+                .allSatisfy { rhythmFrame.contains($0) }
+        )
         XCTAssertNil(leadScope)
     }
 

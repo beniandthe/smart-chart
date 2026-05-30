@@ -56,7 +56,12 @@ enum LeadSheetActiveInkScope {
             return nil
         }
 
-        return .freehandSymbols(frame: freehandSymbolWritingFrame(for: pageLayout))
+        return .freehandSymbols(
+            frame: freehandSymbolWritingFrame(
+                for: pageLayout,
+                layoutStyle: chartLayoutStyle
+            )
+        )
     }
 
     static func pageWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
@@ -67,7 +72,14 @@ enum LeadSheetActiveInkScope {
         pageLayout.paperFrame.insetBy(dx: 10, dy: 10)
     }
 
-    static func freehandSymbolWritingFrame(for pageLayout: LeadSheetPageLayout) -> CGRect {
+    static func freehandSymbolWritingFrame(
+        for pageLayout: LeadSheetPageLayout,
+        layoutStyle: ChartLayoutStyle
+    ) -> CGRect {
+        if layoutStyle.profile.freehandSymbolLanes.contains(.chartArea) {
+            return pageWritingFrame(for: pageLayout)
+        }
+
         let laneFrames = pageLayout.systems
             .flatMap(\.measures)
             .flatMap { measure -> [CGRect] in

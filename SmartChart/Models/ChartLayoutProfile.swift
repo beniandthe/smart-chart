@@ -115,7 +115,7 @@ extension ChartLayoutStyle {
                     beatGridPreset: .simple
                 ),
                 notationLanePolicy: .chordGrid,
-                freehandSymbolLanes: [.aboveMeasure, .belowMeasure],
+                freehandSymbolLanes: [.chartArea],
                 allowsUserFacingRhythmNoteEditing: false,
                 rendererRoute: .currentLeadSheetRenderer,
                 defaultStylePreset: .cleanStudio,

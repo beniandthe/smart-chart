@@ -16,7 +16,7 @@ This audit records the current end state of the Rhythm Section side sprint, Rhyt
 - Rhythm Section setup remains keyless and clefless while preserving time signature and starting measures.
 - Rhythm Section keeps staff-line measures, rhythm notation inside the measure lane, chords above staff, rhythm-slot chord snapping, and beat-grid fallback when no rhythm exists.
 - Measure insertion at the beginning is supported through chart editing, preserving existing measure IDs and anchors while reindexing order.
-- Free-hand symbol lanes are profile-owned: Simple supports above/below lanes, Rhythm Section supports below-staff only, and Lead Sheet has no free-hand symbol lane for now.
+- Free-hand symbol policy is profile-owned: Simple now uses measure-attached chart-area freehand objects, Rhythm Section supports below-staff only, and Lead Sheet has no free-hand symbol lane for now.
 - Rhythmic-notation ink availability is profile-owned: Simple has no rhythm-notation ink scope, Rhythm Section and Lead Sheet keep that scope.
 - User-facing rhythm-note editing availability is profile-owned: Simple and Rhythm Section remain disabled, Lead Sheet keeps the existing note/rhythm edit surface.
 - Ink tools expose write/erase modes for active canvas ink, and erase mode only affects live ink strokes.
