@@ -45,10 +45,10 @@ struct LeadSheetNotationRenderer {
         if let composerFrame = header.composerFrame,
            let composerCredit = normalizedText(chart.composerCredit) {
             drawText(
-                "—\(composerCredit)",
+                composerCredit,
                 in: composerFrame,
-                font: style.metadataFont(size: 16),
-                color: style.inkColor.withAlphaComponent(0.86),
+                font: style.metadataFont(size: 14),
+                color: style.inkColor.withAlphaComponent(0.8),
                 alignment: .right
             )
         }
@@ -56,10 +56,10 @@ struct LeadSheetNotationRenderer {
         if let styleNoteFrame = header.styleNoteFrame,
            let styleNote = LeadSheetPageLayoutEngine.resolvedStyleNote(for: chart) {
             drawText(
-                "(\(styleNote))",
+                styleNote,
                 in: styleNoteFrame,
-                font: style.metadataFont(size: 15),
-                color: style.inkColor.withAlphaComponent(0.82)
+                font: style.metadataFont(size: 14),
+                color: style.inkColor.withAlphaComponent(0.8)
             )
         }
 
@@ -68,7 +68,8 @@ struct LeadSheetNotationRenderer {
                 chart.documentKey.transposed(for: chart.defaultTranspositionView).displayText.uppercased(),
                 in: keyFrame,
                 font: style.metadataFont(size: 14),
-                color: style.inkColor.withAlphaComponent(0.82)
+                color: style.inkColor.withAlphaComponent(0.8),
+                alignment: .center
             )
         }
 
@@ -77,16 +78,10 @@ struct LeadSheetNotationRenderer {
                 chart.defaultMeter.displayText,
                 in: meterFrame,
                 font: style.metadataFont(size: 14),
-                color: style.inkColor.withAlphaComponent(0.82)
+                color: style.inkColor.withAlphaComponent(0.8),
+                alignment: .center
             )
         }
-
-        let underlinePath = UIBezierPath()
-        underlinePath.move(to: CGPoint(x: header.titleFrame.minX + 28, y: header.titleFrame.maxY - 4))
-        underlinePath.addLine(to: CGPoint(x: header.titleFrame.maxX - 28, y: header.titleFrame.maxY - 4))
-        underlinePath.lineWidth = 2.6 * style.strokeScale
-        style.inkColor.setStroke()
-        underlinePath.stroke()
     }
 
     func drawSectionText(_ text: String, in frame: CGRect) {
@@ -349,8 +344,11 @@ struct LeadSheetNotationRenderer {
         let path = UIBezierPath()
         path.move(to: CGPoint(x: x, y: startY))
         path.addLine(to: CGPoint(x: x, y: endY))
-        path.lineWidth = width.map { $0 * style.strokeScale }
+        let resolvedWidth = width.map { $0 * style.strokeScale }
             ?? style.barlineWidth(semanticWidth, staffSpace: staffSpace)
+        path.lineWidth = chart.layoutStyle == .simpleChordSheet
+            ? max(resolvedWidth * 1.65, 1.55 * style.strokeScale)
+            : resolvedWidth
         style.inkColor.setStroke()
         path.stroke()
     }

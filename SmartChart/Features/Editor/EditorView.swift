@@ -476,17 +476,19 @@ struct EditorView: View {
                 .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
 
-                Button {
-                    handleRhythmicNotationTabTapped()
-                } label: {
-                    EditorMenuTabLabel(
-                        title: "Rhythmic Notation",
-                        systemImage: "note.quarter",
-                        isSelected: canvasMode == .rhythmicNotationEdit
-                    )
+                if chart.layoutStyle.profile.allowsRhythmicNotationInk {
+                    Button {
+                        handleRhythmicNotationTabTapped()
+                    } label: {
+                        EditorMenuTabLabel(
+                            title: "Rhythmic Notation",
+                            systemImage: "note.quarter",
+                            isSelected: canvasMode == .rhythmicNotationEdit
+                        )
+                    }
+                    .disabled(canvasMode.locksDocumentActions)
+                    .buttonStyle(.plain)
                 }
-                .disabled(canvasMode.locksDocumentActions || !chart.layoutStyle.profile.allowsRhythmicNotationInk)
-                .buttonStyle(.plain)
 
                 Button {
                     handleChordTabTapped()

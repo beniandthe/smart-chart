@@ -15,7 +15,30 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertLessThan(layout.paperFrame.minX, layout.pageBounds.midX)
         XCTAssertGreaterThan(layout.paperFrame.maxX, layout.pageBounds.midX)
         XCTAssertTrue(layout.paperFrame.contains(layout.header.titleFrame))
-        XCTAssertTrue(layout.header.titleFrame.midX > layout.paperFrame.minX)
+        XCTAssertEqual(layout.header.titleFrame.midX, layout.paperFrame.midX, accuracy: 0.001)
+    }
+
+    func testHeaderUsesCenteredTitleAndSingleMetadataRow() throws {
+        let chart = ChartSamples.straightAheadSwing
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 1180, height: 1500)
+        )
+
+        let styleNoteFrame = try XCTUnwrap(layout.header.styleNoteFrame)
+        let keyFrame = try XCTUnwrap(layout.header.keyFrame)
+        let meterFrame = try XCTUnwrap(layout.header.meterFrame)
+        let composerFrame = try XCTUnwrap(layout.header.composerFrame)
+        let centerMetadataFrame = keyFrame.union(meterFrame)
+
+        XCTAssertEqual(layout.header.titleFrame.midX, layout.paperFrame.midX, accuracy: 0.001)
+        XCTAssertGreaterThan(styleNoteFrame.minY, layout.header.titleFrame.maxY)
+        XCTAssertEqual(styleNoteFrame.midY, composerFrame.midY, accuracy: 0.001)
+        XCTAssertEqual(centerMetadataFrame.midY, composerFrame.midY, accuracy: 0.001)
+        XCTAssertEqual(centerMetadataFrame.midX, layout.header.frame.midX, accuracy: 0.001)
+        XCTAssertLessThan(styleNoteFrame.maxX, centerMetadataFrame.minX)
+        XCTAssertLessThan(centerMetadataFrame.maxX, composerFrame.minX)
     }
 
     func testNarrowEditorWidthKeepsPaperInsideVisiblePageBounds() {
@@ -232,6 +255,8 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertNil(firstMeasure.freehandAboveFrame)
         XCTAssertNil(firstMeasure.freehandBelowFrame)
         XCTAssertTrue(firstMeasure.staffFrame.contains(firstMeasure.chordBandFrame))
+        XCTAssertGreaterThanOrEqual(firstMeasure.staffFrame.height, 56)
+        XCTAssertGreaterThan(firstMeasure.staffFrame.height, firstMeasure.chordBandFrame.height)
         XCTAssertGreaterThanOrEqual(firstChord.frame.minY, firstMeasure.staffFrame.minY)
         XCTAssertLessThanOrEqual(firstChord.frame.maxY, firstMeasure.staffFrame.maxY)
         XCTAssertTrue(firstMeasure.noteLayouts.isEmpty)

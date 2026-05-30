@@ -246,20 +246,24 @@ enum LeadSheetPageLayoutEngine {
 
     private static func headerLayout(for chart: Chart, in frame: CGRect) -> LeadSheetHeaderLayout {
         let composerCredit = normalizedText(chart.composerCredit)
-        let titleWidth = composerCredit == nil ? frame.width + 68 : frame.width * 0.62
+        let titleHorizontalBleed: CGFloat = 34
         let titleFrame = CGRect(
-            x: frame.midX - titleWidth / 2,
-            y: frame.minY + 20,
-            width: titleWidth,
-            height: 44
+            x: frame.minX - titleHorizontalBleed,
+            y: frame.minY + 10,
+            width: frame.width + titleHorizontalBleed * 2,
+            height: 46
         )
+        let metadataY = titleFrame.maxY + 6
+        let metadataHeight: CGFloat = 20
+        let sideMetadataWidth = min(220, frame.width * 0.32)
+
         let composerFrame: CGRect?
         if let composerCredit, !composerCredit.isEmpty {
             composerFrame = CGRect(
-                x: frame.maxX - 190,
-                y: titleFrame.minY + 10,
-                width: 190,
-                height: 20
+                x: frame.maxX - sideMetadataWidth,
+                y: metadataY,
+                width: sideMetadataWidth,
+                height: metadataHeight
             )
         } else {
             composerFrame = nil
@@ -269,31 +273,33 @@ enum LeadSheetPageLayoutEngine {
         if let styleNote = resolvedStyleNote(for: chart), !styleNote.isEmpty {
             styleNoteFrame = CGRect(
                 x: frame.minX,
-                y: titleFrame.maxY + 2,
-                width: 180,
-                height: 18
+                y: metadataY,
+                width: sideMetadataWidth,
+                height: metadataHeight
             )
         } else {
             styleNoteFrame = nil
         }
 
+        let centerMetadataWidth: CGFloat = chart.layoutStyle.profile.setupPolicy.includesKeySelection ? 150 : 88
+        let centerMetadataX = frame.midX - centerMetadataWidth / 2
         let keyFrame: CGRect?
         if chart.layoutStyle.profile.setupPolicy.includesKeySelection {
             keyFrame = CGRect(
-                x: frame.minX,
-                y: frame.minY,
-                width: 80,
-                height: 18
+                x: centerMetadataX,
+                y: metadataY,
+                width: 78,
+                height: metadataHeight
             )
         } else {
             keyFrame = nil
         }
-        let meterY = keyFrame == nil ? frame.minY : frame.minY + 18
+        let meterX = keyFrame == nil ? centerMetadataX : centerMetadataX + 88
         let meterFrame = CGRect(
-            x: frame.minX,
-            y: meterY,
-            width: 80,
-            height: 18
+            x: meterX,
+            y: metadataY,
+            width: keyFrame == nil ? centerMetadataWidth : 62,
+            height: metadataHeight
         )
 
         return LeadSheetHeaderLayout(
@@ -335,15 +341,16 @@ enum LeadSheetPageLayoutEngine {
         let lineSpacing = metrics.staffLineSpacing
         let chordBandHeight = metrics.chordBandHeight
         let isSimpleChordSheet = chart.layoutStyle == .simpleChordSheet
-        let staffTop = frame.minY + chordBandHeight + 2
+        let staffTop = isSimpleChordSheet ? frame.minY + 24 : frame.minY + chordBandHeight + 2
         let staffLineYPositions = isSimpleChordSheet
             ? []
             : (0..<5).map { staffTop + CGFloat($0) * lineSpacing }
+        let simpleChordGridHeight = min(76, max(56, frame.height - 46))
         let staffFrame = CGRect(
             x: frame.minX,
             y: staffTop - 2,
             width: frame.width,
-            height: lineSpacing * 4 + 4
+            height: isSimpleChordSheet ? simpleChordGridHeight : lineSpacing * 4 + 4
         )
         let measureStartX = frame.minX + plan.leadingSignatureWidth
 

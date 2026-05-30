@@ -462,6 +462,30 @@ Verification:
 - `git diff --check` passed.
 - XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only, and screenshot capture succeeded.
 
+## Simple Header And Grid Polish
+
+Implemented slice:
+
+- `Rhythmic Notation` is hidden from the Simple Chord Sheet toolstrip because Simple has no rhythmic-notation ink scope; Rhythm Section and Lead Sheet keep the tool available.
+- Simple Chord Sheet measure bodies now use a taller blank chord-grid cell so regular barlines read as measure boundaries instead of short staff remnants.
+- Simple Chord Sheet regular barlines are drawn heavier while keeping the repeat-marker double-bar treatment separate.
+- The chart header now follows a cleaner chart-header hierarchy: centered title, one compact metadata row beneath it, style/tempo text on the left, key/meter centered when present, composer/credit on the right.
+- The old title underline is removed from the rendered editor/PDF header.
+
+Reference notes:
+
+- iReal Pro's documented chord chart format is a cell/grid representation with explicit barline symbols and a common 4-measure system feel, which supports making Simple measure boundaries more visually assertive.
+- Lead-sheet/chord-chart header references consistently treat title, style/tempo, key/meter, and composer/credit as compact header metadata rather than large stacked form fields.
+
+Verification:
+
+- Focused SwiftPM `LeadSheetPageLayoutTests` passed with `55` tests and `0` failures after adding header metadata-row and Simple tall-grid layout coverage.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `414` tests, `36` skipped, and `0` failures.
+- XcodeBuildMCP focused simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `24` tests and `0` failures.
+- XcodeBuildMCP focused simulator `test_sim -only-testing:SmartChartTests/LeadSheetPageLayoutTests CODE_SIGNING_ALLOWED=NO` passed with `55` tests and `0` failures.
+- `git diff --check` passed.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only, and screenshot capture succeeded.
+
 ## Recommended Sequence
 
 1. Define system layout and measure flow.
