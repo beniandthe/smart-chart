@@ -51,6 +51,12 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
         XCTAssertTrue(EditorCanvasMode.freeHand.restrictsPageScrollToOutsideMargins)
     }
 
+    func testFreehandTabTitleUsesFreeHandNameUntilActive() {
+        XCTAssertEqual(EditorCanvasMode.browse.freeHandTabTitle, "Free-Hand")
+        XCTAssertEqual(EditorCanvasMode.rhythmicNotationEdit.freeHandTabTitle, "Free-Hand")
+        XCTAssertEqual(EditorCanvasMode.freeHand.freeHandTabTitle, "Done")
+    }
+
     func testScrollMarginPolicyBlocksPaperGesturesOnlyWhenRestricted() {
         let paperFrame = CGRect(x: 100, y: 80, width: 300, height: 420)
 

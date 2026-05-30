@@ -26,7 +26,6 @@ struct EditorView: View {
     @State private var showingSetupSheet = false
     @State private var showingHeaderSheet = false
     @State private var showingRhythmicNotationAcceptanceSheet = false
-    @State private var activeAppearancePanel: ChartAppearancePanel?
     @State private var hasPresentedRhythmicNotationGuide = false
     @State private var isExporting = false
     @State private var rhythmicNotationErrorMessage = ""
@@ -152,9 +151,6 @@ struct EditorView: View {
                 onAdd: handleCueTextEntryAccepted,
                 onCancel: clearPendingCueTextEntry
             )
-        }
-        .sheet(item: $activeAppearancePanel) { panel in
-            ChartAppearanceSheetView(chart: $chart, panel: panel)
         }
         .sheet(isPresented: $showingRhythmicNotationAcceptanceSheet) {
             RhythmicNotationAcceptanceSheetView()
@@ -318,17 +314,65 @@ struct EditorView: View {
     private var toolStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
-                Button {
-                    selectedMeasureID = nil
-                    selectedNoteSelection = nil
-                    pendingTimeSignatureSourceMeasureID = nil
-                    pendingTimeSignaturePlacement = nil
-                    freeHandReturnMode = .browse
-                    canvasMode = .browse
-                    showingSetupSheet = true
+                Menu {
+                    Button {
+                        resetToolContextForDocumentAction()
+                        showingSetupSheet = true
+                    } label: {
+                        Label(chart.hasCompletedInitialSetup ? "Page Setup" : "Setup", systemImage: "doc.text")
+                    }
+
+                    Button {
+                        resetToolContextForDocumentAction()
+                        showingHeaderSheet = true
+                    } label: {
+                        Label("Header", systemImage: "character.cursor.ibeam")
+                    }
+
+                    Divider()
+
+                    Menu {
+                        ForEach(StylePreset.allCases, id: \.self) { preset in
+                            Button {
+                                resetToolContextForDocumentAction()
+                                chart.setStylePreset(preset)
+                            } label: {
+                                notationMenuLabel(preset.displayText, isSelected: chart.stylePreset == preset)
+                            }
+                        }
+                    } label: {
+                        Label("Style", systemImage: "paintpalette")
+                    }
+
+                    Menu {
+                        ForEach(NotationFontPreset.allCases, id: \.self) { preset in
+                            Button {
+                                resetToolContextForDocumentAction()
+                                chart.setNotationFont(preset)
+                            } label: {
+                                notationMenuLabel(preset.displayText, isSelected: chart.notationFont == preset)
+                            }
+                        }
+                    } label: {
+                        Label("Fonts", systemImage: "textformat")
+                    }
+
+                    Menu {
+                        ForEach(EngravingPreset.allCases, id: \.self) { preset in
+                            Button {
+                                resetToolContextForDocumentAction()
+                                chart.setEngravingPreset(preset)
+                            } label: {
+                                notationMenuLabel(preset.displayText, isSelected: chart.engravingPreset == preset)
+                            }
+                        }
+                    } label: {
+                        Label("Engraving", systemImage: "slider.horizontal.3")
+                    }
                 } label: {
                     EditorMenuTabLabel(title: "Page", systemImage: "doc.text")
                 }
+                .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
 
                 Menu {
@@ -494,11 +538,7 @@ struct EditorView: View {
                     }
                     .disabled(!canRemovePointRoadmapMarkerAtSelectedMeasure)
                 } label: {
-                    EditorMenuTabLabel(
-                        title: "Roadmap",
-                        systemImage: "signpost.right",
-                        isSelected: false
-                    )
+                    EditorCodaTabLabel(isSelected: false)
                 }
                 .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
@@ -507,24 +547,24 @@ struct EditorView: View {
                     Button {
                         handleAddCueText(position: .below)
                     } label: {
-                        Label("Add Cue Below Selected Measure", systemImage: "text.bubble")
+                        Label("Add Text Below Selected Measure", systemImage: "text.bubble")
                     }
 
                     Button {
                         handleAddCueText(position: .above)
                     } label: {
-                        Label("Add Cue Above Selected Measure", systemImage: "text.bubble")
+                        Label("Add Text Above Selected Measure", systemImage: "text.bubble")
                     }
 
                     Button(role: .destructive) {
                         handleRemoveCueTextsAtSelectedMeasure()
                     } label: {
-                        Label("Remove Cue Text at Selected Measure", systemImage: "trash")
+                        Label("Remove Text at Selected Measure", systemImage: "trash")
                     }
                     .disabled(!canRemoveCueTextAtSelectedMeasure)
                 } label: {
                     EditorMenuTabLabel(
-                        title: "Cue",
+                        title: "Text",
                         systemImage: "text.bubble",
                         isSelected: showingCueTextEntry
                     )
@@ -557,31 +597,6 @@ struct EditorView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    handleEditTabTapped()
-                } label: {
-                    EditorMenuTabLabel(
-                        title: "Edit",
-                        systemImage: "lasso",
-                        isSelected: canvasMode == .noteEdit
-                    )
-                }
-                .disabled((canvasMode.locksDocumentActions && canvasMode != .noteEdit) || !allowsUserFacingRhythmNoteEditing)
-                .buttonStyle(.plain)
-                .popover(
-                    isPresented: $isNoteEditMenuPresented,
-                    attachmentAnchor: .rect(.bounds),
-                    arrowEdge: .top
-                ) {
-                    NoteEditPopoverView(
-                        stage: $noteEditMenuStage,
-                        notationFont: chart.notationFont,
-                        selectedRhythmValue: selectedRhythmValue,
-                        onSelectRhythm: handleSelectedNoteRhythmReplacement
-                    )
-                    .presentationCompactAdaptation(.popover)
-                }
-
-                Button {
                     handleChordTabTapped()
                 } label: {
                     EditorMenuTabLabel(
@@ -611,78 +626,6 @@ struct EditorView: View {
                         || (!chart.hasCompletedInitialSetup && canvasMode != .freeHand)
                         || !chart.layoutStyle.profile.allowsFreehandSymbolInk
                 )
-                .buttonStyle(.plain)
-
-                EditorMenuTabLabel(title: "Jazz", systemImage: "music.quarternote.3", isSelected: true)
-
-                Button {
-                    presentAppearancePanel(.documentStyle)
-                } label: {
-                    EditorMenuTabLabel(
-                        title: "Style",
-                        systemImage: "paintpalette",
-                        isSelected: activeAppearancePanel == .documentStyle
-                    )
-                }
-                .disabled(canvasMode.locksDocumentActions)
-                .buttonStyle(.plain)
-
-                Button {
-                    presentAppearancePanel(.notationFont)
-                } label: {
-                    EditorMenuTabLabel(
-                        title: "Fonts",
-                        systemImage: "textformat",
-                        isSelected: activeAppearancePanel == .notationFont
-                    )
-                }
-                .disabled(canvasMode.locksDocumentActions)
-                .buttonStyle(.plain)
-
-                Button {
-                    presentAppearancePanel(.engraving)
-                } label: {
-                    EditorMenuTabLabel(
-                        title: "Engraving",
-                        systemImage: "slider.horizontal.3",
-                        isSelected: activeAppearancePanel == .engraving
-                    )
-                }
-                .disabled(canvasMode.locksDocumentActions)
-                .buttonStyle(.plain)
-
-                Button {
-                    selectedMeasureID = nil
-                    selectedNoteSelection = nil
-                    pendingTimeSignatureSourceMeasureID = nil
-                    pendingTimeSignaturePlacement = nil
-                    freeHandReturnMode = .browse
-                    canvasMode = .browse
-                    showingHeaderSheet = true
-                } label: {
-                    EditorMenuTabLabel(title: "Header", systemImage: "character.cursor.ibeam")
-                }
-                .disabled(canvasMode.locksDocumentActions)
-                .buttonStyle(.plain)
-
-                Menu {
-                    ForEach(TranspositionView.allCases, id: \.self) { view in
-                        Button {
-                            selectedMeasureID = nil
-                            selectedNoteSelection = nil
-                            pendingTimeSignatureSourceMeasureID = nil
-                            pendingTimeSignaturePlacement = nil
-                            freeHandReturnMode = .browse
-                            canvasMode = .browse
-                            chart.setTranspositionView(view)
-                        } label: {
-                            notationMenuLabel(view.displayText, isSelected: chart.defaultTranspositionView == view)
-                        }
-                    }
-                } label: {
-                    EditorMenuTabLabel(title: "View", systemImage: "guitars")
-                }
-                .disabled(canvasMode.locksDocumentActions)
                 .buttonStyle(.plain)
             }
             .padding(10)
@@ -1205,14 +1148,13 @@ struct EditorView: View {
         }
     }
 
-    private func presentAppearancePanel(_ panel: ChartAppearancePanel) {
+    private func resetToolContextForDocumentAction() {
         selectedMeasureID = nil
         selectedNoteSelection = nil
         pendingTimeSignatureSourceMeasureID = nil
         pendingTimeSignaturePlacement = nil
         freeHandReturnMode = .browse
         canvasMode = .browse
-        activeAppearancePanel = panel
     }
 
     private func resolvedMeasureActionTargetID() -> UUID? {
@@ -2367,14 +2309,14 @@ private struct CueTextEntrySheetView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
-                TextField("Cue text", text: $text, axis: .vertical)
+                TextField("Text", text: $text, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(2...4)
 
                 Spacer(minLength: 0)
             }
             .padding(24)
-            .navigationTitle("Cue Text")
+            .navigationTitle("Text")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

@@ -19,3 +19,42 @@ struct EditorMenuTabLabel: View {
             .clipShape(Capsule())
     }
 }
+
+struct EditorCodaTabLabel: View {
+    var isSelected: Bool = false
+
+    var body: some View {
+        codaGlyph
+            .frame(width: 28, height: 28)
+            .frame(minWidth: 44)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                isSelected
+                ? Color(red: 0.16, green: 0.38, blue: 0.82)
+                : Color(uiColor: .secondarySystemBackground)
+            )
+            .clipShape(Capsule())
+            .accessibilityLabel("Roadmap")
+    }
+
+    private var symbolColor: Color {
+        isSelected ? Color.white : Color.primary
+    }
+
+    private var codaGlyph: some View {
+        ZStack {
+            Circle()
+                .stroke(symbolColor, lineWidth: 2.2)
+                .frame(width: 18, height: 18)
+
+            Rectangle()
+                .fill(symbolColor)
+                .frame(width: 2, height: 26)
+
+            Rectangle()
+                .fill(symbolColor)
+                .frame(width: 26, height: 2)
+        }
+    }
+}

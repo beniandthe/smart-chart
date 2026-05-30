@@ -333,7 +333,7 @@ Implementation progress:
 - `ChartEditing` can now add cue text to a selected measure, trim/reject empty text, preserve position/emphasis, look up cue text, and remove cue text attached to a measure while clearing measure back-references.
 - Shared layout resolves `LeadSheetCueTextLayout` per measure for Simple Chord Sheet and Rhythm Section Sheet.
 - The editor canvas and PDF export path draw cue text through the shared notation renderer.
-- The editor now exposes a `Cue` menu with `Add Cue Below Selected Measure`, `Add Cue Above Selected Measure`, and `Remove Cue Text at Selected Measure`.
+- The editor now exposes this workflow through the user-facing `Text` menu with add-below, add-above, and remove-at-selected-measure commands.
 - Focused verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests --filter LeadSheetPageLayoutTests` passed with `107` tests and `0` failures.
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `383` tests, `36` skipped, and `0` failures.
 - Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
@@ -440,6 +440,24 @@ Verification:
 - Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 - Crash hardening verification: after a clean simulator erase on 2026-05-30, XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` launched successfully and screenshot capture succeeded without the `UIScrollView` pan delegate exception.
 
+## Toolstrip Cleanup
+
+Implemented slice:
+
+- `Page` is now a dropdown that owns Page Setup, Header, Style, Fonts, and Engraving controls.
+- Style, Fonts, Engraving, and Header no longer occupy separate toolstrip tabs.
+- The roadmap tool is surfaced as the coda-symbol menu while keeping the existing roadmap object model and commands.
+- `Cue` is now user-facing `Text`; the underlying typed cue-text model remains the structured musician-instruction object.
+- `Free-Hand` remains the ink-entry label; Rhythm Section keeps its below-measure freehand lane without renaming the tool to Articulation.
+- Legacy/redundant `Edit`, `Jazz`, and `View` tabs are hidden from the active V1 toolstrip.
+
+Verification:
+
+- XcodeBuildMCP focused simulator `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `24` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
+- `git diff --check` passed.
+- Clean simulator wipe plus XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded with the existing headermap warning only, and screenshot capture succeeded.
+
 ## Recommended Sequence
 
 1. Define system layout and measure flow.
@@ -466,9 +484,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects, selected freehand drag targets no longer pull the page sideways, and active tool modes only allow parent page scrolling from outside the rendered paper margins. Rhythm Section still owns below-measure freehand articulations only.
+Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, Measure edit mode shows a Simple-only row-group guide without active vertical drag, Simple freehand ink now floats anywhere on chart paper as measure-attached, movable/deleteable objects, selected freehand drag targets no longer pull the page sideways, and active tool modes only allow parent page scrolling from outside the rendered paper margins. Rhythm Section owns below-measure freehand articulations only. The active toolstrip now groups page appearance/setup under `Page`, keeps `Free-Hand`, uses a coda-symbol roadmap menu, renames cue entry to `Text`, and hides legacy/redundant `Edit`, `Jazz`, and `View` tabs.
 
 Next implementation checkpoint:
 
-- Begin the Rhythm Section below-staff articulation workflow polish/audit from the existing below-measure freehand lane.
+- Continue Rhythm Section below-staff freehand workflow polish from the `Free-Hand` entry point.
 - Keep vamp count deferred until there is a clearer V1 need.
