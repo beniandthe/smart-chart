@@ -610,9 +610,13 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             drawFreehandSymbolEditOverlays(using: renderer)
         }
 
-        if interactionMode.showsMeasureResizeHandles,
-           let selectedMeasure = selectedMeasureLayout() {
-            drawMeasureResizeHandles(for: selectedMeasure, using: renderer)
+        if interactionMode.showsMeasureResizeHandles {
+            if let rowGroupAffordance = simpleRowGroupAffordance() {
+                drawSimpleRowGroupAffordance(rowGroupAffordance)
+            }
+            if let selectedMeasure = selectedMeasureLayout() {
+                drawMeasureResizeHandles(for: selectedMeasure, using: renderer)
+            }
         }
     }
 
@@ -826,6 +830,50 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             color: UIColor(red: 0.16, green: 0.33, blue: 0.68, alpha: 1),
             alignment: .center
         )
+    }
+
+    private func drawSimpleRowGroupAffordance(_ affordance: LeadSheetSimpleRowGroupAffordance) {
+        let guideY = affordance.handleFrame.midY
+        let startX = affordance.groupFrame.minX + 4
+        let endX = affordance.groupFrame.maxX - 4
+
+        let guidePath = UIBezierPath()
+        guidePath.move(to: CGPoint(x: startX, y: guideY))
+        guidePath.addLine(to: CGPoint(x: endX, y: guideY))
+        guidePath.move(to: CGPoint(x: startX, y: guideY))
+        guidePath.addLine(to: CGPoint(x: startX, y: guideY + 7))
+        guidePath.move(to: CGPoint(x: endX, y: guideY))
+        guidePath.addLine(to: CGPoint(x: endX, y: guideY + 7))
+
+        UIColor(red: 0.16, green: 0.33, blue: 0.68, alpha: 0.52).setStroke()
+        guidePath.lineWidth = 1.1
+        guidePath.setLineDash([5, 4], count: 2, phase: 0)
+        guidePath.stroke()
+
+        let handlePath = UIBezierPath(roundedRect: affordance.handleFrame, cornerRadius: 7)
+        UIColor.white.withAlphaComponent(0.92).setFill()
+        handlePath.fill()
+        UIColor(red: 0.18, green: 0.38, blue: 0.78, alpha: 0.78).setStroke()
+        handlePath.lineWidth = 1.0
+        handlePath.stroke()
+
+        UIColor(red: 0.16, green: 0.33, blue: 0.68, alpha: 0.88).setFill()
+        let dotRadius: CGFloat = 1.35
+        let centerX = affordance.handleFrame.midX
+        let centerY = affordance.handleFrame.midY
+        let rowOffsets: [CGFloat] = [-3, 3]
+        let columnOffsets: [CGFloat] = [-5, 0, 5]
+        for rowOffset in rowOffsets {
+            for columnOffset in columnOffsets {
+                let dotFrame = CGRect(
+                    x: centerX + columnOffset - dotRadius,
+                    y: centerY + rowOffset - dotRadius,
+                    width: dotRadius * 2,
+                    height: dotRadius * 2
+                )
+                UIBezierPath(ovalIn: dotFrame).fill()
+            }
+        }
     }
 
     private func drawSavedPageInk() {
@@ -1043,6 +1091,14 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         return measureLayout(for: selectedMeasureID)
+    }
+
+    private func simpleRowGroupAffordance() -> LeadSheetSimpleRowGroupAffordance? {
+        LeadSheetSimpleRowGroupAffordanceGeometry.affordance(
+            for: selectedMeasureID,
+            in: pageLayout,
+            layoutStyle: chart.layoutStyle
+        )
     }
 
     private func measureLayout(for measureID: UUID) -> LeadSheetMeasureLayout? {

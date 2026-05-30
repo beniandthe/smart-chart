@@ -198,6 +198,61 @@ final class LeadSheetInteractionModeStatePolicyTests: XCTestCase {
         XCTAssertEqual(leadMeasureID, leadChart.measures.first?.id)
     }
 
+    func testSimpleRowGroupAffordanceGroupsSelectedMeasureThroughCurrentRow() throws {
+        var chart = Chart.blank(title: "Manual Rows", measureCount: 6, layoutStyle: .simpleChordSheet)
+        let measureIDs = chart.measures.map(\.id)
+        XCTAssertTrue(chart.insertSimpleSystemBreak(before: measureIDs[4]))
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let affordance = try XCTUnwrap(
+            LeadSheetSimpleRowGroupAffordanceGeometry.affordance(
+                for: measureIDs[1],
+                in: layout,
+                layoutStyle: chart.layoutStyle
+            )
+        )
+        let selectedMeasure = try XCTUnwrap(
+            layout.systems[0].measures.first { $0.sourceMeasureID == measureIDs[1] }
+        )
+        let lastGroupedMeasure = try XCTUnwrap(
+            layout.systems[0].measures.first { $0.sourceMeasureID == measureIDs[3] }
+        )
+
+        XCTAssertEqual(affordance.selectedMeasureID, measureIDs[1])
+        XCTAssertEqual(affordance.groupedMeasureIDs, Array(measureIDs[1..<4]))
+        XCTAssertEqual(affordance.groupFrame.minX, selectedMeasure.frame.minX, accuracy: 0.001)
+        XCTAssertEqual(affordance.groupFrame.maxX, lastGroupedMeasure.frame.maxX, accuracy: 0.001)
+        XCTAssertGreaterThanOrEqual(affordance.handleFrame.maxX, affordance.groupFrame.minX)
+        XCTAssertLessThanOrEqual(affordance.handleFrame.minX, affordance.groupFrame.maxX)
+    }
+
+    func testSimpleRowGroupAffordanceIsSimpleOnly() throws {
+        let chart = Chart.blank(title: "Pocket", measureCount: 4, layoutStyle: .rhythmSectionSheet)
+        let measureID = try XCTUnwrap(chart.measures.first?.id)
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        XCTAssertNil(
+            LeadSheetSimpleRowGroupAffordanceGeometry.affordance(
+                for: measureID,
+                in: layout,
+                layoutStyle: chart.layoutStyle
+            )
+        )
+        XCTAssertNil(
+            LeadSheetSimpleRowGroupAffordanceGeometry.affordance(
+                for: nil,
+                in: layout,
+                layoutStyle: .simpleChordSheet
+            )
+        )
+    }
+
     func testRhythmAutoApplyRequiresStableNonEmptyScheduledSnapshot() {
         let snapshot = LeadSheetRhythmicNotationInkSnapshot(testValues: [1, 2])
 

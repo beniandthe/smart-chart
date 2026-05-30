@@ -386,6 +386,22 @@ Verification:
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `410` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture showed the app launched to Projects.
 
+## Simple Chord Sheet Row Group Affordance
+
+Implemented slice:
+
+- Measure edit mode now draws a Simple Chord Sheet-only row group affordance for the selected measure.
+- The affordance uses a small drag-handle visual plus a dashed guide spanning the selected measure through the end of the current manual row.
+- The grouping follows the documented future drag rule: selected measure plus following measures until the next manual row break.
+- Rhythm Section Sheet and Lead Sheet do not show this Simple row-group affordance.
+- This slice is visual/geometry-only; it does not add vertical drag behavior yet.
+
+Verification:
+
+- Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `21` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `410` tests, `36` skipped, and `0` failures.
+- Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture showed the app launched to Projects.
+
 ## Recommended Sequence
 
 1. Define system layout and measure flow.
@@ -412,9 +428,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet manual row breaks are implemented locally as the first system-layout and measure-flow slice.
+Simple Chord Sheet row-break/group affordance is implemented locally in Measure edit mode.
 
 Next implementation checkpoint:
 
-- Add the subtle Simple Chord Sheet row-break/group affordance in Measure edit mode and then decide whether vertical drag row movement is stable enough for the next slice.
+- Decide whether vertical drag row movement is stable enough for the next slice, and if so wire it as a row-break edit operation rather than a second layout authority.
 - Keep vamp count deferred until there is a clearer V1 need.
