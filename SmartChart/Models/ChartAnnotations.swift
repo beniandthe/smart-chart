@@ -98,6 +98,30 @@ enum RoadmapType: String, Codable, CaseIterable, Hashable {
             return "Vamp"
         }
     }
+
+    var isEnding: Bool {
+        switch self {
+        case .ending1, .ending2:
+            return true
+        default:
+            return false
+        }
+    }
+
+    var usesStructuredLayout: Bool {
+        self == .repeatSpan || isEnding
+    }
+
+    var compactEndingDisplayText: String? {
+        switch self {
+        case .ending1:
+            return "1."
+        case .ending2:
+            return "2."
+        default:
+            return nil
+        }
+    }
 }
 
 enum RoadmapPlacement: String, Codable, CaseIterable, Hashable {

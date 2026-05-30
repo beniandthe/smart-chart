@@ -383,6 +383,66 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertEqual(measure.repeatMarkerLayouts.count, 2)
     }
 
+    func testSimpleChordSheetEndingSpanAddsCompactBracketAboveBlankMeasureSpace() throws {
+        var chart = Chart.blank(title: "Simple Endings", measureCount: 2, layoutStyle: .simpleChordSheet)
+        let startMeasureID = chart.measures[0].id
+        let endMeasureID = chart.measures[1].id
+        let endingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let endingLayout = try XCTUnwrap(firstSystem.endingLayouts.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == startMeasureID })
+        let secondMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == endMeasureID })
+
+        XCTAssertTrue(firstSystem.staffLineYPositions.isEmpty)
+        XCTAssertNil(firstSystem.roadmapText)
+        XCTAssertNil(firstSystem.roadmapTextFrame)
+        XCTAssertEqual(endingLayout.roadmapObjectID, endingID)
+        XCTAssertEqual(endingLayout.type, .ending1)
+        XCTAssertEqual(endingLayout.text, "1.")
+        XCTAssertTrue(endingLayout.showsLeadingHook)
+        XCTAssertTrue(endingLayout.showsTrailingHook)
+        XCTAssertLessThanOrEqual(endingLayout.frame.maxY, firstMeasure.staffFrame.minY)
+        XCTAssertEqual(endingLayout.frame.minX, firstMeasure.staffFrame.minX + 4, accuracy: 0.001)
+        XCTAssertEqual(endingLayout.frame.maxX, secondMeasure.staffFrame.maxX - 4, accuracy: 0.001)
+    }
+
+    func testRhythmSectionEndingSpanReservesBracketSpaceAboveChordLane() throws {
+        var chart = Chart.blank(title: "Rhythm Endings", measureCount: 2, layoutStyle: .rhythmSectionSheet)
+        let startMeasureID = chart.measures[0].id
+        let endMeasureID = chart.measures[1].id
+        _ = try XCTUnwrap(
+            chart.addEndingSpan(.ending2, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+        try appendChord("C7", to: startMeasureID, in: &chart, atFraction: 0.05)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let endingLayout = try XCTUnwrap(firstSystem.endingLayouts.first)
+        let firstMeasure = try XCTUnwrap(firstSystem.measures.first { $0.sourceMeasureID == startMeasureID })
+        let chordLayout = try XCTUnwrap(firstMeasure.chordLayouts.first)
+
+        XCTAssertEqual(firstSystem.staffLineYPositions.count, 5)
+        XCTAssertNil(firstSystem.roadmapText)
+        XCTAssertNil(firstSystem.roadmapTextFrame)
+        XCTAssertEqual(endingLayout.type, .ending2)
+        XCTAssertEqual(endingLayout.text, "2.")
+        XCTAssertLessThanOrEqual(endingLayout.frame.maxY, firstMeasure.chordBandFrame.minY)
+        XCTAssertGreaterThanOrEqual(chordLayout.frame.minY, firstMeasure.chordBandFrame.minY)
+        XCTAssertLessThan(firstMeasure.chordBandFrame.maxY, firstMeasure.staffFrame.minY)
+    }
+
     func testRhythmSectionSheetPreservesCurrentRhythmAndChordWorkflow() throws {
         var chart = Chart.blank(title: "Pocket", measureCount: 1, layoutStyle: .rhythmSectionSheet)
         let measureID = try XCTUnwrap(chart.measures.first?.id)

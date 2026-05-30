@@ -236,6 +236,38 @@ Repeat implementation progress:
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `378` tests, `36` skipped, and `0` failures.
 - Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
+Ending span contract:
+
+- V1 first and second endings persist as structured roadmap span objects of type `1st Ending` or `2nd Ending`, not as loose text or freehand ink.
+- `startMeasureID` means the first measure under the ending bracket.
+- `endMeasureID` means the final measure under the ending bracket.
+- One-measure endings are valid when `startMeasureID` and `endMeasureID` are the same measure.
+- First and second endings can share the same measure range because they represent different musical passes.
+- Duplicate requests for the same ending type and same boundary range return the existing ending span.
+- Deleting either attached boundary measure deletes the whole ending span and clears measure back-references.
+- Inserting measures between the anchors includes the inserted measures in the visual span by current measure order; inserting before or after the anchors preserves the existing boundary measures.
+- If a future move operation inverts the start/end order, the span should fail closed for rendering/editing until the user repairs the range.
+
+Ending visual contract:
+
+- Simple Chord Sheet renders compact ending brackets above the blank measure space, integrated with the chord-grid feel and excluded from the legacy roadmap-text banner.
+- Rhythm Section Sheet renders notation-style ending brackets above the chord lane and reserves local bracket space so chord symbols remain readable below the bracket.
+- Wrapped ending spans render as system-local bracket segments from the first visible measure in range to the last visible measure in range.
+- The first visible segment shows the ending label (`1.` or `2.` by default); continuation segments preserve the bracket without creating a second roadmap-text banner.
+
+Ending implementation progress:
+
+- `RoadmapType` now marks repeat spans and endings as structured-layout roadmap objects.
+- `ChartEditing` can add, update, look up through `roadmapObject(id:)`, and delete first/second ending spans by selected boundary measures.
+- Ending spans attach their roadmap object ID to the start and end boundary measures, support one-measure endings, reject missing/inverted/non-ending requests, allow first and second endings over the same range, and avoid duplicate spans for the same type/range.
+- Shared layout resolves `LeadSheetEndingLayout` per system segment for Simple Chord Sheet and Rhythm Section Sheet.
+- The editor canvas and PDF export path draw ending brackets through the shared notation renderer.
+- The Measures menu exposes ending creation/removal commands: `1st Ending Selected Measure`, `2nd Ending Selected Measure`, `Start 1st Ending Here`, `Start 2nd Ending Here`, `End Ending Here`, `Remove Ending at Selected Measure`, and `Clear Ending Start`.
+- Focused verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter ChartEditingTests --filter LeadSheetPageLayoutTests` passed with `116` tests and `0` failures.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `392` tests, `36` skipped, and `0` failures.
+- Focused simulator PDF verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/PDFChartExporterTests CODE_SIGNING_ALLOWED=NO` passed with `5` tests and `0` failures.
+- Simulator verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
+
 ### 4. Cue Text
 
 Defined V1 behavior:
@@ -276,9 +308,9 @@ Implementation boundary:
 
 Implementation progress:
 
-- `PDFChartExporterTests` now includes Simple Chord Sheet and Rhythm Section Sheet export-proof charts populated with section labels, repeat spans, cue text, chords, and rhythm maps where appropriate.
-- The PDF proof asserts exported document text includes the structured title/chord/cue/section content and excludes key text plus editor placeholder instructions. Repeat markers remain geometry-proofed through layout tests because their glyph/barline art is not searchable PDF text.
-- `LeadSheetPageLayoutTests` now includes SwiftPM-visible per-style readiness tests proving Simple keeps staff lines absent and structured objects readable inside the chord-grid layout, while Rhythm Section keeps staff lines, chord lane, rhythm notation, below-staff cue/freehand space, and repeat edge markers readable across automatic wrapping.
+- `PDFChartExporterTests` now includes Simple Chord Sheet and Rhythm Section Sheet export-proof charts populated with section labels, repeat spans, ending spans, cue text, chords, and rhythm maps where appropriate.
+- The PDF proof asserts exported document text includes the structured title/chord/cue/section content and excludes key text plus editor placeholder instructions. Repeat markers and ending brackets remain geometry-proofed through layout tests because their barline/bracket art is not reliably searchable PDF text.
+- `LeadSheetPageLayoutTests` now includes SwiftPM-visible per-style readiness tests proving Simple keeps staff lines absent and structured objects readable inside the chord-grid layout, while Rhythm Section keeps staff lines, chord lane, rhythm notation, below-staff cue/freehand space, repeat edge markers, and ending bracket space readable across automatic wrapping.
 
 Verification:
 
@@ -313,9 +345,9 @@ Verification:
 
 ## Current Checkpoint
 
-Per-style export/readability proof is implemented locally for Simple Chord Sheet and Rhythm Section Sheet.
+First and second ending spans are implemented locally as the second roadmap-object slice.
 
 Next implementation checkpoint:
 
-- Continue the roadmap-object sequence with first and second endings.
-- Keep point navigation markers such as Coda, Segno, Fine, D.S., D.C., and N.C. deferred until endings are stable.
+- Continue the roadmap-object sequence with point navigation markers such as Coda, Segno, Fine, D.S., D.C., and N.C.
+- Keep vamp count and optional linked target behavior deferred until point marker rendering is stable.

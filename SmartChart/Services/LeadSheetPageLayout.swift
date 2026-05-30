@@ -29,6 +29,7 @@ struct LeadSheetSystemLayout: Identifiable, Hashable {
     var sectionText: String?
     var roadmapTextFrame: CGRect?
     var roadmapText: String?
+    var endingLayouts: [LeadSheetEndingLayout]
     var measures: [LeadSheetMeasureLayout]
 }
 
@@ -115,6 +116,21 @@ struct LeadSheetRepeatMarkerLayout: Identifiable, Hashable {
 
     var id: String {
         "\(roadmapObjectID.uuidString)-\(edge.rawValue)"
+    }
+}
+
+struct LeadSheetEndingLayout: Identifiable, Hashable {
+    var roadmapObjectID: UUID
+    var systemIndex: Int
+    var type: RoadmapType
+    var text: String
+    var frame: CGRect
+    var showsText: Bool
+    var showsLeadingHook: Bool
+    var showsTrailingHook: Bool
+
+    var id: String {
+        "\(roadmapObjectID.uuidString)-\(systemIndex)"
     }
 }
 
@@ -339,8 +355,11 @@ enum LeadSheetPageLayoutEngine {
         let sectionTextFrame = sectionText.map { _ in
             CGRect(x: frame.minX, y: frame.minY + 2, width: 140, height: 18)
         }
+        let reservesEndingSpace = !isSimpleChordSheet && chart.roadmapObjects.contains {
+            roadmapObject($0, intersects: measureIDs, in: chart)
+        }
         let roadmapText = chart.roadmapObjects.first(where: {
-            $0.type != .repeatSpan
+            !$0.type.usesStructuredLayout
                 && (measureIDs.contains($0.startMeasureID) || ($0.endMeasureID.map(measureIDs.contains) ?? false))
         })?.resolvedDisplayText
         let roadmapTextFrame = roadmapText.map { _ in
@@ -370,11 +389,18 @@ enum LeadSheetPageLayoutEngine {
                     height: staffFrame.height
                 ),
                 chordBandHeight: chordBandHeight,
+                reservesEndingSpace: reservesEndingSpace,
                 staffLineYPositions: staffLineYPositions,
                 layoutStyle: chart.layoutStyle,
                 trailingMeterChange: trailingMeterChange(after: measurePlan.measure, in: chart)
             )
         }
+        let endingLayouts = endingLayouts(
+            for: chart,
+            systemIndex: index,
+            systemFrame: frame,
+            measureLayouts: measures
+        )
 
         return LeadSheetSystemLayout(
             id: plan.id,
@@ -388,8 +414,97 @@ enum LeadSheetPageLayoutEngine {
             sectionText: sectionText,
             roadmapTextFrame: roadmapTextFrame,
             roadmapText: roadmapText,
+            endingLayouts: endingLayouts,
             measures: measures
         )
+    }
+
+    private static func roadmapObject(
+        _ roadmapObject: RoadmapObject,
+        intersects measureIDs: [UUID],
+        in chart: Chart
+    ) -> Bool {
+        guard roadmapObject.type.isEnding,
+              let endMeasureID = roadmapObject.endMeasureID else {
+            return false
+        }
+
+        let orderedMeasureIDs = chart.measures.map(\.id)
+        guard let startIndex = orderedMeasureIDs.firstIndex(of: roadmapObject.startMeasureID),
+              let endIndex = orderedMeasureIDs.firstIndex(of: endMeasureID),
+              startIndex <= endIndex else {
+            return false
+        }
+
+        return measureIDs.contains { measureID in
+            guard let measureIndex = orderedMeasureIDs.firstIndex(of: measureID) else {
+                return false
+            }
+
+            return measureIndex >= startIndex && measureIndex <= endIndex
+        }
+    }
+
+    private static func endingLayouts(
+        for chart: Chart,
+        systemIndex: Int,
+        systemFrame: CGRect,
+        measureLayouts: [LeadSheetMeasureLayout]
+    ) -> [LeadSheetEndingLayout] {
+        let orderedMeasureIDs = chart.measures.map(\.id)
+        let indexedMeasureLayouts = measureLayouts.compactMap { measureLayout -> (layout: LeadSheetMeasureLayout, index: Int)? in
+            guard let sourceMeasureID = measureLayout.sourceMeasureID,
+                  let measureIndex = orderedMeasureIDs.firstIndex(of: sourceMeasureID) else {
+                return nil
+            }
+
+            return (measureLayout, measureIndex)
+        }
+        guard !indexedMeasureLayouts.isEmpty else {
+            return []
+        }
+
+        return chart.roadmapObjects
+            .filter { $0.type.isEnding }
+            .compactMap { roadmapObject in
+                guard let endMeasureID = roadmapObject.endMeasureID,
+                      let startIndex = orderedMeasureIDs.firstIndex(of: roadmapObject.startMeasureID),
+                      let endIndex = orderedMeasureIDs.firstIndex(of: endMeasureID),
+                      startIndex <= endIndex else {
+                    return nil
+                }
+
+                let segmentMeasures = indexedMeasureLayouts.filter {
+                    $0.index >= startIndex && $0.index <= endIndex
+                }
+                guard let firstSegmentMeasure = segmentMeasures.first,
+                      let lastSegmentMeasure = segmentMeasures.last else {
+                    return nil
+                }
+
+                let startX = firstSegmentMeasure.layout.staffFrame.minX + 4
+                let endX = lastSegmentMeasure.layout.staffFrame.maxX - 4
+                let frame = CGRect(
+                    x: startX,
+                    y: systemFrame.minY + 4,
+                    width: max(1, endX - startX),
+                    height: 18
+                )
+                let text = roadmapObject.displayText
+                    ?? roadmapObject.type.compactEndingDisplayText
+                    ?? roadmapObject.resolvedDisplayText
+
+                return LeadSheetEndingLayout(
+                    roadmapObjectID: roadmapObject.id,
+                    systemIndex: systemIndex,
+                    type: roadmapObject.type,
+                    text: text,
+                    frame: frame,
+                    showsText: firstSegmentMeasure.index == startIndex,
+                    showsLeadingHook: firstSegmentMeasure.index == startIndex,
+                    showsTrailingHook: lastSegmentMeasure.index == endIndex
+                )
+            }
     }
 
     private static func packedSystemPlans(
@@ -646,11 +761,13 @@ enum LeadSheetPageLayoutEngine {
         frame: CGRect,
         staffFrame: CGRect,
         chordBandHeight: CGFloat,
+        reservesEndingSpace: Bool,
         staffLineYPositions: [CGFloat],
         layoutStyle: ChartLayoutStyle,
         trailingMeterChange: Meter?
     ) -> LeadSheetMeasureLayout {
         let isSimpleChordSheet = layoutStyle == .simpleChordSheet
+        let endingReserveHeight: CGFloat = reservesEndingSpace ? 22 : 0
         let freehandSymbolLanes = layoutStyle.profile.freehandSymbolLanes
         let freehandAboveFrame = freehandSymbolLanes.contains(.aboveMeasure) ? CGRect(
             x: staffFrame.minX + 4,
@@ -671,9 +788,9 @@ enum LeadSheetPageLayoutEngine {
             height: max(1, staffFrame.height - 8)
         ) : CGRect(
             x: frame.minX + 3,
-            y: frame.minY,
+            y: frame.minY + endingReserveHeight,
             width: frame.width - 6,
-            height: chordBandHeight - 4
+            height: max(1, chordBandHeight - 4 - endingReserveHeight)
         )
         let writableFrame = isSimpleChordSheet ? staffFrame.insetBy(dx: 2, dy: 2) : CGRect(
             x: frame.minX + 2,

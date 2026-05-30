@@ -246,6 +246,107 @@ final class ChartEditingTests: XCTestCase {
         XCTAssertTrue(chart.measure(id: endMeasureID)?.roadmapObjectIDs.contains(repeatID) == true)
     }
 
+    func testAddEndingSpanCreatesTypedSpanAttachedToBoundaryMeasures() throws {
+        var chart = Chart.blank(title: "Endings", measureCount: 4, layoutStyle: .rhythmSectionSheet)
+        let startMeasureID = chart.measures[1].id
+        let middleMeasureID = chart.measures[2].id
+        let endMeasureID = chart.measures[3].id
+
+        let endingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+
+        let ending = try XCTUnwrap(chart.roadmapObject(id: endingID))
+        XCTAssertEqual(ending.type, .ending1)
+        XCTAssertEqual(ending.startMeasureID, startMeasureID)
+        XCTAssertEqual(ending.endMeasureID, endMeasureID)
+        XCTAssertEqual(ending.placement, .snappedTop)
+        XCTAssertEqual(ending.rawInput, RoadmapType.ending1.defaultDisplayText)
+        XCTAssertTrue(chart.measure(id: startMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+        XCTAssertTrue(chart.measure(id: endMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+        XCTAssertFalse(chart.measure(id: middleMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+    }
+
+    func testEndingSpansRejectMissingInvertedOrNonEndingTypes() {
+        var chart = Chart.blank(title: "Endings", measureCount: 3)
+        let firstMeasureID = chart.measures[0].id
+        let lastMeasureID = chart.measures[2].id
+
+        XCTAssertNil(chart.addEndingSpan(.ending1, startMeasureID: lastMeasureID, endMeasureID: firstMeasureID))
+        XCTAssertNil(chart.addEndingSpan(.ending2, startMeasureID: firstMeasureID, endMeasureID: UUID()))
+        XCTAssertNil(chart.addEndingSpan(.repeatSpan, startMeasureID: firstMeasureID, endMeasureID: lastMeasureID))
+        XCTAssertTrue(chart.roadmapObjects.isEmpty)
+        XCTAssertTrue(chart.measures.allSatisfy(\.roadmapObjectIDs.isEmpty))
+    }
+
+    func testFirstAndSecondEndingsCanShareTheSameRange() throws {
+        var chart = Chart.blank(title: "Endings", measureCount: 2)
+        let startMeasureID = chart.measures[0].id
+        let endMeasureID = chart.measures[1].id
+
+        let firstEndingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+        let secondEndingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending2, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+        let duplicateFirstEndingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+
+        XCTAssertNotEqual(firstEndingID, secondEndingID)
+        XCTAssertEqual(duplicateFirstEndingID, firstEndingID)
+        XCTAssertEqual(chart.roadmapObjects.count, 2)
+        XCTAssertEqual(Set(chart.endingSpanIDs(attachedTo: startMeasureID)), [firstEndingID, secondEndingID])
+        XCTAssertEqual(Set(chart.measure(id: endMeasureID)?.roadmapObjectIDs ?? []), [firstEndingID, secondEndingID])
+    }
+
+    func testDeleteEndingSpansAttachedToBoundaryMeasureClearsBackReferences() throws {
+        var chart = Chart.blank(title: "Endings", measureCount: 3)
+        let startMeasureID = chart.measures[0].id
+        let middleMeasureID = chart.measures[1].id
+        let endMeasureID = chart.measures[2].id
+        let endingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending2, startMeasureID: startMeasureID, endMeasureID: endMeasureID)
+        )
+
+        XCTAssertTrue(chart.endingSpanIDs(attachedTo: middleMeasureID).isEmpty)
+        XCTAssertEqual(chart.deleteEndingSpans(attachedTo: middleMeasureID), 0)
+        XCTAssertNotNil(chart.roadmapObject(id: endingID))
+        XCTAssertEqual(chart.deleteEndingSpans(attachedTo: endMeasureID), 1)
+
+        XCTAssertNil(chart.roadmapObject(id: endingID))
+        XCTAssertTrue(chart.measure(id: startMeasureID)?.roadmapObjectIDs.isEmpty == true)
+        XCTAssertTrue(chart.measure(id: endMeasureID)?.roadmapObjectIDs.isEmpty == true)
+    }
+
+    func testUpdateEndingSpanMovesBoundaryBackReferences() throws {
+        var chart = Chart.blank(title: "Endings", measureCount: 4)
+        let firstMeasureID = chart.measures[0].id
+        let secondMeasureID = chart.measures[1].id
+        let thirdMeasureID = chart.measures[2].id
+        let fourthMeasureID = chart.measures[3].id
+        let endingID = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: firstMeasureID, endMeasureID: secondMeasureID)
+        )
+
+        XCTAssertTrue(
+            chart.updateEndingSpan(
+                endingID,
+                startMeasureID: thirdMeasureID,
+                endMeasureID: fourthMeasureID
+            )
+        )
+
+        let ending = try XCTUnwrap(chart.roadmapObject(id: endingID))
+        XCTAssertEqual(ending.startMeasureID, thirdMeasureID)
+        XCTAssertEqual(ending.endMeasureID, fourthMeasureID)
+        XCTAssertFalse(chart.measure(id: firstMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+        XCTAssertFalse(chart.measure(id: secondMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+        XCTAssertTrue(chart.measure(id: thirdMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+        XCTAssertTrue(chart.measure(id: fourthMeasureID)?.roadmapObjectIDs.contains(endingID) == true)
+    }
+
     func testDeleteRepeatBoundaryMeasureDeletesWholeRepeatSpan() throws {
         var chart = Chart.blank(title: "Repeats", measureCount: 3)
         let startMeasureID = chart.measures[0].id

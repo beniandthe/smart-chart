@@ -127,6 +127,9 @@ final class PDFChartExporterTests: XCTestCase {
             chart.addRepeatSpan(startMeasureID: measureIDs[0], endMeasureID: measureIDs[3])
         )
         _ = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: measureIDs[0], endMeasureID: measureIDs[1])
+        )
+        _ = try XCTUnwrap(
             chart.addCueText("freely", anchorMeasureID: measureIDs[1], position: .above, emphasis: .subtle)
         )
         try appendChord("C", to: measureIDs[0], in: &chart, atFraction: 0.05)
@@ -145,6 +148,9 @@ final class PDFChartExporterTests: XCTestCase {
         chart.addSectionLabel(text: "A")
         _ = try XCTUnwrap(
             chart.addRepeatSpan(startMeasureID: measureIDs[0], endMeasureID: measureIDs[3])
+        )
+        _ = try XCTUnwrap(
+            chart.addEndingSpan(.ending1, startMeasureID: measureIDs[0], endMeasureID: measureIDs[1])
         )
         _ = try XCTUnwrap(
             chart.addCueText("stop time", anchorMeasureID: measureIDs[1], position: .below, emphasis: .normal)

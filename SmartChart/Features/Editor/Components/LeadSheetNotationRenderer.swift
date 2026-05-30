@@ -132,6 +132,41 @@ struct LeadSheetNotationRenderer {
         )
     }
 
+    func drawEnding(_ endingLayout: LeadSheetEndingLayout) {
+        let bracketY = endingLayout.frame.minY + 3
+        let hookBottomY = endingLayout.frame.maxY
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: endingLayout.frame.minX, y: bracketY))
+        path.addLine(to: CGPoint(x: endingLayout.frame.maxX, y: bracketY))
+        if endingLayout.showsLeadingHook {
+            path.move(to: CGPoint(x: endingLayout.frame.minX, y: bracketY))
+            path.addLine(to: CGPoint(x: endingLayout.frame.minX, y: hookBottomY))
+        }
+        if endingLayout.showsTrailingHook {
+            path.move(to: CGPoint(x: endingLayout.frame.maxX, y: bracketY))
+            path.addLine(to: CGPoint(x: endingLayout.frame.maxX, y: hookBottomY))
+        }
+        path.lineWidth = 1.35 * style.strokeScale
+        style.inkColor.setStroke()
+        path.stroke()
+
+        guard endingLayout.showsText else {
+            return
+        }
+
+        drawText(
+            endingLayout.text,
+            in: CGRect(
+                x: endingLayout.frame.minX + 6,
+                y: bracketY + 1,
+                width: min(70, max(1, endingLayout.frame.width - 12)),
+                height: max(1, endingLayout.frame.height - 4)
+            ),
+            font: style.metadataFont(size: 12),
+            color: style.inkColor.withAlphaComponent(0.88)
+        )
+    }
+
     func drawStaffLines(for system: LeadSheetSystemLayout) {
         let staffSpace = system.staffSpace
         for lineY in system.staffLineYPositions {

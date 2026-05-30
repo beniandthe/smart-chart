@@ -48,6 +48,8 @@ struct EditorView: View {
     @State private var pendingTimeSignatureSourceMeasureID: UUID?
     @State private var pendingTimeSignaturePlacement: PendingTimeSignaturePlacement?
     @State private var pendingRepeatStartMeasureID: UUID?
+    @State private var pendingEndingStartMeasureID: UUID?
+    @State private var pendingEndingType: RoadmapType?
     @State private var pendingCueTextMeasureID: UUID?
     @State private var pendingCueTextPosition: CuePosition?
     @State private var cueTextDraft = ""
@@ -384,6 +386,55 @@ struct EditorView: View {
                             Label("Clear Repeat Start", systemImage: "xmark.circle")
                         }
                     }
+
+                    Divider()
+
+                    Button {
+                        handleEndingSelectedMeasure(.ending1)
+                    } label: {
+                        Label("1st Ending Selected Measure", systemImage: "textformat.123")
+                    }
+
+                    Button {
+                        handleEndingSelectedMeasure(.ending2)
+                    } label: {
+                        Label("2nd Ending Selected Measure", systemImage: "textformat.123")
+                    }
+
+                    Button {
+                        handleStartEndingHere(.ending1)
+                    } label: {
+                        Label("Start 1st Ending Here", systemImage: "1.circle")
+                    }
+
+                    Button {
+                        handleStartEndingHere(.ending2)
+                    } label: {
+                        Label("Start 2nd Ending Here", systemImage: "2.circle")
+                    }
+
+                    Button {
+                        handleEndEndingHere()
+                    } label: {
+                        Label("End Ending Here", systemImage: "checkmark.circle")
+                    }
+                    .disabled(pendingEndingStartMeasureID == nil || pendingEndingType == nil)
+
+                    Button(role: .destructive) {
+                        handleRemoveEndingAtSelectedMeasure()
+                    } label: {
+                        Label("Remove Ending at Selected Measure", systemImage: "trash")
+                    }
+                    .disabled(!canRemoveEndingAtSelectedMeasure)
+
+                    if pendingEndingStartMeasureID != nil {
+                        Button(role: .cancel) {
+                            pendingEndingStartMeasureID = nil
+                            pendingEndingType = nil
+                        } label: {
+                            Label("Clear Ending Start", systemImage: "xmark.circle")
+                        }
+                    }
                 } label: {
                     EditorMenuTabLabel(
                         title: "Measures",
@@ -661,6 +712,14 @@ struct EditorView: View {
         return !chart.repeatSpanIDs(attachedTo: targetMeasureID).isEmpty
     }
 
+    private var canRemoveEndingAtSelectedMeasure: Bool {
+        guard let targetMeasureID = resolvedMeasureActionTargetID() else {
+            return false
+        }
+
+        return !chart.endingSpanIDs(attachedTo: targetMeasureID).isEmpty
+    }
+
     private var canRemoveCueTextAtSelectedMeasure: Bool {
         guard let targetMeasureID = resolvedMeasureActionTargetID() else {
             return false
@@ -695,6 +754,8 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         selectedMeasureID = chart.insertMeasureAtBeginning()
     }
 
@@ -705,6 +766,8 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         guard let targetMeasureID else {
             selectedMeasureID = chart.appendMeasure(authoringState: .open)
             return
@@ -726,6 +789,8 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         selectedMeasureID = targetMeasureID
     }
 
@@ -737,6 +802,8 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = targetMeasureID
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         selectedMeasureID = targetMeasureID
     }
 
@@ -757,6 +824,8 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         selectedMeasureID = targetMeasureID
     }
 
@@ -769,6 +838,74 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleEndingSelectedMeasure(_ type: RoadmapType) {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard type.isEnding,
+              enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.addEndingSpan(type, startMeasureID: targetMeasureID, endMeasureID: targetMeasureID) != nil else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleStartEndingHere(_ type: RoadmapType) {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard type.isEnding,
+              enterMeasureEditMode(),
+              let targetMeasureID else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = targetMeasureID
+        pendingEndingType = type
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleEndEndingHere() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let endingStartMeasureID = pendingEndingStartMeasureID,
+              let pendingEndingType,
+              let targetMeasureID,
+              let orderedBoundaryIDs = orderedRepeatBoundaryIDs(
+                startMeasureID: endingStartMeasureID,
+                endMeasureID: targetMeasureID
+              ),
+              chart.addEndingSpan(
+                pendingEndingType,
+                startMeasureID: orderedBoundaryIDs.start,
+                endMeasureID: orderedBoundaryIDs.end
+              ) != nil else {
+            return
+        }
+
+        pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        self.pendingEndingType = nil
+        selectedMeasureID = targetMeasureID
+    }
+
+    private func handleRemoveEndingAtSelectedMeasure() {
+        let targetMeasureID = resolvedMeasureActionTargetID()
+        guard enterMeasureEditMode(),
+              let targetMeasureID,
+              chart.deleteEndingSpans(attachedTo: targetMeasureID) > 0 else {
+            return
+        }
+
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         selectedMeasureID = targetMeasureID
     }
 
@@ -780,6 +917,8 @@ struct EditorView: View {
         }
 
         pendingRepeatStartMeasureID = nil
+        pendingEndingStartMeasureID = nil
+        pendingEndingType = nil
         selectedMeasureID = targetMeasureID
         pendingCueTextMeasureID = targetMeasureID
         pendingCueTextPosition = position

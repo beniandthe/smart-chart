@@ -829,6 +829,47 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func addEndingSpan(
+        _ type: RoadmapType,
+        startMeasureID: UUID,
+        endMeasureID: UUID
+    ) -> UUID? {
+        guard type.isEnding,
+              let startLocation = measureLocation(id: startMeasureID),
+              let endLocation = measureLocation(id: endMeasureID),
+              flattenedMeasureIndex(for: startLocation) <= flattenedMeasureIndex(for: endLocation) else {
+            return nil
+        }
+
+        if let existingEndingSpan = roadmapObjects.first(where: {
+            $0.type == type
+                && $0.startMeasureID == startMeasureID
+                && $0.endMeasureID == endMeasureID
+        }) {
+            return existingEndingSpan.id
+        }
+
+        let endingSpan = RoadmapObject(
+            id: UUID(),
+            type: type,
+            startMeasureID: startMeasureID,
+            endMeasureID: endMeasureID,
+            anchorSystemID: systems[startLocation.systemIndex].id,
+            placement: .snappedTop,
+            displayText: nil,
+            count: nil,
+            linkedTargetID: nil,
+            rawInput: type.defaultDisplayText
+        )
+
+        roadmapObjects.append(endingSpan)
+        attachRoadmapObject(endingSpan.id, to: startMeasureID)
+        attachRoadmapObject(endingSpan.id, to: endMeasureID)
+        updatedAt = .now
+        return endingSpan.id
+    }
+
+    @discardableResult
     mutating func updateRepeatSpan(
         _ roadmapObjectID: UUID,
         startMeasureID: UUID,
@@ -861,6 +902,38 @@ extension Chart {
     }
 
     @discardableResult
+    mutating func updateEndingSpan(
+        _ roadmapObjectID: UUID,
+        startMeasureID: UUID,
+        endMeasureID: UUID
+    ) -> Bool {
+        guard let roadmapObjectIndex = roadmapObjects.firstIndex(where: { $0.id == roadmapObjectID }),
+              roadmapObjects[roadmapObjectIndex].type.isEnding,
+              let startLocation = measureLocation(id: startMeasureID),
+              let endLocation = measureLocation(id: endMeasureID),
+              flattenedMeasureIndex(for: startLocation) <= flattenedMeasureIndex(for: endLocation) else {
+            return false
+        }
+
+        var endingSpan = roadmapObjects[roadmapObjectIndex]
+        guard endingSpan.startMeasureID != startMeasureID
+            || endingSpan.endMeasureID != endMeasureID
+            || endingSpan.anchorSystemID != systems[startLocation.systemIndex].id else {
+            return false
+        }
+
+        endingSpan.startMeasureID = startMeasureID
+        endingSpan.endMeasureID = endMeasureID
+        endingSpan.anchorSystemID = systems[startLocation.systemIndex].id
+        roadmapObjects[roadmapObjectIndex] = endingSpan
+        removeRoadmapObjectIDFromMeasures(roadmapObjectID)
+        attachRoadmapObject(roadmapObjectID, to: startMeasureID)
+        attachRoadmapObject(roadmapObjectID, to: endMeasureID)
+        updatedAt = .now
+        return true
+    }
+
+    @discardableResult
     mutating func deleteRoadmapObject(_ roadmapObjectID: UUID) -> Bool {
         guard let roadmapObjectIndex = roadmapObjects.firstIndex(where: { $0.id == roadmapObjectID }) else {
             return false
@@ -881,6 +954,15 @@ extension Chart {
             .map(\.id)
     }
 
+    func endingSpanIDs(attachedTo measureID: UUID) -> [UUID] {
+        roadmapObjects
+            .filter {
+                $0.type.isEnding
+                    && ($0.startMeasureID == measureID || $0.endMeasureID == measureID)
+            }
+            .map(\.id)
+    }
+
     @discardableResult
     mutating func deleteRepeatSpans(attachedTo measureID: UUID) -> Int {
         let repeatSpanIDs = repeatSpanIDs(attachedTo: measureID)
@@ -895,6 +977,22 @@ extension Chart {
         }
         updatedAt = .now
         return repeatSpanIDs.count
+    }
+
+    @discardableResult
+    mutating func deleteEndingSpans(attachedTo measureID: UUID) -> Int {
+        let endingSpanIDs = endingSpanIDs(attachedTo: measureID)
+        guard !endingSpanIDs.isEmpty else {
+            return 0
+        }
+
+        let endingSpanIDSet = Set(endingSpanIDs)
+        roadmapObjects.removeAll { endingSpanIDSet.contains($0.id) }
+        for endingSpanID in endingSpanIDs {
+            removeRoadmapObjectIDFromMeasures(endingSpanID)
+        }
+        updatedAt = .now
+        return endingSpanIDs.count
     }
 
     func measure(id: UUID) -> Measure? {
