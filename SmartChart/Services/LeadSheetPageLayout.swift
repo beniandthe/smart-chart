@@ -679,7 +679,7 @@ enum LeadSheetPageLayoutEngine {
 
         func appendPlan(for measures: [Measure], id: UUID) {
             let weights = measures.map {
-                max(1, preferredWidth(for: $0, chart: chart) / max(0.1, metrics.measureWidthScale))
+                simpleChordSheetMeasureWeight(for: $0, metrics: metrics)
             }
             let totalWeight = max(1, weights.reduce(0, +))
             let measurePlans = zip(measures, weights).map { measure, weight in
@@ -714,6 +714,18 @@ enum LeadSheetPageLayoutEngine {
         }
 
         return plans
+    }
+
+    private static func simpleChordSheetMeasureWeight(
+        for measure: Measure,
+        metrics: LeadSheetEngravingMetrics
+    ) -> CGFloat {
+        guard let manualLayoutWidth = measure.manualLayoutWidth else {
+            return 1
+        }
+
+        let defaultWidth = preferredCommittedMeasureWidth * metrics.measureWidthScale
+        return max(0.25, CGFloat(manualLayoutWidth) / max(1, defaultWidth))
     }
 
     private static func leadingSignatureWidth(

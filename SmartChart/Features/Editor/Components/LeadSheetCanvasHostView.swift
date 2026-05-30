@@ -543,7 +543,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
     private var chordInkRecognitionRequestState = LeadSheetChordInkRecognitionRequestState()
     private var activeMeasureResizeDrag: ActiveMeasureResizeDrag?
-    private var activeSimpleRowGroupDrag: ActiveSimpleRowGroupDrag?
     private var activeChordMoveDrag: ActiveChordMoveDrag?
     private var selectedFreehandSymbolID: UUID?
     private var activeFreehandSymbolMoveDrag: ActiveFreehandSymbolMoveDrag?
@@ -834,7 +833,7 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
     }
 
     private func drawSimpleRowGroupAffordance(_ affordance: LeadSheetSimpleRowGroupAffordance) {
-        let guideY = affordance.handleFrame.midY
+        let guideY = affordance.guideY
         let startX = affordance.groupFrame.minX + 4
         let endX = affordance.groupFrame.maxX - 4
 
@@ -850,31 +849,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         guidePath.lineWidth = 1.1
         guidePath.setLineDash([5, 4], count: 2, phase: 0)
         guidePath.stroke()
-
-        let handlePath = UIBezierPath(roundedRect: affordance.handleFrame, cornerRadius: 7)
-        UIColor.white.withAlphaComponent(0.92).setFill()
-        handlePath.fill()
-        UIColor(red: 0.18, green: 0.38, blue: 0.78, alpha: 0.78).setStroke()
-        handlePath.lineWidth = 1.0
-        handlePath.stroke()
-
-        UIColor(red: 0.16, green: 0.33, blue: 0.68, alpha: 0.88).setFill()
-        let dotRadius: CGFloat = 1.35
-        let centerX = affordance.handleFrame.midX
-        let centerY = affordance.handleFrame.midY
-        let rowOffsets: [CGFloat] = [-3, 3]
-        let columnOffsets: [CGFloat] = [-5, 0, 5]
-        for rowOffset in rowOffsets {
-            for columnOffset in columnOffsets {
-                let dotFrame = CGRect(
-                    x: centerX + columnOffset - dotRadius,
-                    y: centerY + rowOffset - dotRadius,
-                    width: dotRadius * 2,
-                    height: dotRadius * 2
-                )
-                UIBezierPath(ovalIn: dotFrame).fill()
-            }
-        }
     }
 
     private func drawSavedPageInk() {
@@ -1115,17 +1089,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         }
 
         return LeadSheetMeasureResizeGeometry.hitTarget(at: location, in: measure)
-    }
-
-    private func simpleRowGroupDragHitTarget(at location: CGPoint) -> ActiveSimpleRowGroupDrag? {
-        guard interactionMode.showsMeasureResizeHandles else {
-            return nil
-        }
-
-        return LeadSheetSimpleRowGroupAffordanceGeometry.hitTarget(
-            at: location,
-            in: simpleRowGroupAffordance()
-        )
     }
 
     private func chordEditHitTarget(at location: CGPoint) -> ChordEditHitTarget? {
@@ -1391,16 +1354,8 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
         switch recognizer.state {
         case .began:
             let location = recognizer.location(in: self)
-            activeSimpleRowGroupDrag = simpleRowGroupDragHitTarget(at: location)
-            if activeSimpleRowGroupDrag == nil {
-                activeMeasureResizeDrag = measureResizeHandleHitTarget(at: location)
-            } else {
-                activeMeasureResizeDrag = nil
-            }
+            activeMeasureResizeDrag = measureResizeHandleHitTarget(at: location)
         case .changed:
-            guard activeSimpleRowGroupDrag == nil else {
-                return
-            }
             guard let activeMeasureResizeDrag else {
                 return
             }
@@ -1423,50 +1378,10 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
             chart = updatedChart
             onChartChanged?(updatedChart)
         case .ended, .cancelled, .failed:
-            if recognizer.state == .ended,
-               let activeSimpleRowGroupDrag {
-                commitSimpleRowGroupDrag(
-                    activeSimpleRowGroupDrag,
-                    translation: recognizer.translation(in: self)
-                )
-            }
-            activeSimpleRowGroupDrag = nil
             activeMeasureResizeDrag = nil
         default:
             break
         }
-    }
-
-    private func commitSimpleRowGroupDrag(
-        _ drag: ActiveSimpleRowGroupDrag,
-        translation: CGPoint
-    ) {
-        let operation = LeadSheetSimpleRowGroupAffordanceGeometry.dragOperation(
-            for: translation,
-            canInsertBreak: chart.canInsertSimpleSystemBreak(before: drag.measureID),
-            canRemoveBreak: chart.canRemoveSimpleSystemBreak(before: drag.measureID)
-        )
-        guard let operation else {
-            return
-        }
-
-        var updatedChart = chart
-        let didApply: Bool
-        switch operation {
-        case .insertBreakBefore:
-            didApply = updatedChart.insertSimpleSystemBreak(before: drag.measureID)
-        case .removeBreakBefore:
-            didApply = updatedChart.removeSimpleSystemBreak(before: drag.measureID)
-        }
-
-        guard didApply else {
-            return
-        }
-
-        chart = updatedChart
-        selectedMeasureID = drag.measureID
-        onChartChanged?(updatedChart)
-        onMeasureSelectionChanged?(drag.measureID)
     }
 
     @objc
@@ -2369,7 +2284,6 @@ final class LeadSheetCanvasUIKitView: UIView, PKCanvasViewDelegate, UIGestureRec
 
         if policy.clearsMeasureResizeDrag {
             activeMeasureResizeDrag = nil
-            activeSimpleRowGroupDrag = nil
         }
 
         if policy.clearsChordInteractionState {

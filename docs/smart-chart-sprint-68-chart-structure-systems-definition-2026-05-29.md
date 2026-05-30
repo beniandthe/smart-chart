@@ -48,7 +48,7 @@ Simple Chord Sheet direction:
 - System rows should be controlled by manual row breaks, not per-measure row IDs or fully automatic equal-width grouping.
 - Measures must stay complete inside one system row; a single measure should not split across rows.
 - Users should be able to compress, stretch, and reposition measures in a system row.
-- Users should be able to drag measures up or down between system rows as an editing gesture.
+- Direct row dragging can be revisited later, but the V1 control path is the Measure menu: `New System Before This Measure` and `Remove System Break`.
 - Moving measures to a new system should live under the Measure menu/edit-measure workflow.
 - The first Measure menu row-break controls should be `New System Before This Measure` and `Remove System Break`.
 - Adding a measure should place the new measure on the same system row as the current last measure by default.
@@ -71,8 +71,8 @@ Manual row-break behavior:
 - Smart Chart should not automatically move measures to a new row for readability.
 - The row cap is the exception: when adding a measure would exceed the cap, Smart Chart automatically starts a new system and places the new measure there.
 - Dragging a measure vertically between rows should become a row-break edit operation, not a second layout authority.
-- Vertical drag moves the selected measure plus every following measure until the next manual row break; it does not move only one isolated measure.
-- In Measure edit mode, a subtle row-break/group handle should appear for the selected measure group so the user can see that vertical dragging moves the group boundary rather than a single isolated bar.
+- Row-break actions move the selected measure plus every following measure until the next manual row break; they do not move only one isolated measure.
+- In Measure edit mode, a subtle row-break/group guide should appear for the selected measure group so the user can see which measures the menu action affects.
 
 Reference notes:
 
@@ -376,7 +376,7 @@ Implemented slice:
 - Manual row breaks are stored as forced `ChartSystem` boundaries and are preserved by measure identity when measures are inserted or reindexed.
 - Adding a measure at the beginning keeps the new measure on the first row and shifts existing forced row breaks by measure identity.
 - Adding a measure beyond the Simple row cap starts an automatic next row; this is the only automatic Simple row push in this slice.
-- The Simple Chord Sheet page layout now renders each model system as a proportional fit-to-row chord-grid system, with manual width emphasis acting as the weight source.
+- The Simple Chord Sheet page layout now renders each model system as a proportional fit-to-row chord-grid system. Default measures share equal width, and manual width emphasis acts as the only proportional weight source.
 - Simple Chord Sheet layout allows `16` measures on one row and caps at `20`; Rhythm Section layout remains on the existing automatic width-packing path.
 - The editor Measures menu exposes `New System Before This Measure` and `Remove System Break`, disabled outside valid Simple Chord Sheet row-break positions.
 
@@ -386,25 +386,22 @@ Verification:
 - Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `410` tests, `36` skipped, and `0` failures.
 - Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture showed the app launched to Projects.
 
-## Simple Chord Sheet Row Group Affordance
+## Simple Chord Sheet Row Group Indicator
 
 Implemented slice:
 
-- Measure edit mode now draws a Simple Chord Sheet-only row group affordance for the selected measure.
-- The affordance uses a small drag-handle visual plus a dashed guide spanning the selected measure through the end of the current manual row.
-- The grouping follows the documented future drag rule: selected measure plus following measures until the next manual row break.
-- Rhythm Section Sheet and Lead Sheet do not show this Simple row-group affordance.
-- The affordance handle now supports release-based vertical drag as a row-break edit operation:
-  - dragging down past threshold inserts `New System Before This Measure` for the selected group when valid;
-  - dragging up past threshold removes the forced system break before the selected row when valid.
-- Tiny gestures, mostly horizontal gestures, or invalid row-break directions do not rewrite rows.
-- Vertical drag uses the same `ChartEditing` row-break authority as the Measure menu and does not introduce per-measure row IDs or freeform placement state.
+- Measure edit mode draws a Simple Chord Sheet-only row group guide for the selected measure.
+- The guide is a dashed marker spanning the selected measure through the end of the current manual row.
+- The grouping follows the row-break rule: selected measure plus following measures until the next manual row break.
+- Rhythm Section Sheet and Lead Sheet do not show this Simple row-group guide.
+- Direct vertical drag has been removed from the active V1 path after live-pass friction; the Measure menu remains the row-break authority and does not introduce per-measure row IDs or freeform placement state.
 
 Verification:
 
-- Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `23` tests and `0` failures.
-- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `410` tests, `36` skipped, and `0` failures.
-- Simulator smoke verification: XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture showed the app launched to Projects.
+- Focused layout verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile --filter LeadSheetPageLayoutTests` passed with `54` tests and `0` failures after adding equal-default-width and manual-weight regression coverage.
+- Focused simulator editor verification: XcodeBuildMCP `test_sim -only-testing:SmartChartTests/LeadSheetInteractionModeStatePolicyTests CODE_SIGNING_ALLOWED=NO` passed with `21` tests and `0` failures after removing the active vertical drag path.
+- Full SwiftPM verification: `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `412` tests, `36` skipped, and `0` failures.
+- Simulator smoke verification: `git diff --check` passed; XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only, and screenshot capture succeeded.
 
 ## Recommended Sequence
 
@@ -432,9 +429,9 @@ Verification:
 
 ## Current Checkpoint
 
-Simple Chord Sheet row-break/group affordance and release-based vertical row drag are implemented locally in Measure edit mode.
+Simple Chord Sheet row-break/menu controls are implemented locally, default Simple measures now equalize inside each row until manually resized, and Measure edit mode shows a Simple-only row-group guide without active vertical drag.
 
 Next implementation checkpoint:
 
-- Run a live simulator pass on Simple Chord Sheet row controls, then move to the next Simple style refinement only after the manual row workflow feels stable.
+- Run a live simulator pass on Simple Chord Sheet row controls, then move to the next Simple style refinement only after the Measure-menu row workflow feels stable.
 - Keep vamp count deferred until there is a clearer V1 need.

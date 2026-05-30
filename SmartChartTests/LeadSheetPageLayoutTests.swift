@@ -257,6 +257,45 @@ final class LeadSheetPageLayoutTests: XCTestCase {
         XCTAssertTrue(layout.systems.allSatisfy { $0.frame.width <= layout.paperFrame.width })
     }
 
+    func testSimpleChordSheetDefaultMeasuresUseEqualRowWidths() throws {
+        let chart = Chart.blank(title: "Even Grid", measureCount: 6, layoutStyle: .simpleChordSheet)
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let widths = firstSystem.measures.map(\.frame.width)
+        let firstWidth = try XCTUnwrap(widths.first)
+
+        XCTAssertEqual(firstSystem.measures.count, 6)
+        XCTAssertTrue(
+            widths.allSatisfy { abs($0 - firstWidth) <= 0.001 },
+            "Default Simple measures should share equal row width until the user applies a manual width."
+        )
+    }
+
+    func testSimpleChordSheetManualWidthActsAsProportionalRowWeight() throws {
+        var chart = Chart.blank(title: "Weighted Grid", measureCount: 4, layoutStyle: .simpleChordSheet)
+        let measureIDs = chart.measures.map(\.id)
+        _ = chart.setMeasureManualLayoutWidth(280, for: measureIDs[1])
+
+        let layout = LeadSheetPageLayoutEngine.pageLayout(
+            for: chart,
+            pageSize: CGSize(width: 900, height: 1400)
+        )
+
+        let firstSystem = try XCTUnwrap(layout.systems.first)
+        let widths = firstSystem.measures.map(\.frame.width)
+
+        XCTAssertEqual(firstSystem.measures.count, 4)
+        XCTAssertGreaterThan(widths[1], widths[0])
+        XCTAssertEqual(widths[0], widths[2], accuracy: 0.001)
+        XCTAssertEqual(widths[2], widths[3], accuracy: 0.001)
+        XCTAssertLessThanOrEqual(firstSystem.measures.last?.frame.maxX ?? 0, firstSystem.frame.maxX + 0.001)
+    }
+
     func testSimpleChordSheetAllowsSixteenMeasuresOnOneManualRow() throws {
         let chart = Chart.blank(title: "Dense Grid", measureCount: 16, layoutStyle: .simpleChordSheet)
 
