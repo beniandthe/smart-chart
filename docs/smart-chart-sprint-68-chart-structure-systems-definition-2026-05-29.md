@@ -342,7 +342,7 @@ Implementation progress:
 
 Defined V1 behavior:
 
-- Simple Chord Sheet export is worthy when it reads like a dense handwritten chord-chart grid: no key header, blank barline-to-barline measure space, structured chords inside the blank measure area, compact section/repeat/cue objects, and freehand lanes that do not leak into the chord lane.
+- Simple Chord Sheet export is worthy when it reads like a dense handwritten chord-chart grid: no key header, blank barline-to-barline measure space, structured chords inside the blank measure area, compact section/repeat/cue objects, and measure-attached chart-area freehand ink that stays separate from chord entry.
 - Simple Chord Sheet should prefer dense one-page readability when possible, but never by overlapping structured objects or collapsing the user's measure-width emphasis.
 - Rhythm Section Sheet export is worthy when it reads like a professional rhythm/hit chart: no key header, visible meter/staff systems, chord lane above the staff, rhythmic slashes/rests inside the staff lane, cue text and below-staff freehand articulations below the measure, and clear repeat markers at repeated range edges.
 - Rhythm Section Sheet prioritizes readable rhythm-lane space over maximum density. Automatic wrapping remains acceptable for this slice.
@@ -594,6 +594,5 @@ Simple Chord Sheet row-break/menu controls are implemented locally, default Simp
 
 Next implementation checkpoint:
 
-- Run the fresh live simulator pass for Simple chord writing after the automatic beat placement/no-resize correction.
-- Continue Rhythm Section below-staff freehand workflow polish from the `Free-Hand` entry point after the Simple pass is accepted.
+- Superseded by Sprint 69 V1 readiness audit and matrix.
 - Keep vamp count deferred until there is a clearer V1 need.

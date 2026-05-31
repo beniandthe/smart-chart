@@ -5,6 +5,7 @@ Date: 2026-05-31
 Branch: `codex/rhythm-section-core-authoring`
 Source of truth: `docs/smart-chart-sprint-source-of-truth.md`
 Milestone checkpoint: `4dff695 Finalize Simple chart core authoring loop`
+Readiness matrix: `docs/smart-chart-v1-readiness-matrix-2026-05-31.md`
 
 ## Purpose
 
@@ -43,6 +44,22 @@ Likely Sprint 69 audit checks:
 - Toolstrip consistency after current Page/Measures/Roadmap/Text/Time/Chord/Free-Hand cleanup.
 - Rhythm Section visual cohesion and whether it now lags Simple in professional polish.
 - Any stale docs that still imply the old Simple above/below freehand lane, Lead Sheet as a V1 target, or generic shared layout behavior.
+
+## Audit Findings So Far
+
+- No hidden V1 code/doc blocker is confirmed by the first audit pass.
+- Simple Chord Sheet persistence needed a richer proof than the generic snapshot round trip. Sprint 69 added a repository test that saves and reloads a V1-shaped Simple chart with role typography, a manual row break, manual width, roadmap objects, cue text, chart-area freehand ink, and rendered chords.
+- The readiness matrix classifies the current implementation surface and keeps the next decision tied to live app evidence.
+- The remaining release gates are fresh app-surface save/reopen/export passes for Simple Chord Sheet and Rhythm Section Sheet, plus a clean simulator build/run.
+- If those passes do not expose a blocker, the highest-value next polish lane is Rhythm Section visual cohesion.
+
+## Verification Checkpoint
+
+- `git diff --check` passed.
+- Focused SwiftPM audit group passed with `165` tests and `0` failures: `FileChartRepositoryTests`, `PDFChartExporterTests`, `ChartEditingTests`, `LeadSheetPageLayoutTests`, `ChartTypographyResolverTests`, `LeadSheetInteractionModeStatePolicyTests`, and `RhythmicNotationQuantizerTests`.
+- Full `swift test --scratch-path /tmp/SmartChartSwiftBuild-layoutprofile` passed with `438` tests, `36` skipped, and `0` failures.
+- XcodeBuildMCP `build_run_sim CODE_SIGNING_ALLOWED=NO` succeeded on the configured iPad Pro 13-inch simulator with the existing headermap warning only.
+- Screenshot capture succeeded and showed the app launched to Projects.
 
 ## Scope
 
@@ -85,6 +102,7 @@ Larger implementation should wait until the audit says which lane is next.
    - add below-staff freehand articulation, cue text, and roadmap objects
    - save/reopen and export
 6. Produce a V1 readiness matrix with recommendations for the next implementation sprint.
+   - Status: matrix created at `docs/smart-chart-v1-readiness-matrix-2026-05-31.md`.
 
 ## Acceptance Criteria
 
